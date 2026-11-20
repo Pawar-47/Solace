@@ -28,7 +28,7 @@ not upwards.
   anti-aliasing, FXAA, motion blur, auto exposure, chromatic aberration, sharpening
 - Distant Horizons and Voxy support, so the far world is lit by the same model as
   the near world
-- 94 options in fourteen sub-screens, and nine languages
+- 95 options in fourteen sub-screens, and nine languages
 - Five profiles, from `Potato` to `PerformancePlus`
 
 ## Requirements
