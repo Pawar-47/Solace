@@ -525,3 +525,42 @@ supported and their uniforms cannot be verified without those mods installed.
 
 Still unimplemented for the same reason, unchanged from earlier passes: coloured
 shadows, shadow lock, the three PNG textures, and native-reviewed translations.
+
+
+
+## 14. Seventh pass: the properties files and the shader constants
+
+`lib/config.glsl` was re-read in full (331 lines) and reconciled against this pack's
+options, together with the reference's `block.properties` (102 lines), `item.properties`
+(5), `entity.properties` (10) and `dimension.properties` (3). The program files were
+already covered; what these four decide is *which geometry* gets the shaders at all,
+and that is where the gaps were.
+
+| # | Reference behaviour | Mine before | Fix |
+| --- | --- | --- | --- |
+| 58 | `block.properties` gives each block **one** id | `minecraft:ice`, `packed_ice` and `blue_ice` were in both the polished id (4) and the glass id (9), and `crying_obsidian` in both the polished id and the emissive id (6). A block listed twice has no defined id, so ice shimmered or glossed depending on the order the mod read the file | the duplicates are gone: ice and its variants are glass, crying obsidian is emissive |
+| 59 | grass, crops, leaves and vines are listed by category, and the reference's lists are huge because they cover mods | vanilla only, and missing every underwater plant, every vine, hanging roots, the dripleaf stem, dead bush, azalea and the new pale oak | added to the waving and leaves ids, so kelp, seagrass, cave/weeping/twisting vines, hanging roots and the rest sway and pale oak leaves move with the wind |
+| 60 | `item.properties` exists and its ids drive the held-item light (`glint_blocks`, `composite` read `heldItemId`) | no `item.properties` at all, so `HAND_LIGHT` only ever reacted to `heldBlockLightValue` - a torch held as an *item* lit nothing | `item.properties` added with two light levels, `heldItemId` declared, and the hand light in the geometry stage now mixes blocks and items |
+| 61 | `entity.properties` gives Iris the ids that fill `mc_Entity.x` for entity programs (`10101` lightning, `10201` entity flames) | no `entity.properties`, so `blockId` was always 0 for entities and nothing could key off them | `entity.properties` added, and lightning bolts and the fire on a burning entity are drawn as their own light rather than as a lit surface |
+| 62 | glow-berry vines are emissive | not listed, so a cave-vine with berries was shaded like a leaf | added to the emissive id with their state (`berries=true`) |
+| 63 | `config.glsl:200-321` declares the **shader constants** the mod applies to the whole pipeline: `sunPathRotation = -25.0`, `ambientOcclusionLevel` (0.7 with SSAO off, 0.0 with it on), `eyeBrightnessHalflife = 3.0`, `centerDepthHalflife = 0.66`, `shadowIntervalSize = 3.0`, `shadowHardwareFiltering`, `shadowtex1Nearest` | this pack declared none of them: the sun crossed straight overhead instead of on the reference's tilted path, vanilla's own AO stayed at full strength while the pack's SSAO was off, and the fog and focus smoothing used Iris's much slower defaults | all seven declared in `lib/config.glsl`; the sun tilt alone changes every sunset, shadow direction and water glint |
+| 64 | `config.glsl:48,144-148` caps sight in the Nether at `min(far/2, 96)` (`NETHER_FOG_DISTANCE`, on by default) | the Nether fog reached the full render distance, so the far wall of a nether fortress never faded | the Nether's fog distance is capped the same way; the option to switch it off is not exposed, and that is named below rather than pretended away |
+
+Reconciled and deliberately left as they are:
+
+- **`NETHER_FOG_DISTANCE` as a switch.** The behaviour is the reference default; a
+  slider for it would be one more thing to translate into nine languages for a value
+  nobody turns off.
+- **`SHADOW_LOCK`** - a shadow refresh throttle. A shader cannot ask the mod to skip
+  the shadow pass, so this is a per-frame cost the pack cannot reclaim. Still out.
+- **`SELECTIVE_TAA_V2`** - needs an object mask so entities can be excluded from the
+  history; the mask comes from buffers this pack does not have.
+- **`CLOUD_SPEED`, `AVOID_DARK_LEVEL`, `BLACK_ENTITY_FIX`, `DEBUG_MODE`** - the cloud
+  drift is fixed in the pack's analytic noise, the cave light floor is `0.045`, and the
+  other two are a driver workaround and a debug switch.
+- **The reference's mod block lists** - it lists thousands of blocks from dozens of
+  mods. This pack is vanilla-only by design and says so in `block.properties`.
+- **The reference's per-theme light colours** - it exposes a custom colour for every
+  sunset/day/night light, zenith and horizon value; this pack exposes the custom
+  zenith, horizon, ambient and water colours, which covers the same look with eleven
+  options instead of eighteen.

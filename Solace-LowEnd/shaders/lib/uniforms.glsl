@@ -24,6 +24,7 @@ uniform vec3 moonPosition;     // unit vector towards the moon, view space
 
 uniform vec4 entityColor;      // damage tint, only filled for entity programs
 uniform float heldBlockLightValue;
+uniform int heldItemId;        // filled from item.properties, 0 when unknown
 
 uniform float frameTimeCounter;
 uniform float frameTime;

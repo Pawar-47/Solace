@@ -94,9 +94,20 @@ void main() {
     #endif
 
     #if HAND_LIGHT == 1
-        if (heldBlockLightValue > 0.5) {
+        /* A light in the hand throws light on what is around you. `heldBlockLightValue`
+           only reports a light-emitting *block* in hand, so a torch held as an item
+           contributed nothing until item.properties existed; the two ids below are the
+           ones that file defines, the same split the reference uses. */
+        float heldLight = heldBlockLightValue / 15.0;
+        if (heldItemId == 11001) {
+            heldLight = max(heldLight, 1.0);
+        } else if (heldItemId == 11002) {
+            heldLight = max(heldLight, 0.45);
+        }
+
+        if (heldLight > 0.03) {
             float nearness = sat(1.0 - length(viewSpacePos) / 6.0);
-            light += blockLightColour() * nearness * (heldBlockLightValue / 15.0) * 0.80;
+            light += blockLightColour() * nearness * heldLight * 0.80;
         }
     #endif
 
@@ -128,6 +139,13 @@ void main() {
             colour = max(colour, albedo.rgb * (0.90 + 0.35 * sat(rawBlock)));
         }
     #endif
+
+    /* A lightning bolt and the fire an entity wears while burning are light, not lit
+       surfaces. Both ids come from entity.properties, as the reference's do; without
+       that file `blockId` was always 0 for entity programs and this could not fire. */
+    if (blockId == 10101.0 || blockId == 10201.0) {
+        colour = max(colour, albedo.rgb);
+    }
 
     if (blockId == SOLACE_PORTAL) {
         /* The End portal as a stack of layers, each a finer grid than the one behind

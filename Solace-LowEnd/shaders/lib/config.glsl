@@ -12,6 +12,31 @@ enabled, all samples at their minimum, the shadow map at 512 px over 75 blocks.
 #ifndef SOLACE_CONFIG
 #define SOLACE_CONFIG
 
+// ---- Shader constants the mod reads --------------------------------------
+// Not options: values Iris and OptiFine look for in any included file and then
+// apply to the whole pipeline. The reference declares the same set.
+
+/* Tilt of the sun's path. Without it the sun crosses straight overhead and every
+   sunset is the same; the reference uses -25 degrees, which is what makes the
+   shadows swing round during the day. */
+const float sunPathRotation = -25.0;
+
+/* Vanilla's own smooth-lighting ambient occlusion is declared at the end of this
+   file, where the AO option exists - a `const` decided here would read an AO that
+   has not been defined yet and always take the else branch. */
+
+/* How quickly the two smoothed values the terrain shader reads catch up with the
+   real ones: sky exposure (which drives the fog) and the depth under the crosshair
+   (which drives the focus). The defaults are far slower than the reference's. */
+const float eyeBrightnessHalflife = 3.0;
+const float centerDepthHalflife = 0.66;
+
+/* Shadow projection snapping and filtering. The interval size keeps the shadow
+   texel grid from crawling as the player walks. */
+const float shadowIntervalSize = 3.0;
+const bool shadowHardwareFiltering = true;
+const bool shadowtex1Nearest = false;
+
 // ---- Water ---------------------------------------------------------------
 #define WATER_WAVES 1          // [0 1] Animated water surface.
 #define WAVE_SPEED 0.55        // [0.2 0.35 0.55 0.8 1.1]
@@ -122,5 +147,17 @@ enabled, all samples at their minimum, the shadow map at 512 px over 75 blocks.
 #define SHARPEN 0.35           // [0.15 0.25 0.35 0.50 0.70]
 #define COLOR_BLINDNESS 0      // [0 1] Colour-blindness aid.
 #define COLOR_BLIND_MODE 0     // [0 1 2 3] 1 red-weak, 2 green-weak, 3 blue-weak.
+
+// ---- Vanilla ambient occlusion -------------------------------------------
+// Declared here, after AO, so the mod reads the value that matches the option:
+// full vanilla darkening while this pack's screen-space AO is off would fight the
+// ambient term, and none at all is right when the pack does it itself. The
+// reference declares the same pair.
+
+#if AO == 1
+    const float ambientOcclusionLevel = 0.0;
+#else
+    const float ambientOcclusionLevel = 0.7;
+#endif
 
 #endif

@@ -93,8 +93,17 @@ void main() {
         float fogDensity = FOG_DENSITY;
     #endif
 
+    /* The Nether has no horizon to look at: the reference caps its sight at half the
+       render distance, up to 96 blocks (NETHER_FOG_DISTANCE), so the fog closes in
+       instead of ending at the build limit. */
+    #if SOLACE_DIM_NETHER == 1
+        float sight = min(far * 0.5, 96.0);
+    #else
+        float sight = far;
+    #endif
+
     float fogExponent = mix(fogDensity * 2.0, 1.0, rainStrength);
-    float fogAmount = pow(sat(fogDist / max(far, 32.0)) * skyExposure, fogExponent);
+    float fogAmount = pow(sat(fogDist / max(sight, 32.0)) * skyExposure, fogExponent);
 
     #if UNDERWATER_FOG == 1
         if (isEyeInWater == 1) {

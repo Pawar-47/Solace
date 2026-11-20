@@ -152,8 +152,10 @@ of them a decision, not an omission:
   tooltips stay English for a native reviewer to finish.
 - **A short `block.properties`.** Nine ids instead of the reference's ~90 KB
   catalogue: two for waving, three for the gloss classes, and one each for emissive
-  blocks, the End portal, water and glass. Nothing else here keys off a block id, and
-  `item.properties` / `entity.properties` would have no reader.
+  blocks, the End portal, water and glass. `item.properties` carries the ten or so
+  items that light the world when held, and `entity.properties` the two entity ids the
+  pack reacts to. Nothing else here keys off an id, and nothing in any of them needs a
+  mod.
 - **No Distant Horizons or Voxy entry points.** Those mods ask for extra programs;
   this pack does not support them, so the files would be dead.
 - **Every pass earns its place.** `deferred`, `composite` and `composite2` exist and
