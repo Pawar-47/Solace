@@ -32,6 +32,9 @@ jobs:
       - name: Options against the language files
         run: python3 tools/check_lang.py
 
+      - name: Varyings across each stage pair, one output directive per program
+        run: python3 tools/check_stages.py
+
       - name: Texture generator
         run: python3 tools/check_textures.py
 

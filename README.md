@@ -93,10 +93,11 @@ and they run on every push:
 ```bash
 python3 tools/validate_pack.py    # includes, preprocessor balance, program pairs, DRAWBUFFERS
 python3 tools/check_lang.py       # options against the language files
+python3 tools/check_stages.py     # varyings across each stage pair, one output directive each
 python3 tools/check_textures.py   # runs the texture generator and verifies its output
 ```
 
-All three need nothing but Python 3. A red run means a file the game would refuse to
+All four need nothing but Python 3. A red run means a file the game would refuse to
 load, or a setting that would show up in the options screen as a raw identifier.
 
 Packaging runs on the same trigger. Every push to `main` rebuilds `Solace-LowEnd.zip`

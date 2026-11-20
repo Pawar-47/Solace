@@ -38,8 +38,18 @@ temporal pass, which has already put its result back in colortex0.
 
 uniform sampler2D SCENE;
 uniform sampler2D colortex6;
-uniform sampler2D depthtex0;
-uniform sampler2D depthtex1;
+
+/* The depth buffers are only requested by the effects that read them. A sampler a
+   program does not use is a copy Iris does not have to make: `depthtex0` is the depth
+   *without* translucent geometry, which the mod produces by copying the depth buffer
+   after the opaque pass - a full-screen blit per frame, for nothing, when ambient
+   occlusion and depth of field are both off (which is how the pack ships). */
+#if DOF == 1 || AO == 1
+    uniform sampler2D depthtex0;
+#endif
+#if AO == 1
+    uniform sampler2D depthtex1;
+#endif
 
 varying vec2 texcoord;
 

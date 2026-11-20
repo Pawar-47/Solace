@@ -42,6 +42,7 @@ jobs:
         run: |
           python3 tools/validate_pack.py
           python3 tools/check_lang.py
+          python3 tools/check_stages.py
           python3 tools/check_textures.py
 
       - name: Name the asset
