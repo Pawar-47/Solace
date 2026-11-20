@@ -12,6 +12,10 @@ cost hours when they do:
     None means Iris binds the first eight colour attachments (Intel supports seven);
     two means the pack depends on which one the mod happens to read first.
 
+The output directives are looked for in the *uncommented* text, because that is where
+they live: a shaderpack declares them in a comment. Varyings are looked for with the
+comments stripped, so a commented-out declaration does not count.
+
 Includes are expanded before scanning, because both problems so far have come out of
 shared libraries: `lib/io_geometry.glsl` declares the varyings, `lib/composite_body.glsl`
 holds the directive.
@@ -111,8 +115,6 @@ def check_program(shader_root, folder, name):
         return
 
     label = "%s/%s" % (folder or ".", name)
-    if folder == "world0":
-        label = "world0/%s" % name
 
     fragment_text = strip_comments(expand(fragment_path, shader_root))
     vertex_text = strip_comments(expand(vertex_path, shader_root))
@@ -133,7 +135,7 @@ def check_program(shader_root, folder, name):
             warn("%s.vsh declares varying '%s' that its fragment stage never reads"
                  % (label, varying))
 
-    outputs = OUTPUT_DIRECTIVE.findall(fragment_text)
+    outputs = OUTPUT_DIRECTIVE.findall(expand(fragment_path, shader_root))
     if name != "final":
         if not outputs:
             error("%s.fsh has no DRAWBUFFERS or RENDERTARGETS directive, so every "
@@ -143,7 +145,7 @@ def check_program(shader_root, folder, name):
                   "have exactly one" % (label, len(outputs),
                                         ", ".join(kind for kind, _ in outputs)))
 
-    for kind, _ in OUTPUT_DIRECTIVE.findall(vertex_text):
+    for kind, _ in OUTPUT_DIRECTIVE.findall(expand(vertex_path, shader_root)):
         error("%s.vsh declares %s; a vertex stage has no colour outputs"
               % (label, kind))
 
