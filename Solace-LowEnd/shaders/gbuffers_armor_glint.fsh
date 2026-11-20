@@ -1,8 +1,7 @@
 /* Solace - gbuffers_armor_glint.fsh
 
 The glint is additive sparkle over the item, so it is brightened and kept mostly
-transparent, and divided by the exposure the vertex stage fetched - the reference's
-`glint_blocks_fragment.glsl` divides by it for the same reason: the final pass
+transparent, and divided by the exposure the vertex stage fetched: the final pass
 multiplies the whole picture by the exposure, and a sparkle that is supposed to read
 as pure light should not ride up and down with it.
 */

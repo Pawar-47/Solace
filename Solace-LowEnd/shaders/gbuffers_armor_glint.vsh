@@ -5,9 +5,9 @@ geometry vertex stage: it needs a texture coordinate, the tint, and the exposure
 final pass will apply, so this is written out small instead of pulling in waving,
 fog and the rest.
 
-The exposure comes from the same buffer the reference reads for its glint
-(gaux3 there, colortex6 here), so with auto exposure on the sparkle keeps a fixed
-brightness instead of brightening with the rest of the picture.
+The exposure is read from the buffer the exposure pass leaves it in, so with auto
+exposure on the sparkle keeps a fixed brightness instead of brightening with the rest
+of the picture.
 */
 
 #version 120

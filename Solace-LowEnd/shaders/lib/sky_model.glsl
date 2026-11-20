@@ -4,9 +4,9 @@ The pack's colour model, in one place so the sky, the fog on every surface and t
 water reflection cannot disagree.
 
 The day and dusk factors are **parameters**, not functions called from inside every
-colour function: `sunHeight()` costs a sin(), and the reference keeps a precomputed
-day mixer for exactly this reason. Each program now computes them once and passes
-them down, so a sky pixel pays one sin() instead of eight.
+colour function: `sunHeight()` costs a sin(), and paying it inside each colour
+function means eight of them on one sky pixel. Each program computes them once and
+passes them down instead, so the pixel pays one sin() in total.
 
 The palette is picked in two steps: themePalette() reads COLOR_SCHEME (eight presets
 plus the custom slot), and palette() lets a dimension override it. The dimension
@@ -75,12 +75,11 @@ void themePalette(out vec3 zenith, out vec3 horizon) {
 
 /* The dimension has the last word over the theme.
 
-   Both other dimensions are nearly neutral in the reference (`lib/color_utils_nether.glsl`
-   and `lib/color_utils_end.glsl`): the End sky is (0.0465, 0.0375, 0.0465) and the
-   Nether's is (0.0480, 0.0434, 0.0425) - almost grey, with the colour coming from the
-   light and the fog rather than from the palette. This pack had a bright orange
-   Nether and a violet End, which made the fog in both far stronger than the
-   reference's. The Nether takes most of its colour from vanilla's fog now. */
+   Both other dimensions are nearly neutral: the End sky is (0.0465, 0.0375, 0.0465)
+   and the Nether's is (0.0480, 0.0434, 0.0425) - almost grey, with the colour coming
+   from the light and the fog rather than from the palette. A bright orange Nether and
+   a violet End, as earlier versions of this pack had, make the fog in both far too
+   strong. The Nether takes most of its colour from vanilla's fog now. */
 void palette(out vec3 zenith, out vec3 horizon) {
     #if SOLACE_DIM_NETHER == 1
         vec3 neutral = vec3(0.0480, 0.0434, 0.0425);
@@ -105,9 +104,9 @@ vec3 moonColour() {
     return vec3(0.40, 0.50, 0.78) * 0.30;
 }
 
-/* How much skylight a theme gives. The reference gives every theme its own level,
-   from a dim 0.25 for New Shoka to a bright 0.65 for Testigo, and without it the
-   eight presets differ only in hue and all sit at the same brightness. */
+/* How much skylight a theme gives. Every theme has its own level, from a dim 0.25 for
+   Shoka to a bright 0.65 for Testigo; without it the eight presets differ only in
+   hue and all sit at the same brightness. */
 float themeAmbient() {
     #if COLOR_SCHEME == 0
         return 0.40;   // Ethereal
@@ -131,8 +130,7 @@ float themeAmbient() {
 }
 
 /* The colour water takes on from a theme, so a Cocoa ocean is not the same blue as
-   an Ethereal one. The reference keeps a water colour per theme for the same
-   reason; before this the pack had one fixed colour whatever the theme. */
+   an Ethereal one. Without it the pack had one fixed colour whatever the theme. */
 vec3 themeWater() {
     #if COLOR_SCHEME == 0
         return vec3(0.050, 0.100, 0.110);
@@ -156,11 +154,10 @@ vec3 themeWater() {
 }
 
 /* Torch and lava light: warm orange, a little paler towards yellow at full
-   strength, and redder in the Nether where the reference recolours it too.
-   It was being called from the geometry, water and glowing stages without ever
-   being defined, which stopped the pack from compiling at all. BLOCKLIGHT_TEMP
-   moves the light from orange through warm white to neutral, as the reference's
-   own temperature setting does. */
+   strength, and redder in the Nether. It is called from the geometry, water and
+   glowing stages, and it once was called from all three without being defined
+   anywhere, which stopped the pack from compiling at all. BLOCKLIGHT_TEMP moves the
+   light from orange through warm white to neutral. */
 vec3 blockLightColour() {
     #if SOLACE_DIM_NETHER == 1
         return vec3(1.00, 0.46, 0.20);
@@ -221,9 +218,8 @@ vec3 fogColour(float day, float dusk) {
 }
 
 /* A cheap reflection: the dome gradient plus one soft glow at the light source, with
-   no stars and no tight halo. The reference computes its reflection colours in the
-   water vertex stage for the same reason - a reflected pixel must not pay for the
-   whole sky. */
+   no stars and no tight halo. A reflected pixel must not pay for the whole sky, so
+   everything only the sky itself needs is left out. */
 vec3 reflectionColour(vec3 directionWorld) {
     float day = dayFactor();
     float dusk = duskFactor();

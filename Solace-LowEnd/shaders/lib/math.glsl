@@ -24,8 +24,7 @@ float luma(vec3 c) {
 
 /* Small integer powers as multiplications. pow(x, 6.0) is a logarithm and an
    exponential on most drivers, and the lightmap candle curve is evaluated on every
-   lit pixel, so this is not a micro-optimisation. The reference keeps the same
-   helpers (basic_utils.glsl) for the same reason. */
+   lit pixel, so this is not a micro-optimisation. */
 float solPow4(float x) {
     float t = x * x;
     return t * t;
@@ -80,8 +79,7 @@ float solDither(vec2 pixel) {
 /* A dithered sample position, in [0, 1), with a 2x2 tile flip: neighbouring tiles
    mirror each other, so the pattern the eye sees is far closer to noise than a
    single hash, which repeats visibly at large flat areas. The two constants are a
-   low-discrepancy pair, the same trick the reference uses in its `semiblue` dither
-   and in most of its sampling. */
+   low-discrepancy pair, which is what keeps consecutive taps from lining up. */
 float solDitherBlue(vec2 pixel) {
     vec2 tile = floor(pixel * 0.25);
     float flip = mod(tile.x + tile.y, 2.0);

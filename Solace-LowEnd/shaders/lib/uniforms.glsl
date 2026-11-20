@@ -41,8 +41,7 @@ uniform float viewHeight;
 uniform float aspectRatio;
 
 /* Vanilla's fog colour for the dimension. The Nether has no sky to take a colour
-   from, so its palette is built from this instead of from a theme, which is what the
-   reference does with the same uniform. */
+   from, so its palette is built from this instead of from a theme. */
 uniform vec3 fogColor;
 
 uniform int frameCounter;
@@ -58,8 +57,8 @@ uniform int moonPhase;
     uniform sampler2D dhDepthTex1;   // far terrain, with its translucent part
     uniform float dhNearPlane;
     uniform float dhFarPlane;
-    /* The far terrain is projected with its own matrix, not the vanilla one - the
-       reference declares it the same way in solid_dh_blocks_vertex.glsl. */
+    /* The far terrain is projected with its own matrix and its own far plane, not
+       the vanilla one. */
     uniform mat4 dhProjection;
 #endif
 

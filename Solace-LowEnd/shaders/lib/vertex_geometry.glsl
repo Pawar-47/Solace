@@ -3,10 +3,12 @@
 The vertex stage of every program that draws a textured object: terrain, block
 entities, entities, the hand, particles, weather, clouds.
 
-Carried over from the reference because a fragment stage cannot do it as well:
+What happens here rather than in a fragment stage, because it is cheaper here or
+because it is simply correct here:
 
   * the fog amount is computed here, once per vertex. Clouds measure it on the
-    horizontal plane, as the reference does, because a cloud deck is a flat layer;
+    horizontal plane, because a cloud deck is a flat layer and the distance to it
+    has almost no vertical component;
   * plant waving grows from mc_midTexCoord upwards, is scaled by skylight squared
     (a plant in the dark does not wave) and gains a little in rain;
   * the temporal-antialiasing offset is multiplied by w, so it stays a constant
@@ -45,9 +47,9 @@ void main() {
     vec4 viewPos = gl_ModelViewMatrix * gl_Vertex;
 
     #if defined SOLACE_DH_GEOMETRY && defined SOLACE_DH_WATER
-        /* Distant Horizons draws its water surface exactly on the block boundary; the
-           reference pulls it down an eighth of a block so the far water does not fight
-           the near water for the same depth. */
+        /* Distant Horizons draws its water surface exactly on the block boundary;
+           pulling it down an eighth of a block stops the far water and the near
+           water fighting for the same depth. */
         viewPos.y -= 0.125;
     #endif
 
@@ -90,8 +92,7 @@ void main() {
     #if AA_TYPE == 1 || AA_TYPE == 2
         /* Sub-pixel jitter for the temporal pass: eight positions instead of the four
            corners of a square, walked by a low-discrepancy pair so consecutive frames
-           never land next to each other. The reference walks a sixteen-point
-           pentagon for the same reason - the faster the samples move, the better the
+           never land next to each other. The faster the samples move, the better the
            history can absorb what a still pattern would leave as flicker. */
         float phase = float(frameCounter % 8);
         vec2 subPixel = fract(phase * vec2(0.75487766624669276, 0.569840290998) + 0.37)
@@ -104,9 +105,9 @@ void main() {
         gl_Position.z *= 0.01;
     #endif
 
-    /* Fog amount, once per vertex, shaped the way the reference shapes it: a power
-       curve on the distance normalised by far, scaled by how much sky this vertex
-       can see (so a cave has almost none) and heavier while it rains. */
+    /* Fog amount, once per vertex: a power curve on the distance normalised by far,
+       scaled by how much sky this vertex can see (so a cave has almost none) and
+       heavier while it rains. */
     #if defined SOLACE_CLOUDS
         float fogDist = length(viewPos.xz);
     #else
@@ -116,18 +117,17 @@ void main() {
     float skyExposure = max(float(eyeBrightnessSmooth.y) * 0.004166666666666667,
                             sat(max(lmcoord.y - 0.065, 0.0) * 1.06951871657754));
 
-    /* The reference gives the Nether and the End a fixed fog density of 1.0 and lets
-       the overworld's setting do what it likes; in an enclosed dimension heavy fog
-       just fills the screen. */
+    /* The Nether and the End get a fixed fog density of 1.0 whatever the overworld's
+       setting is; in an enclosed dimension heavy fog just fills the screen. */
     #if SOLACE_DIM_NETHER == 1 || SOLACE_DIM_END == 1
         float fogDensity = 1.0;
     #else
         float fogDensity = FOG_DENSITY;
     #endif
 
-    /* The Nether has no horizon to look at: the reference caps its sight at half the
-       render distance, up to 96 blocks (NETHER_FOG_DISTANCE), so the fog closes in
-       instead of ending at the build limit. Far terrain keeps the overworld's sight so
+    /* The Nether has no horizon to look at: its sight is capped at half the render
+       distance, up to 96 blocks, so the fog closes in instead of ending at the build
+       limit. Far terrain keeps the overworld's sight so
        that it and the near world meet at the same fog value. */
     #if SOLACE_DIM_NETHER == 1
         float sight = min(far * 0.5, 96.0);
@@ -139,9 +139,8 @@ void main() {
     float fogAmount = pow(sat(fogDist / max(sight, 32.0)) * skyExposure, fogExponent);
 
     /* Distant Horizons has to be *un*fogged where the near world is fading out, or the
-       two overlap as a bright band on a dim horizon. The reference does this with
-       TRANSITION_DH_SUP/INF: fog is removed over the last tenth of the near distance
-       and gone by the time the near world is fully faded. */
+       two overlap as a bright band on a dim horizon. Fog is removed over the last
+       tenth of the near distance and gone by the time the near world is fully faded. */
     #if defined SOLACE_DH_GEOMETRY && defined DISTANT_HORIZONS
         float transition = max(far - dhNearPlane, 1.0);
         float clearStart = dhNearPlane + transition * 0.90;

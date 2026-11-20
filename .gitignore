@@ -1,0 +1,14 @@
+# Textures the pack can read are generated, not committed: a PNG is binary and the
+# generator in Solace-LowEnd/shaders/textures/ rebuilds them exactly, from a fixed
+# seed. CI runs it on every push and checks the output.
+Solace-LowEnd/shaders/textures/noise.png
+Solace-LowEnd/shaders/textures/clouds.png
+Solace-LowEnd/shaders/textures/clouds_blocky.png
+
+# Release builds
+*.zip
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+*.swp

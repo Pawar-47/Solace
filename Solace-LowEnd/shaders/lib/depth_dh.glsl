@@ -4,7 +4,8 @@ Depth helpers for Distant Horizons, which draws the terrain past the vanilla ren
 distance with its own projection and therefore its own near and far planes. A value
 from `dhDepthTex1` means nothing until it has been pushed through that projection.
 
-The reference keeps the same pair in its own `depth_dh.glsl`. */
+Everything here returns a distance in blocks, so it can be compared with the near
+depth and with the distance of a water surface. */
 
 #ifndef SOLACE_DEPTH_DH
 #define SOLACE_DEPTH_DH

@@ -7,19 +7,18 @@ optional extras that both read the copy of the scene the deferred pass leaves in
 gaux1:
 
   REFRACTION  the scene behind the surface is bent by the normal and darkened by the
-              distance the light travels through water - the thickness of water
-              behind the pixel, not the distance to the eye, which is what the
-              reference measures and what makes a shallow pool still show its floor.
+              depth the light travels through water - the thickness of water behind
+              the pixel, not the distance to the eye, which is what makes a shallow
+              pool still show its floor.
   WATER_SSR   the reflected ray is marched through that same copy, so water reflects
               the world and not only the sky; the sky remains the fallback when the
               march finds nothing.
 
 WATER_TEXTURE and VANILLA_WATER choose where the base colour comes from.
 
-Glass is shaded as glass and not as flat water (the reference keeps a separate
-cristal shader for it): no ripples, no absorption, a squarer border fade on its
-reflection, its base colour already blended towards the reflection by the fresnel
-curve, and an alpha that closes to opaque at grazing angles.
+Glass is shaded as glass and not as flat water: no ripples, no absorption, a squarer
+border fade on its reflection, its base colour already blended towards the reflection
+by the fresnel curve, and an alpha that closes to opaque at grazing angles.
 */
 
 #include "/lib/config.glsl"
@@ -37,8 +36,8 @@ uniform sampler2D depthtex0;
 uniform sampler2D gaux1;
 #endif
 
-/* View-space distance of a depth-buffer value. The reference derives it from the
-   projection matrix the same way, which avoids needing the near plane. */
+/* View-space distance of a depth-buffer value, derived from the projection matrix so
+   the near plane is never needed. */
 float waterLinearDepth(float depth) {
     return gbufferProjection[3][2] / (gbufferProjection[2][2] + 2.0 * depth - 1.0);
 }
@@ -49,15 +48,14 @@ void main() {
 
     vec3 normal = normalize(normalView);
 
-    /* The reference shades water and glass separately: only water ripples. */
+    /* Water and glass are shaded separately: only water ripples. */
     bool glass = (blockId == SOLACE_GLASS);
 
     #if WATER_WAVES == 1
     if (!glass) {
         #if PACK_TEXTURES == 1
             /* Two texture fetches from textures/noise.png instead of the six noise
-               evaluations below, which is the whole reason the file exists. The UVs
-               are the reference's scale, so the ripples match its look. */
+               evaluations below, which is the whole reason the file exists. */
             float t = frameTimeCounter * WAVE_SPEED;
             vec2 base = worldSpacePos.xz * (0.05 * WAVE_SCALE);
             vec2 waveA = texture2D(noise, base + vec2(t * 0.040, t * 0.030)).rg - 0.5;
@@ -84,7 +82,8 @@ void main() {
             vec2 slope = vec2(ax - a0, az - a0) * 4.0
                        + vec2(bx - b0, bz - b0) * 2.0;
 
-            /* Rain flattens the chop, as the reference's turbulence term does. */
+            /* Rain flattens the chop: wet weather should not leave the surface
+               looking windier than the dry. */
             slope *= 1.0 - rainStrength * 0.35;
 
             vec3 worldNormal = mat3(gbufferModelViewInverse) * normal;
@@ -153,9 +152,9 @@ void main() {
         vec2 hitUV = vec2(0.0);
         float hitDistance = 0.0;
 
-        /* The reference marches its ray in exponentially growing steps and then
-           bisects to refine the hit: far fewer fetches than a fixed step, for the
-           same accuracy up close. Two blocks out to the last step's reach. */
+        /* The ray marches in exponentially growing steps and then bisects to refine
+           the hit: far fewer fetches than a fixed step, for the same accuracy up
+           close. Two blocks out to the last step's reach. */
         float dither = solDitherShifted(gl_FragCoord.xy,
                                         float(frameCounter % 64) * 0.015625);
         float previousT = 0.0;
@@ -217,8 +216,7 @@ void main() {
         if (found) {
             /* Off-screen reflection rays have nowhere to sample, so the image is
                folded back at the screen edge and faded out towards it rather than
-               smeared along the border. The reference does the same, with a
-               squarer falloff on glass. */
+               smeared along the border. Glass gets a squarer falloff than water. */
             vec2 uv = hitUV;
             if (glass) {
                 float fx = abs(2.0 * uv.x - 1.0);
@@ -266,9 +264,8 @@ void main() {
     #if WATER_GLINT == 1
         #if WATER_REFLECTION == 1
             /* The highlight lies on the reflected ray, not on the surface normal,
-               and only where that ray reaches the sky - the reference gates it on
-               its march's "infinite" flag and on the sky lightmap for the same
-               reason. */
+               and only where that ray reaches the sky: a surface under a roof gets
+               none of it, which the sky lightmap also enforces. */
             float alignment = sat(dot(normalize(reflectedWorld), astroDir));
             float glint = smoothstep(0.995, 1.0, alignment);
             colour += astroColour * glint * skyLight * reflectionSky
@@ -283,18 +280,18 @@ void main() {
     if (glass) alpha = mix(alpha, 1.0, fresnel * 0.9);
 
     #if REFRACTION == 1
-        /* Glass does not bend what is behind it in the reference either: it is
-           drawn as opaque geometry with its own alpha. */
+        /* Glass does not bend what is behind it: it is drawn as opaque geometry with
+           its own alpha. */
         if (!glass && isEyeInWater == 0) {
             vec2 bent = clamp(texcoord + normal.xy
                               * (0.09 / (1.0 + viewDist * 0.25)),
                               vec2(0.002), vec2(0.998));
             vec3 behind = texture2D(gaux1, bent).rgb;
 
-            /* How much water the light crosses behind this pixel. The reference
-               squares the thickness and feeds it through a rational curve; that
-               curve turns negative for thick water at its default constant, so
-               this uses an exponential, which is monotone and cannot overshoot. */
+            /* How much water the light crosses behind this pixel. A rational curve
+               of the squared thickness is the obvious choice, but it turns negative
+               for thick water, so this uses an exponential: monotone, and it cannot
+               overshoot. */
             float surfaceDistance = waterLinearDepth(gl_FragCoord.z);
             float sceneDistance = waterLinearDepth(texture2D(depthtex0, bent).r);
 
@@ -309,8 +306,8 @@ void main() {
 
             float thickness = max(sceneDistance - surfaceDistance, 0.0);
 
-            /* Nothing behind the surface but sky: the reference treats that as
-               fully absorbed, which stops the sky showing through the water. */
+            /* Nothing behind the surface but sky: treated as fully absorbed, which
+               stops the sky showing through the water. */
             float absorbed = 1.0 - exp(-thickness * thickness
                                        * WATER_ABSORPTION * 0.5);
 

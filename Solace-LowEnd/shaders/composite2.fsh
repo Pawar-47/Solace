@@ -4,8 +4,8 @@ Temporal antialiasing and motion blur, in one pass, because both need the whole
 picture and the previous frame's camera.
 
   reprojection - each pixel's view position is rebuilt from depthtex1 (the depth
-                 that includes translucent geometry, as the reference uses, so
-                 water reprojects correctly), moved back to where it was last frame
+                 that includes translucent geometry, so water reprojects correctly),
+                 moved back to where it was last frame
                  with the previous camera matrix, and projected with the previous
                  projection. History is sampled there and clamped to the
                  neighbourhood of the current pixel, so a moving object cannot smear
@@ -13,7 +13,7 @@ picture and the previous frame's camera.
   motion blur  - the same previous position, walked in MOTION_BLUR_SAMPLES steps.
 
 FXAA-only mode is not here: it needs no history and costs no extra pass, so it runs
-in `final` instead, which is also what the reference does.
+in `final` instead, which needs no history.
 
 Reads the shaded scene from colortex1, writes the result to colortex0 and the new
 history to colortex3, so nothing is read from the buffer being written.
@@ -54,9 +54,9 @@ vec2 previousUV(vec2 uv, float depth) {
 }
 
 /* The history is clipped into the box the current 3x3 neighbourhood occupies when
-   measured by its own mean and standard deviation. The reference clips the same way,
-   and it is tighter than a plain min/max box: a thin edge through a flat area gets a
-   narrow box, so an old ghost cannot survive beside it. The fourth component is the
+   measured by its own mean and standard deviation. It is tighter than a plain min/max
+   box: a thin edge through a flat area gets a narrow box, so an old ghost cannot
+   survive beside it. The fourth component is the
    size of that box, which sets how much of the history is trusted. */
 vec4 solHistoryBox(vec3 history, vec2 uv) {
     vec2 texel = vec2(1.0 / viewWidth, 1.0 / viewHeight);

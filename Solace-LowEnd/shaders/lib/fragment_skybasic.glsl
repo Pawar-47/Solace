@@ -70,8 +70,8 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk) {
 
     #if SOLACE_DIM_END == 1
         /* The End has no sun to light its clouds from: they are a bright violet
-           haze, lighter where they are thin, which is how the reference renders its
-           own End cloud layer. */
+           haze, lighter where they are thin, which is what an End sky looks like
+           from inside. */
         cloudColour = mix(horizonColour(day, dusk) * 2.20, vec3(0.98, 0.94, 1.00) * 1.60,
                           0.35);
         cloudColour = mix(cloudColour, cloudColour * 2.00, 1.0 - density);
@@ -79,8 +79,7 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk) {
     #else
         vec3 sunDir = mat3(gbufferModelViewInverse) * normalize(sunPosition);
 
-        /* Rain flattens the lighting: no sunlit tops, no shadowed bases. The
-           reference damps its cloud attenuation with rainStrength the same way. */
+        /* Rain flattens the lighting: no sunlit tops, no shadowed bases. */
         float lit = sat(dot(d, sunDir) * 0.5 + 0.5);
         lit = mix(lit, 0.5, rainStrength * 0.6);
 
@@ -115,9 +114,9 @@ void main() {
         colour = mix(colour, cloud.rgb, cloud.a);
     #endif
 
-    /* Underwater the dome is not the sky but the water surface seen from below:
-       the reference tints it with its water colour and fades it as the eye looks
-       up, which is what makes the surface overhead read as a ceiling. */
+    /* Underwater the dome is not the sky but the water surface seen from below: it
+       takes the water's colour and fades as the eye looks up, which is what makes the
+       surface overhead read as a ceiling. */
     if (isEyeInWater == 1) {
         vec3 belowWater = vec3(0.030, 0.150, 0.210) * (0.35 + 0.65 * day);
         float up = sat(directionWorld.y - 0.10);

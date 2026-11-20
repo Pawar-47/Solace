@@ -4,8 +4,8 @@ What the geometry vertex stage hands to its fragment stage, plus the block ids t
 pack reads. Both stages include this file, so the names, the types and the ids
 cannot drift apart.
 
-fogFactor is computed per vertex and only mixed per pixel: the reference does the
-same, and it is one exp() per vertex instead of one per pixel.
+fogFactor is computed per vertex and only mixed per pixel, which turns what would be
+one exp() per pixel into one per vertex.
 
 blockId is mc_Entity.x. The ids are the ones this pack writes into
 block.properties, not raw block numbers, so nothing outside those lists can be

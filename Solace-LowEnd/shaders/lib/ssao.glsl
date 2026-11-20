@@ -1,15 +1,13 @@
 /* Solace - lib/ssao.glsl
 
-Screen-space ambient occlusion in the final pass, built the way the reference builds
-its `dbao`:
+Screen-space ambient occlusion in the final pass:
 
   * samples are taken in pairs, one each side of the centre, rotated by the golden
     ratio so consecutive taps never line up, which is what lets four or six taps
     cover a disc;
   * each pair adds an "angle" term (a neighbour in front of this surface) and a
     "distance" term, then the sum is clamped - occlusion, not just depth difference;
-  * the result goes through a square root, as the reference's does, which keeps
-    corners from going flat black;
+  * the result goes through a square root, which keeps corners from going flat black;
   * the occlusion fades with distance, because at 60 blocks a depth difference says
     nothing about a corner.
 
@@ -54,8 +52,8 @@ float screenSpaceAO(vec2 uv) {
     float distanceFade = sat(1.0 - (-centreZ) / AO_FADE);
     if (distanceFade <= 0.001) return 1.0;
 
-    /* The reference scales its taps by fov and depth; this is the same idea without
-       the extra uniforms: a fixed fraction of the screen, divided by depth. */
+    /* Taps scale with the field of view and with depth: a fixed fraction of the
+       screen, divided by depth. */
     float scale = AO_RADIUS / max(-centreZ, 1.0);
     vec2 scaleVec = vec2(scale / aspectRatio, scale);
     float rangeScale = 1.0 / max(AO_RADIUS * 12.0, 0.35);
@@ -82,7 +80,7 @@ float screenSpaceAO(vec2 uv) {
 
     occlusion /= (taps * 2.0);
 
-    /* The reference's curve: sqrt(occlusion * strength + (1 - strength)). */
+    /* The curve: sqrt(occlusion * strength + (1 - strength)). */
     float curved = sqrt(clamp(occlusion * AO_STRENGTH + (1.0 - AO_STRENGTH), 0.0, 1.0));
     return mix(1.0, curved, distanceFade);
 }

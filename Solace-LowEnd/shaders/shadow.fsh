@@ -10,8 +10,8 @@ should not:
   * alpha-tested geometry below the same 0.10 threshold the solid pass uses, so a
     leaf does not cast a solid square;
   * emissive blocks: fire, torches and lanterns are their own light and must not
-    drop a shadow on the ground under them, which is what the reference does with
-    its `is_noshadow` flag.
+    drop a shadow on the ground under them: a torch that shadowed its own pool of
+    light would look wrong.
 */
 
 #version 120

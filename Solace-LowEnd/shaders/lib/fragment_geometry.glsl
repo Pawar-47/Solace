@@ -1,11 +1,11 @@
 /* Solace - lib/fragment_geometry.glsl
 
-Lighting for solid, textured geometry, following the reference's model step by step:
+Lighting for solid, textured geometry:
 
   1. the vanilla lightmap is de-biased, so the sky channel really runs 0 to 1 and a
-     cave can reach zero (the reference: max(y - 0.065) * 1.0695);
-  2. block light grows faster than linearly - x^1.5 + (1.17x)^6 - the reference's
-     candle curve, which is what makes a torch pool read correctly;
+     cave can reach zero: max(y - 0.065) * 1.0695;
+  2. block light grows faster than linearly - x^1.5 + (1.17x)^6 - the candle curve
+     that makes a torch pool read correctly;
   3. the direct term is the face angle to the sun by day and to the moon by night,
      and with no shadow map it is crushed by sky exposure to the tenth power, so
      sunlight cannot leak into caves or under a tree;
@@ -76,8 +76,8 @@ void main() {
             directTint = shadowTintAt(playerPosition);
         #endif
     #else
-        /* No shadow map: sky exposure to the tenth power is the stand-in, as in
-           the reference's fake shadows. Built from squares, no pow(). */
+        /* No shadow map: sky exposure to the tenth power is the stand-in, and it is
+           built from squares rather than pow(). */
         float sky2 = skyLight * skyLight;
         float sky4 = sky2 * sky2;
         float sky8 = sky4 * sky4;
@@ -102,8 +102,8 @@ void main() {
     #if HAND_LIGHT == 1
         /* A light in the hand throws light on what is around you. `heldBlockLightValue`
            only reports a light-emitting *block* in hand, so a torch held as an item
-           contributed nothing until item.properties existed; the two ids below are the
-           ones that file defines, the same split the reference uses. */
+           contributed nothing until item.properties existed; the two ids below are
+           the ones that file defines. */
         float heldLight = heldBlockLightValue / 15.0;
         if (heldItemId == 11001) {
             heldLight = max(heldLight, 1.0);
@@ -128,16 +128,15 @@ void main() {
         } else if (blockId == SOLACE_GLOSS_FABRIC) {
             gloss = 0.16;
         } else if (blockId == SOLACE_GLOSS_SAND) {
-            /* Sand and gravel: a sheen, not a highlight. This is the reference's
-               fourth gloss class; it was the one category this pack left out. */
+            /* Sand and gravel: a sheen, not a highlight. The fourth gloss class,
+               and the last one this pack was missing. */
             gloss = 0.08;
         }
 
         if (gloss > 0.0) {
             vec3 halfway = normalize(astroDir + normalize(-viewSpacePos));
             float highlight = pow(sat(dot(normalize(normalView), halfway)), 44.0);
-            /* Rain kills the highlight, as it does in the reference's
-               `material_gloss_fragment.glsl`, which multiplies by 1 - rainStrength. */
+            /* Rain kills the highlight: wet metal should not specular like dry. */
             colour += mix(moonColour() * 2.5, sunColour(), day)
                     * highlight * gloss * GLOSS_STRENGTH * facing * skyLight
                     * (1.0 - rainStrength);
@@ -151,17 +150,17 @@ void main() {
     #endif
 
     /* A lightning bolt and the fire an entity wears while burning are light, not lit
-       surfaces. Both ids come from entity.properties, as the reference's do; without
-       that file `blockId` was always 0 for entity programs and this could not fire. */
+       surfaces. Both ids come from entity.properties; without that file `blockId` was
+       always 0 for entity programs and this could not fire. */
     if (blockId == 10101.0 || blockId == 10201.0) {
         colour = max(colour, albedo.rgb);
     }
 
     if (blockId == SOLACE_PORTAL) {
         /* The End portal as a stack of layers, each a finer grid than the one behind
-           it, with the layers that are left nearly transparent drawn first. The
-           reference builds it exactly this way; what was here before was a teal
-           noise swirl, which is the wrong colour for a portal and had no depth.
+           it, with the layers that are left nearly transparent drawn first. A flat
+           swirl of noise was the first attempt here, and it had neither the colour
+           nor the depth of a portal.
            Six layers, not ten, with the fade stopping the loop early: past the
            fourth layer the remaining contribution is under one 8-bit step. */
         float t = frameTimeCounter;
@@ -206,8 +205,8 @@ void main() {
                      nightVision * 0.60);
     #endif
 
-    /* Blindness and the Warden's darkness, as the reference handles them in its
-       final colour step. A uniform the running version lacks reads 0. */
+    /* Blindness and the Warden's darkness, applied to the final colour. A uniform a
+       running version lacks reads 0. */
     float darkness = max(blindness, darknessFactor * darknessLightFactor);
     if (darkness > 0.01) {
         colour = mix(colour, vec3(0.0), sat(darkness * length(viewSpacePos) * 0.24));
@@ -228,7 +227,7 @@ void main() {
 
     colour = mix(colour, fogTint, isEyeInWater > 0 ? sat(fogFactor * 1.6) : fogFactor);
 
-    /* The reference clamps every geometry write to 50, which is what keeps a stray
-       highlight out of the bloom and the AA history. */
+    /* Every geometry write is clamped to 50, which is what keeps a stray highlight
+       out of the bloom and the AA history. */
     gl_FragData[0] = vec4(clamp(colour, vec3(0.0), vec3(50.0)), albedo.a);
 }

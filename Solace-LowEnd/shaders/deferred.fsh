@@ -5,10 +5,9 @@ reads when REFRACTION or WATER_SSR is on, so the surface can bend what is behind
 and reflect the world instead of only the sky.
 
 The copy is taken after the translucent geometry, so it contains the water surface
-itself; a reflection that lands on water therefore shows water, which is what the
-reference's copy does as well. It also means the copy water reads is one frame old,
-because this pass runs after gbuffers_water - the reason colortex4 is never cleared
-(see lib/buffers.glsl).
+itself; a reflection that lands on water therefore shows water. It also means the copy
+water reads is one frame old, because this pass runs after gbuffers_water - the reason
+colortex4 is never cleared (see lib/buffers.glsl).
 
 Only runs when one of those two options is 1; with both off the pass is switched off
 in shaders.properties and costs nothing.

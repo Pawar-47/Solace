@@ -42,7 +42,7 @@ float openSkyTowardsSun(vec2 uv) {
     /* The march starts at a different point in the first step for every pixel and
        every frame; without it the three to six samples leave visible bands running
        along the ray, which is the one thing that makes a cheap shaft effect look
-       cheap. The reference dithers its ray the same way. */
+       cheap. */
     float dither = solDitherShifted(gl_FragCoord.xy,
                                     float(frameCounter % 64) * 0.015625);
 
@@ -101,9 +101,9 @@ void main() {
         float previous = texture2D(colortex6, vec2(0.5)).r;
         if (previous <= 0.0) previous = target;
 
-        /* The reference smooths its exposure by `exp(-frameTime * 1.25)`, i.e. by how
-           much time passed, not by a fixed step per frame. A fixed step converges
-           twice as fast at 60 fps as at 30 and the picture pumps when the framerate
+        /* Exposure is smoothed by elapsed time, not by a fixed step per frame. A fixed
+           step converges twice as fast at 60 fps as at 30, and the picture pumps when
+           the framerate
            changes; this is the same shape, scaled by the option. */
         float blend = 1.0 - exp(-max(frameTime, 0.001)
                                 * (AUTO_EXPOSURE_SPEED * 8.0));

@@ -1,0 +1,48 @@
+name: Release
+
+# Packaging only: on a version tag, check the pack and attach the zip a player
+# installs. The zip holds `shaders/` at its top level, which is what the game wants.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Check and package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check before packaging
+        run: |
+          python3 tools/validate_pack.py
+          python3 tools/check_lang.py
+          python3 tools/check_textures.py
+
+      - name: Build the zip
+        run: |
+          cd Solace-LowEnd
+          zip -r "../Solace-LowEnd-${GITHUB_REF_NAME}.zip" shaders README.md
+          cd ..
+          unzip -l "Solace-LowEnd-${GITHUB_REF_NAME}.zip" | head -20
+
+      - name: Attach it to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            "Solace-LowEnd-${GITHUB_REF_NAME}.zip" \
+            --title "Solace ${GITHUB_REF_NAME}" \
+            --generate-notes

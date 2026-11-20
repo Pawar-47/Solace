@@ -1,7 +1,7 @@
 /* Solace - gbuffers_basic.fsh
 
-The vertex colour times the light the vertex stage worked out. The reference's
-`basic_blocks_fragment.glsl` is exactly this: `blockColor.rgb *= basicLight`.
+The vertex colour times the light the vertex stage worked out: one multiply, which is
+all a block outline or a leash can show.
 */
 
 #version 120

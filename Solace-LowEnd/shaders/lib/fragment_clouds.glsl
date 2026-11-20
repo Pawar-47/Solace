@@ -29,8 +29,8 @@ void main() {
 
     colour = mix(colour, fogColour(day, dusk), fogFactor);
 
-    /* Blindness and the Warden's darkness reach the cloud deck too; the reference
-       declares both in its cloud fragment for the same reason. */
+    /* Blindness and the Warden's darkness reach the cloud deck too: a deck that
+       stayed bright over a dark world would give the effect away. */
     float darkness = max(blindness, darknessFactor * darknessLightFactor);
     if (darkness > 0.01) {
         colour = mix(colour, vec3(0.0), sat(darkness * 0.85));

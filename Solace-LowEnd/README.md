@@ -1,240 +1,207 @@
-# Solace LowEnd - a shader pack written for one machine
+# Solace-LowEnd
 
-144 files, all written here, all my own code. No file, texture, line or constant
-was copied out of another pack: this folder contains no PNG, no noise table and
-no borrowed function. The pack next door in `../shaders` is **MakeUp - Ultra
-Fast v9.6** by Javier Garduño (KDXavier, LGPL-3.0), and it was used the only way
-it should be: as the reference for **which programs Minecraft asks a pack for**
-and **what a pipeline has to do**, file by file. Its settings, its shaders and
-its assets stay where they are.
+A shader pack for Minecraft, written for laptops that other packs have left behind.
 
-Built for:
+The target is an Intel Core i3-5005U with Intel HD 5500 graphics and 8 GB of RAM. On
+hardware like that, "high quality" is not a setting, it is a budget. So this pack
+works the other way round from most: the cheap configuration is the default, and each
+effect has a lowest setting that keeps it running rather than switching it off
+entirely. If you want everything on at once, the `PerformancePlus` profile does
+exactly that — every effect enabled, every sample count at its minimum.
 
-- **Intel Core i3-5005U** - 2 cores / 4 threads, 15 W
-- **Intel HD Graphics 5500** - 24 EUs, no dedicated VRAM
-- **8 GB RAM**, **Linux Mint**
-
-Nothing here needs a network. It is text files read by Iris or OptiFine from
-disk.
-
----
-
-## The shape of the pack
-
-The reference pack spends five full-screen passes on a frame (deferred,
-composite, composite1, composite2, final) and a whole second scene render on a
-shadow map, always. This pack spends **one** in the configuration it ships with -
-every program that draws geometry lights it in place and writes it straight to the
-scene buffer, and `final` tonemaps that buffer to the screen. The other three
-passes exist but are switched off until their effect is: `deferred` (the scene copy
-water refracts through), `composite` (light shafts and the exposure average) and
-`composite2` (antialiasing and motion blur). Each is enabled by the option that
-needs it, in `shaders.properties`.
-
-That is the single biggest decision in the pack and it is what makes it fit an
-HD 5500: no G-buffer, no history buffer, no shadow map, no mip chain, no
-raymarch. The price is no shadows at all - caves are lit by block light and the
-sky's light level, and a wall facing away from the sun is as bright as one facing
-it unless its light level differs. `SUN_SHADING` adds a cheap directional term on
-lit faces, which is as close to a shadow as this pack gets.
-
-## Files, one by one
-
-### `lib/` - the shared code, 14 files
-
-| File | What it holds |
-| --- | --- |
-| `config.glsl` | every option, as a define with the allowed values in a bracket comment so the options screen is built from it |
-| `math.glsl` | `sat`, `luma`, a hash, one-, two- and three-octave value noise, the dither. No tables, no textures |
-| `uniforms.glsl` | the Iris/OptiFine uniforms the pack uses, declared once |
-| `io_geometry.glsl` | the varyings the geometry vertex stage hands to its fragment stage |
-| `sky_model.glsl` | the colour model: sun height from `worldTime`, day and dusk factors, zenith and horizon colours, sun/moon colours, ambient and block light colours, fog colour, and `skyColour()` with the sun halo, moon halo and stars |
-| `vertex_geometry.glsl` | the vertex `main` for every textured program: position, texture and lightmap coordinates, tint, view-space normal, view- and world-space position |
-| `fragment_geometry.glsl` | the fragment `main` for solid geometry: skylight squared, a directional sun term, torch light, night vision, fog, underwater fog |
-| `fragment_water.glsl` | the water surface: two moving noise layers tilt the normal, fresnel mix with the reflected sky, sun and moon glint, fog, alpha for the blend |
-| `shadowmap.glsl` | the opt-in shadow map: the two matrices, the 1024 / 96-block constants Iris reads, and a four-tap lookup with a slope-scaled bias and a fade at the edge of the map |
-| `ssao.glsl` | opt-in screen-space ambient occlusion for the final pass: six ring samples from `depthtex0`, counted only when a neighbour is in front and close |
-| `fragment_skybasic.glsl` | the sky body: ray, palette, stars, halos, cloud slab |
-| `fragment_clouds.glsl` | the cloud geometry body |
-| `fragment_glowing.glsl` | the glowing outline body |
-| `composite_body.glsl` | the light-shaft and exposure body |
-
-The last four are libraries rather than program bodies because a dimension folder
-needs the same code with a different palette, and this is how it gets it without a
-copy.
-
-### The programs, 23 pairs
-
-Minecraft asks for programs by name; that naming is the mod's API, not anyone's
-code. Each of these is a few lines that include a library, except where the file
-does real work of its own.
-
-| Program | Does |
-| --- | --- |
-| `final.vsh` / `final.fsh` | the one full-screen pass: exposure, my own tone curve, saturation, contrast, dither, out |
-| `gbuffers_terrain.vsh/.fsh` | almost every block, through the geometry library |
-| `gbuffers_block.vsh/.fsh` | blocks Minecraft routes through the block pass, same code |
-| `gbuffers_entities.vsh/.fsh` | mobs, items, minecarts |
-| `gbuffers_entities_glowing.vsh/.fsh` | the glowing outline: its own colour, lifted, still fogged |
-| `gbuffers_hand.vsh/.fsh` | held item and arm, lit like the world |
-| `gbuffers_hand_water.vsh/.fsh` | held translucent items |
-| `gbuffers_textured.vsh/.fsh` | particles |
-| `gbuffers_weather.vsh/.fsh` | rain and snow |
-| `gbuffers_water.vsh/.fsh` | water and translucent blocks, through the water library |
-| `gbuffers_skybasic.vsh/.fsh` | the sky: a ray is rebuilt per pixel from `gbufferProjectionInverse`, so the dome geometry does not matter, then the colour model and the stars |
-| `gbuffers_skytextured.vsh/.fsh` | sun and moon discs |
-| `gbuffers_clouds.vsh/.fsh` | cloud geometry, lit, with a lighter fog than the ground |
-| `gbuffers_basic.vsh/.fsh` | the block outline and the hitting box: the tint, unchanged |
-| `gbuffers_line.vsh/.fsh` | debug lines and the fishing line |
-| `gbuffers_spidereyes.vsh/.fsh` | spider and enderman eyes: full bright, no fog |
-| `gbuffers_beaconbeam.vsh/.fsh` | the beacon beam: its own light |
-| `gbuffers_armor_glint.vsh/.fsh` | the enchantment glint |
-| `gbuffers_damagedblock.vsh/.fsh` | the block-breaking overlay |
-| `shadow.vsh/.fsh` | the opt-in shadow pass: plain transform, alpha test, depth. Only runs with `SHADOWS 1` |
-| `deferred.vsh/.fsh` | copies the scene into gaux1 so water can refract it. Only runs with `REFRACTION 1` |
-| `composite.vsh/.fsh` | light shafts towards the sun and the exposure average, history in colortex6. Runs with `VOL_LIGHT` or `AUTO_EXPOSURE` |
-| `composite2.vsh/.fsh` | temporal antialiasing with reprojection, a compact FXAA and motion blur; history in colortex3. Runs with `AA_TYPE` or `MOTION_BLUR` |
-
-Plus `shaders.properties` (profiles, the options screen, the vanilla features the
-pack takes over, and the blend state for every translucent program) and
-`lang/en_US.lang` (the names and tooltips).
-
-### How this maps onto the reference pack
-
-Where the reference has a folder per dimension (`world0`, `world1`, `world-1`),
-this pack has nothing: Minecraft uses the root programs for every dimension, and
-the colour model reads `worldTime` instead of a per-dimension colour set.
-
-Where the reference splits its vertex work across `common/solid_blocks_vertex.glsl`,
-`src/position_vertex.glsl`, `src/light_vertex.glsl` and `src/fog_vertex.glsl`,
-this pack has one `lib/vertex_geometry.glsl` and one `lib/fragment_geometry.glsl`.
-
-Where the reference writes `src/finalcolor.glsl` into every fragment program to
-mix fog against `gaux4`, this pack computes its fog colour from the same model
-that draws the sky, so the sky and the fog cannot drift apart and no extra buffer
-is needed.
-
-## Why this pack has 144 files and MakeUp has 344
-
-MakeUp is 344 files; this pack is 144 and covers the same list of effects. Where
-the difference goes:
-
-| In MakeUp | Files | What it actually is |
-| --- | --- | --- |
-| Root `.vsh` / `.fsh` | 50 | 25 program pairs, 11-19 lines each: a `#version`, a few `#define`s, one `#include` into `common/` |
-| `common/` | 41 | the real programs: `solid_blocks_*`, `water_blocks_*`, `deferred_*`, `composite*_*`, `final_*`, sky, shadow, clouds, plus Distant Horizons and Voxy variants |
-| `lib/` | 38 | AO, bloom, blur, TAA, FXAA, motion blur, SSR water, volumetric clouds, volumetric light, shadow sampling, dither, CAS, colour conversion, config |
-| `src/` | 22 | snippets poured inside `main()`: per-vertex light, position, fog, final colour tails, Voxy/DH |
-| `world0`, `world1`, `world-1` | 170 | **the same 26-27 wrappers three more times**, one set per dimension, differing only in a `#define` |
-| `lang/` | 9 | nine translations of about 300 option strings |
-| `textures/` | 6 | three PNGs and their `.mcmeta` |
-| properties + Voxy entry points | 8 | `block.properties` (90 KB of block ids), `item.properties`, `entity.properties`, the dimension map, `shaders.properties`, three Voxy files |
-
-So the code is 101 files (`common` + `lib` + `src`). The other 243 are 170
-near-copies for the dimensions, 50 thirteen-line wrappers, 9 languages, 6
-textures and 8 property files. This pack has fewer files for these reasons, each
-of them a decision, not an omission:
-
-- **Dimension folders, but thin ones.** `world0`, `world-1` and `world1` hold 24
-  entry points each - 72 files - where the reference holds 170. Each of mine is
-  eight lines: a `#define SOLACE_DIM_*`, then an include of the shared library. The
-  palette, the day factor and the dusk factor read that define, so the Nether and
-  the End get their own light without a second copy of any shader body.
-- **One layer instead of three.** MakeUp's `.fsh` includes `common/*_fragment.glsl`,
-  which includes `lib/*` and `src/*`. This pack's program is six lines and
-  includes one library. Same result.
-- **No `src/` snippets.** Their job is to be poured into a dozen `main()`
-  functions; this pack puts that code in a library function and calls it.
-- **No textures.** Water waves and the dither come from a hash, not from a PNG,
-  so there is no `textures/` folder and no `.mcmeta`.
-- **Nine languages, thinner ones.** `en_US` is complete with tooltips; the other
-  eight translate every option name and every enumerated value, and their long
-  tooltips stay English for a native reviewer to finish.
-- **A short `block.properties`.** Ten ids instead of the reference's ~90 KB
-  catalogue: two for waving, four for the gloss classes, and one each for emissive
-  blocks, the End portal, water and glass. `item.properties` carries the ten or so
-  items that light the world when held, and `entity.properties` the two entity ids the
-  pack reacts to. Nothing else here keys off an id, and nothing in any of them needs a
-  mod.
-- **No Distant Horizons or Voxy entry points.** Those mods ask for extra programs;
-  this pack does not support them, so the files would be dead.
-- **Every pass earns its place.** `deferred`, `composite` and `composite2` exist and
-  are switched on only by the option that needs them, so the cheap configuration
-  still spends one full-screen pass and the expensive one spends four.
-- **The shadow pass exists, but ships off** (`SHADOWS 0`): the file pair and the
-  lookup are there, which is why there are 24 program pairs and not 23.
-
-What is still not here, and cannot be honestly written in this environment:
-**coloured shadows** (needs a shadow colour target plus translucent geometry in the
-shadow pass, and the shadow pass itself is off for this GPU), **shadow lock**
-(refresh throttling a shader cannot request from the mod), **Distant Horizons and
-Voxy** (two more program families whose uniforms can only be verified with those
-mods installed), and the **three PNGs** (waves, clouds and the dither here are
-procedural on purpose).
-
-## Audit against the reference
-
-`COMPARISON.md` is the file-by-file comparison with MakeUp 9.6: every library and
-programme of this pack against the reference file that does the same job, with the
-mismatches found and fixed in that pass, and the list of what is still open.
-
-## What is deliberately not here
-
-| Not implemented | What it means in game |
-| --- | --- |
-| Shadow map on by default | ships off (`SHADOWS 0`); with it on there are cast shadows to 96 blocks, with it off `SUN_SHADING` only shades faces by their angle to the sun, modulated by skylight |
-| Clouds | vanilla geometry, or the opt-in procedural slab (`V_CLOUDS`) with no texture and no extra pass |
-| Light shafts | `VOL_LIGHT`, off by default: marches towards the sun's screen position |
-| Antialiasing | present but off (`AA_TYPE`): temporal with a variance-clipped history buffer and a sub-pixel jitter, plus FXAA 3.11, alone or after the temporal pass |
-| Bloom, DOF, motion blur | present but off; bloom and DOF are tap loops inside `final`, motion blur rides in `composite2` |
-| Screen-space reflections | `WATER_SSR` marchers the reflected ray through the scene copy, with the sky as fallback; off by default |
-| Coloured shadows | `COLORED_SHADOW`: the shadow pass writes the colour of each translucent block into shadowcolor0, the geometry samples it, and the light shafts take it too, so stained glass tints the shadow under it |
-| Shadow lock | `SHADOW_LOCK`: pushes the shadow geometry out of the clip volume on the frames it skips, and the shadow maps are never cleared, so the previous map survives; 64 costs a sixty-fourth of the shadow pass |
-| Distant Horizons | supported: `dh_terrain` and `dh_water` in every dimension, shaded by the same libraries, with the far depth linearised separately so water absorption still works over far land |
-| Voxy | supported: `voxy.json` plus the opaque and translucent entry points, shaded with the same palette model; no shadow map or reflection functions out there, because Voxy gives no basis for them |
-| Pack textures | supported, not shipped: `textures/generate_textures.py` writes `noise.png`, `clouds.png` and `clouds_blocky.png`, and `PACK_TEXTURES 1` makes the water and clouds read them instead of computing noise |
-| `item.properties`, `entity.properties` | present: the first lets a torch held as an item light the world, the second lets lightning and burning-entity fire be drawn as their own light |
+Everything here is one pack: the `shaders` folder next to this file.
 
 ## Install
 
-1. Iris 1.5.1 or newer (OptiFine also reads the pack), Minecraft 1.20-1.21 is the
-   comfortable range for this GPU.
-2. Copy this folder into `shaderpacks`:
-   `~/.minecraft/shaderpacks/Solace-LowEnd`, or
-   `~/.local/share/PrismLauncher/instances/<instance>/.minecraft/shaderpacks/Solace-LowEnd`.
-3. **Options > Video Settings > Shader Packs**, pick `Solace-LowEnd`.
-4. In **Shader Pack Settings**, the profile list has `LowEnd` (water waves,
-   reflection and glint off - the cheapest), `Default`, `Beauty`, and
-   `PerformancePlus`, which turns every heavy effect on at its cheapest setting
-   rather than switching any of them off.
+1. Iris 1.5.1 or newer (OptiFine also reads it), Minecraft 1.20–1.21.
+2. Drop the `Solace-LowEnd` folder into your `shaderpacks` folder. The game should
+   find `shaderpacks/Solace-LowEnd/shaders/`.
+3. **Options → Video Settings → Shader Packs → Solace-LowEnd**.
+4. Open **Shader Pack Settings** and pick a profile, then tune from there.
 
-## Settings that matter more than the pack
+## Profiles
 
-1. **Render distance 6, simulation distance 4.** Two cores; chunk building is
-   where the frame time goes.
-2. **1600x900 or 1366x768.** The HD 5500 is fill-rate bound. The sky shader runs
-   on every pixel of the screen, so resolution is the lever that helps most here.
-3. **`-Xmx2G`.** Of 8 GB the desktop wants about 2, and the iGPU takes its VRAM
-   from the same pool.
-4. **Graphics Fast**, clouds Fast, particles Decreased, entity distance 50%,
-   VSync off, max framerate unlimited.
-5. **Linux:** CPU governor on `performance`, compositor off while playing, and
-   try `mesa_glthread=true` in the launch environment.
+| Profile | What it is |
+| --- | --- |
+| `LowEnd` | The default. Water waves, reflection and glint off, cheapest fog. This is the one that runs on an HD 5500. |
+| `Default` | Waves, sky reflection and the sun glint on. Still no extra passes. |
+| `Beauty` | Adds the sun halo and stars, brighter exposure and a little more saturation. |
+| `PerformancePlus` | Every effect enabled at its cheapest setting: 512 px shadows over 75 blocks with hard taps, four-step reflections, four-tap occlusion, three-sample shafts, three-sample motion blur, temporal AA, four-sample depth of field, slow auto exposure. The heavy end of this pack, but nothing is turned off. |
 
-## If it does not compile
+## The options, by screen
 
-Nothing here was compiled before you run it: this machine has no GPU, no
-Minecraft and no Iris. If Iris reports a compile error, the message names the
-file and line; every program is short and every include is in `lib/`. The most
-likely first day problems are a driver that wants `#version 330` instead of
-`#version 120` (change the first line of every `.vsh` and `.fsh`), and the two
-blend factors in `shaders.properties` if a translucent program does not blend the
-way you expect.
+The settings menu is grouped rather than one long scroll.
 
-## Credit and licence
+**Water** — waves and their speed and scale, opacity, sky reflection, the sun glint,
+refraction (bends what is behind the surface, needs a scene copy), screen-space
+reflections and their step count, absorption, and whether the resource pack's water
+texture or vanilla's colour wins.
 
-This is original code, written to fit the same programs Minecraft asks any pack
-for. The reference pack was MakeUp - Ultra Fast v9.6 by Javier Garduño (KDXavier),
-GNU LGPL-3.0, <https://github.com/javiergcim/MakeUpUltraFast> - credit it if you
-publish anything that grew from this exercise. Pick whatever licence you want for
-this pack itself; it contains no third-party code or assets.
+**Geometry** — plant waving and its strength, the cheap directional sun term, torch
+light strength and colour temperature, night brightness, night vision, held-light,
+the damage tint, the four material gloss classes and their strength, and the emissive
+boost that keeps glowstone and lava from looking dimmed.
+
+**Shadows** — cast shadows and their resolution and distance, the soft-tap filter and
+its spread, coloured shadows, and the refresh lock.
+
+**Sky** — sun and moon halos, stars, volumetric clouds with their sample count, height,
+thickness and coverage.
+
+**Ambient occlusion** — on/off, strength, radius, tap count (four or six) and the
+distance at which it fades out.
+
+**Bloom** — strength, radius and the mip level the glow is gathered from.
+
+**Depth of field** — on/off, strength, and samples in the ring.
+
+**Antialiasing** — off, temporal, temporal + FXAA, or FXAA alone, with the blend
+weight and the edge threshold.
+
+**Motion blur** — on/off, samples, strength.
+
+**Light** — light shafts and their samples and strength, auto exposure and how fast it
+follows the scene.
+
+**Fog** — density, and the underwater fog.
+
+**Colour** — exposure, saturation, contrast, the tone curve, dithering, chromatic
+aberration and its strength, sharpening and its amount.
+
+**Palette** — the theme (eight presets plus custom) and the custom zenith, horizon,
+ambient and water colours.
+
+**Accessibility** — the colour-blindness aid and which weakness it helps with.
+
+## What happens each frame
+
+Worth knowing if you are tuning, because it tells you which options cost a pass
+rather than a few instructions.
+
+- `prepare` fills the screen with the horizon colour before anything else is drawn.
+- The geometry programs (`gbuffers_*`) write colour and depth. Everything expensive
+  per pixel lives in shared libraries under `lib/`, so terrain, entities, the hand and
+  water cannot drift apart.
+- `deferred` copies the finished scene into a second buffer. Water reads that copy for
+  refraction and reflections, which is why it lags a frame — that copy is written after
+  the water is drawn. It only runs when refraction or reflections are on.
+- `composite` draws light shafts and works out the exposure, and only runs when either
+  of those is on.
+- `composite2` does temporal anti-aliasing and motion blur, and only runs for those.
+- `final` applies depth of field, ambient occlusion, bloom, chromatic aberration,
+  sharpening, the exposure, the tone curve and the dither, in that order. FXAA runs
+  here too, because it needs no history and a whole pass for it would be wasted.
+
+So a "cheap" configuration is two full-screen passes, and the expensive one is four.
+Everything else is per-pixel work inside a pass you are already paying for.
+
+## Water, in more detail
+
+Two things are worth understanding because they look like bugs otherwise.
+
+**Refraction measures water thickness, not distance.** The pack compares the depth of
+the water surface with the depth of whatever is behind it, so a shallow pool over
+stone still shows the stone and a deep ocean goes opaque. If refraction looks wrong,
+the usual cause is a scene where the surface and the bottom are at the same depth —
+glass over glass, for example.
+
+**Reflections can lag by one frame.** See the `deferred` note above. With temporal
+anti-aliasing on, you will not see it. Everything off-screen falls back to the sky
+reflection, and the image is folded at the screen edge and faded out rather than
+smeared along the border.
+
+## Shadows
+
+Off by default; a second scene render is the most expensive thing a pack can do.
+
+- **Coloured shadows** write the colour of translucent blocks into a second shadow
+  target, so stained glass tints the shadow under it and water tints the bed beneath
+  it. The light shafts take the same tint.
+- **Shadow lock** redraws the shadow pass every N frames instead of every frame. The
+  shadow maps are never cleared, so on skipped frames the old map stays put. 64 is a
+  sixty-fourth of the shadow cost, at the price of shadows that lag the world a little.
+
+## Distant Horizons and Voxy
+
+Both are supported and neither is required.
+
+- **Distant Horizons**: the far terrain and far water have their own programs in every
+  dimension and are shaded by the same libraries as the near world, so the distance
+  does not change the colour. Far geometry is projected with the mod's own matrix, and
+  the band where the near world fades out is deliberately un-fogged so the two meet
+  without a bright seam. Water absorption looks at the far depth buffer too, so an
+  ocean over far land is not infinitely deep.
+- **Voxy**: the far world goes through Voxy's own fragment entry point and comes out
+  with the same palette model. It has no shadow map out there and no reflection
+  functions (Voxy does not give a basis for them), which at that distance is the right
+  trade.
+
+## The texture files
+
+The ripples and the cloud density are computed in the shader, so the pack works with
+no texture files at all. If you want them cheaper, run the generator once:
+
+```bash
+cd shaders/textures
+python3 generate_textures.py
+```
+
+It writes `noise.png`, `clouds.png` and `clouds_blocky.png`, then set `PACK_TEXTURES`
+to 1. The water then costs two texture fetches instead of six noise evaluations, and
+each cloud sample one fetch instead of two noise octaves. On an HD 5500 that is the
+difference between "free" and "noticeable".
+
+The generator is plain Python 3 with no dependencies, and CI runs it on every push and
+checks the output, so it cannot rot.
+
+## If something looks wrong
+
+**It will not compile.** Iris names the file and the line. Every program is short and
+every include lives in `lib/`, so the message is usually enough. A driver that wants
+`#version 330` instead of `#version 120` is the classic complaint — that means editing
+the first line of every `.vsh` and `.fsh`.
+
+**It is too dark or too bright.** Start from a profile rather than from defaults, then
+move `EXPOSURE` first. `NIGHT_AMBIENT` and `BLOCK_LIGHT` are the two that decide how
+night and caves read.
+
+**The water is a mirror, or has no reflection at all.** `WATER_REFLECTION` controls the
+sky reflection and `WATER_SSR` the world reflection. SSRs need `deferred` to run, and
+`deferred` needs refraction or SSRs to be on.
+
+**Shimmering at a distance.** That is aliasing, not a bug: try `AA_TYPE 1` and give the
+temporal pass a moment to settle, or drop the resolution.
+
+**Stutters instead of low frame rate.** Turn `SHADOWS` off first, then `V_CLOUDS`. Both
+add work per frame rather than per pixel.
+
+## What is deliberately not here
+
+- **A shadow map on by default**, and no shadow support at all for Distant Horizons
+  geometry: one shadow map is enough for a machine this size.
+- **Colour grading in Oklab.** The perceptual round trip costs several transcendentals
+  per pixel, every frame; at the saturation levels this pack uses, scaling chroma
+  around the luma is indistinguishable and far cheaper.
+- **A separate pass for bloom or ambient occlusion.** Both run inside `final`, because
+  a separate pass would have to read and write the same buffer.
+- **Mod block lists.** `block.properties` covers vanilla only. Nothing here needs a mod.
+
+## Layout
+
+```
+shaders/
+  lib/          shared code: config, maths, colour model, geometry stages, water, AO, shadows
+  world0/       the overworld's thin entry points
+  world-1/      the Nether's
+  world1/       the End's
+  lang/         nine languages; English carries the full tooltips
+  textures/     the generator for the three optional textures, and their mcmeta files
+  block.properties   ten ids: waving, four gloss classes, emissive, portal, water, glass
+  item.properties    items that light the world when held
+  entity.properties  the two entity ids the pack reacts to
+  shaders.properties profiles, the options screen, pass switches, blend state
+```
+
+## Licence
+
+MIT. Do what you like with it.

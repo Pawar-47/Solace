@@ -12,16 +12,14 @@ occlusion, bloom, exposure (fixed, or the value the exposure pass left in
 colortex6), tone curve, colour-blindness aid, saturation, contrast, dither.
 
 FXAA lives here and not in composite2 because it needs no history: a whole pass for
-it would be wasted, which is also why the reference applies it here. AA_TYPE 3 is
-FXAA on its own; AA_TYPE 2 runs it after the temporal pass, which has already put its
-result back in colortex0.
+it would be wasted. AA_TYPE 3 is FXAA on its own; AA_TYPE 2 runs it after the
+temporal pass, which has already put its result back in colortex0.
 */
 
 #version 120
 
 /* Needed for texture2DLod in a fragment shader, which is how the bloom gathers from
-   a mip level instead of taking forty taps at full resolution. The reference enables
-   the same extension in its own programs. */
+   a mip level instead of taking forty taps at full resolution. */
 #extension GL_ARB_shader_texture_lod : enable
 
 #include "/lib/config.glsl"
@@ -55,13 +53,12 @@ vec3 toneCurve(vec3 x) {
 /* Colour-blindness aid, in the shape of the algorithm daltonize.org published: work
    in the long/medium/short cone responses, replace the response the eye is missing
    with what the other two can reconstruct, see how far that leaves the picture from
-   the original, and push the difference into the channels that still work. The
-   reference applies the same chain (lib/color_blindness.glsl); what was here before
-   only washed the colour towards grey, which dims the picture without making
-   anything easier to tell apart.
+   the original, and push the difference into the channels that still work. What came
+   before this only washed the colour towards grey, which dims the picture without
+   making anything easier to tell apart.
 
-   Mode 1 is red-weak, 2 green-weak, 3 blue-weak - the same numbering the options file
-   uses, against the reference's 0/1/2. */
+   Mode 1 is red-weak, 2 green-weak, 3 blue-weak, the same numbering the options file
+   uses. */
 vec3 colourBlindAid(vec3 c) {
     float L = 17.8824 * c.r + 43.5161 * c.g + 4.11935 * c.b;
     float M = 3.45565 * c.r + 27.1554 * c.g + 3.86714 * c.b;
@@ -108,9 +105,9 @@ vec3 colourBlindAid(vec3 c) {
    it until the luma stops changing, blend a little towards the nearer end, and add
    a sub-pixel term for the edges that are thinner than a pixel.
 
-   The reference applies the same algorithm; what was here before detected an edge
-   and then blurred along an eight-tap direction, which is cheaper but visibly
-   softer and leaves steep diagonals stepped. */
+   What came before this detected an edge and then blurred along an eight-tap
+   direction, which is cheaper but visibly softer and leaves steep diagonals
+   stepped. */
 vec3 sceneFxaa(vec2 uv) {
     vec2 texel = vec2(1.0 / viewWidth, 1.0 / viewHeight);
 
@@ -242,10 +239,10 @@ void main() {
     #endif
 
     #if CHROMA_ABER == 1
-        /* The reference's scheme (`lib/aberration.glsl`): one offset outwards from
-           the centre, red shifted by all of it, green by half, blue by none. What was
-           here shifted red and blue in opposite directions by the same amount, which
-           adds a blue fringe where the reference has none and is a different look.
+        /* One offset outwards from the centre: red shifted by all of it, green by
+           half, blue by none. Shifting red and blue in opposite directions by the
+           same amount, which is the obvious alternative, adds a blue fringe where
+           there should be none.
            The 0.06 keeps this pack's slider range at a comparable strength.
 
            The taps read the scene rather than the antialiased result: the offset is
@@ -259,8 +256,8 @@ void main() {
 
     #if DOF == 1
         float centreDepth = texture2D(depthtex0, vec2(0.5, 0.5)).r;
-        /* The reference focuses with centerDepthSmooth, a value the mod smooths over
-           frames; falling back to the raw centre pixel keeps it working without. */
+        /* Focus follows centerDepthSmooth, a value the engine smooths over frames;
+           falling back to the raw centre pixel keeps it working without. */
         float focusDepth = centerDepthSmooth > 0.0 ? centerDepthSmooth : centreDepth;
         float hereDepth = texture2D(depthtex0, uv).r;
         float circle = sat(abs(hereDepth - focusDepth) * DOF_STRENGTH * 90.0);
@@ -292,8 +289,8 @@ void main() {
            the surface, so darkening by it would draw the shape of the river bed onto
            the water. `depthtex1` includes the translucent geometry: where the two
            differ, this pixel is in front of the opaque depth and is left alone. The
-           reference avoids the question by computing its AO in the deferred pass,
-           before the water is drawn. */
+           alternative is to compute the occlusion in the deferred pass, before the
+           water is drawn, which costs a pass this machine does not have. */
         float opaqueDepth = texture2D(depthtex0, uv).r;
         float surfaceDepth = texture2D(depthtex1, uv).r;
         if (opaqueDepth - surfaceDepth < 0.00005) {
@@ -304,7 +301,7 @@ void main() {
     #if BLOOM == 1
         /* Gather from a mip level instead of a wide ring of full-resolution taps: one
            fetch at mip BLOOM_LOD already averages a block of pixels, so eight rotated
-           taps give a wide, smooth glow. This is the reference's technique. */
+           taps give a wide, smooth glow. */
         float bloomSeed = solDitherShifted(gl_FragCoord.yx * 0.31,
                                            float(frameCounter % 64) * 0.015625);
         vec3 glow = vec3(0.0);

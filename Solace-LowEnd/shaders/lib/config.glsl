@@ -3,8 +3,8 @@
 Every option this pack has lives here, as a define with the allowed values in a
 bracket comment so Iris and OptiFine can build the options screen from it.
 
-Nothing is left out for being expensive: every effect the reference has exists, and
-each heavy one has a cheap setting that keeps it on instead of switching it off.
+Nothing is left out for being expensive: every effect the pack has belongs to a cheap
+setting as well as an expensive one, so none of them has to be switched off.
 The `PerformancePlus` profile in shaders.properties is exactly that - everything
 enabled, all samples at their minimum, the shadow map at 512 px over 75 blocks.
 */
@@ -14,11 +14,11 @@ enabled, all samples at their minimum, the shadow map at 512 px over 75 blocks.
 
 // ---- Shader constants the mod reads --------------------------------------
 // Not options: values Iris and OptiFine look for in any included file and then
-// apply to the whole pipeline. The reference declares the same set.
+// apply to the whole pipeline.
 
 /* Tilt of the sun's path. Without it the sun crosses straight overhead and every
-   sunset is the same; the reference uses -25 degrees, which is what makes the
-   shadows swing round during the day. */
+   sunset looks the same; -25 degrees is what makes the shadows swing round during
+   the day. */
 const float sunPathRotation = -25.0;
 
 /* Vanilla's own smooth-lighting ambient occlusion is declared at the end of this
@@ -27,7 +27,8 @@ const float sunPathRotation = -25.0;
 
 /* How quickly the two smoothed values the terrain shader reads catch up with the
    real ones: sky exposure (which drives the fog) and the depth under the crosshair
-   (which drives the focus). The defaults are far slower than the reference's. */
+   (which drives the focus). The engine's defaults are much slower, which leaves the
+   fog lagging behind a cave and the focus lagging behind the crosshair. */
 const float eyeBrightnessHalflife = 3.0;
 const float centerDepthHalflife = 0.66;
 
@@ -99,7 +100,7 @@ const bool shadowtex1Nearest = false;
 #define AO_FADE 36.0           // [12.0 24.0 36.0 60.0] Distance at which the occlusion fades out.
 
 // ---- Bloom (opt in) -----------------------------------------------------
-#define BLOOM 0                // [0 1] Bright-pass glow: mipmap taps, as the reference does it.
+#define BLOOM 0                // [0 1] Bright-pass glow gathered from a mip level, so it stays wide and cheap.
 #define BLOOM_STRENGTH 0.14    // [0.05 0.09 0.14 0.20 0.28]
 #define BLOOM_RADIUS 1.6       // [1.0 1.6 2.4 3.4 4.6]
 #define BLOOM_LOD 3.0          // [1.0 2.0 3.0 4.0 5.0] Mip level the glow is gathered from: higher is wider.
@@ -154,8 +155,7 @@ const bool shadowtex1Nearest = false;
 // ---- Vanilla ambient occlusion -------------------------------------------
 // Declared here, after AO, so the mod reads the value that matches the option:
 // full vanilla darkening while this pack's screen-space AO is off would fight the
-// ambient term, and none at all is right when the pack does it itself. The
-// reference declares the same pair.
+// ambient term, and none at all is right when the pack does it itself.
 
 #if AO == 1
     const float ambientOcclusionLevel = 0.0;

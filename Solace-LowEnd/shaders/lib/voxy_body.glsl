@@ -22,8 +22,8 @@ Two entry points use this file:
 #include "/lib/uniforms.glsl"
 #include "/lib/sky_model.glsl"
 
-/* The struct is declared by the pack, not by Iris - the reference declares it in its
-   own Voxy files too, with this exact layout. */
+/* The struct is declared by the pack, not by Iris: Voxy hands the fragment its data
+   in this shape, and the layout has to match it field for field. */
 struct VoxyFragmentParameters {
     vec4 sampledColour;
     vec2 tile;

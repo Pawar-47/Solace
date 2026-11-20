@@ -1,9 +1,8 @@
 /* Solace - gbuffers_basic.vsh
 
 Untextured vanilla geometry: the block outline, the hitting box, debug shapes. They
-carry their colour in the vertex colour, and they are lit here, per vertex, the way
-the reference lights its own basic blocks (`basic_blocks_vertex.glsl`): the day or
-night light plus the candle curve from the lightmap. Without it a block outline
+carry their colour in the vertex colour, and they are lit here, per vertex: the day
+or night light plus the candle curve from the lightmap. Without it a block outline
 glows in a cave and a leash is the brightest thing in the picture.
 
 Per vertex, not per pixel: these are lines and boxes, and one lit colour for each is

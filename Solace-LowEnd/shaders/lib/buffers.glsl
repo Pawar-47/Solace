@@ -9,9 +9,8 @@ three break silently:
     wide level to gather from;
   * the formats must be wide enough for a history, or the values crawl.
 
-The reference declares the same set in its final program. Declaring them is what
-makes them take effect, so this file is included by every program that touches
-those buffers.
+Declaring them is what makes them take effect, so this file is included by every
+program that touches those buffers.
 */
 
 #ifndef SOLACE_BUFFERS
@@ -21,8 +20,8 @@ those buffers.
    It must not be cleared: gbuffers_water runs before `deferred`, the pass that fills
    it, so at the moment water is drawn this buffer holds the previous frame's copy.
    Clearing it would leave the water refracting black. The cost of not clearing is
-   that refraction and reflections lag one frame behind the camera, which is the same
-   trade the reference makes and is hidden by temporal antialiasing when it is on. */
+   that refraction and reflections lag one frame behind the camera, which temporal
+   antialiasing hides when it is on. */
 const int colortex4Format = R11F_G11F_B10F;
 const bool colortex4Clear = false;
 
