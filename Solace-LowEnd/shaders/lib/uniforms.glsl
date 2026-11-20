@@ -60,6 +60,9 @@ uniform int moonPhase;
     /* The far terrain is projected with its own matrix and its own far plane, not
        the vanilla one. */
     uniform mat4 dhProjection;
+    /* How far the mod draws, in blocks. It is usually much further than `far`, which
+       is why the far fog cannot be normalised by the vanilla distance. */
+    uniform int dhRenderDistance;
 #endif
 
 #endif

@@ -125,28 +125,33 @@ void main() {
         float fogDensity = FOG_DENSITY;
     #endif
 
-    /* The Nether has no horizon to look at: its sight is capped at half the render
-       distance, up to 96 blocks, so the fog closes in instead of ending at the build
-       limit. Far terrain keeps the overworld's sight so
-       that it and the near world meet at the same fog value. */
-    #if SOLACE_DIM_NETHER == 1
-        float sight = min(far * 0.5, 96.0);
+    /* Far terrain fades over the mod's own render distance, not over the vanilla one:
+       it can be 500 blocks out while the near world ends at 96, and normalising by the
+       near distance would leave the whole far world one flat wall of fog. Its curve is
+       also far softer than the near one, which is what makes a horizon read as haze
+       rather than as a wall. */
+    #if defined SOLACE_DH_GEOMETRY && defined DISTANT_HORIZONS
+        float sight = float(dhRenderDistance);
+        float fogExponent = mix(0.30, 0.50, rainStrength);
     #else
-        float sight = far;
+        /* The Nether has no horizon to look at: its sight is capped at half the render
+           distance, up to 96 blocks, so the fog closes in instead of ending at the
+           build limit. */
+        #if SOLACE_DIM_NETHER == 1
+            float sight = min(far * 0.5, 96.0);
+        #else
+            float sight = far;
+        #endif
+
+        float fogExponent = mix(fogDensity * 2.0, 1.0, rainStrength);
     #endif
 
-    float fogExponent = mix(fogDensity * 2.0, 1.0, rainStrength);
     float fogAmount = pow(sat(fogDist / max(sight, 32.0)) * skyExposure, fogExponent);
 
-    /* Distant Horizons has to be *un*fogged where the near world is fading out, or the
-       two overlap as a bright band on a dim horizon. Fog is removed over the last
-       tenth of the near distance and gone by the time the near world is fully faded. */
-    #if defined SOLACE_DH_GEOMETRY && defined DISTANT_HORIZONS
-        float transition = max(far - dhNearPlane, 1.0);
-        float clearStart = dhNearPlane + transition * 0.90;
-        float clearEnd = far - transition * 0.05;
-        fogAmount *= 1.0 - sat((fogDist - clearStart) / max(clearEnd - clearStart, 1.0));
-    #endif
+    /* Far terrain needs no special treatment here: fragments inside the near range are
+       discarded before they are shaded (lib/fragment_geometry.glsl, lib/fragment_water.glsl),
+       so what survives already sits past the distance where the near world is mostly
+       fogged, and the two meet at the same value. */
 
     #if UNDERWATER_FOG == 1
         if (isEyeInWater == 1) {

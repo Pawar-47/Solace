@@ -26,8 +26,24 @@ Lighting for solid, textured geometry:
 uniform sampler2D gcolor;
 
 void main() {
-    vec4 albedo = texture2D(gcolor, texcoord) * tint;
-    if (albedo.a < 0.10) discard;
+    #if defined SOLACE_DH_GEOMETRY && defined DISTANT_HORIZONS
+        /* Distant Horizons draws untextured level-of-detail geometry, and it overlaps
+           the near world by design. Two consequences: this fragment's colour arrives
+           as the vertex tint, not as a texture, and anything inside the near range is
+           already drawn by the near geometry at full detail. Dropping it here saves
+           the whole fragment and removes the overlap. */
+        if (length(viewSpacePos) < dhNearPlane + (far - dhNearPlane) * 0.90) discard;
+
+        vec4 albedo = vec4(tint.rgb, 1.0);
+
+        /* One hash per block keeps a distant hillside from being a single flat
+           colour. It is the only texture a far block can have. */
+        vec3 cell = floor(worldSpacePos * 6.0 + 0.01);
+        albedo.rgb *= 0.95 + solHash(cell.xz + cell.y * 31.7) * 0.10;
+    #else
+        vec4 albedo = texture2D(gcolor, texcoord) * tint;
+        if (albedo.a < 0.10) discard;
+    #endif
 
     #if defined SOLACE_WEATHER
         albedo.a *= 0.5;

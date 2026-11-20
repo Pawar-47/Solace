@@ -4,5 +4,6 @@ Overworld far water, with the overworld palette. */
 #version 120
 
 #define SOLACE_DIM_OVERWORLD 1
+#define SOLACE_DH_WATER 1
 
 #include "/lib/fragment_water.glsl"

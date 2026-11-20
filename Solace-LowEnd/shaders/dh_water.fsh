@@ -1,10 +1,13 @@
 /* Solace - dh_water.fsh
 
-Far water: waves, the sky reflection, the sun glint and the fog, all from the same
-library the near water uses. The scene copy it would refract is a near-scene buffer,
-so the far water leaves refraction to the near one and simply keeps its own colour.
+Far water: waves, a reflection, the sun glint and the fog, from the same library the
+near water uses, with one difference the library has to know about - this fragment's
+depth is in Distant Horizons' projection, so its own depth buffer is the only one that
+means anything here.
 */
 
 #version 120
+
+#define SOLACE_DH_WATER 1
 
 #include "/lib/fragment_water.glsl"

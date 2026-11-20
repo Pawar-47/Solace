@@ -43,8 +43,24 @@ float waterLinearDepth(float depth) {
 }
 
 void main() {
-    vec4 albedo = texture2D(gcolor, texcoord) * tint;
-    if (albedo.a < 0.05) discard;
+    #if defined SOLACE_DH_WATER && defined DISTANT_HORIZONS
+        /* Where the near world has already drawn something, the far water behind it
+           must not appear - the far pass does not depth-test against the near one.
+           And inside the near range the water is drawn there, in full detail. */
+        if (texture2D(depthtex0, gl_FragCoord.xy
+                      / vec2(viewWidth, viewHeight)).r < 0.9999) discard;
+        if (length(viewSpacePos) < dhNearPlane + (far - dhNearPlane) * 0.90) discard;
+
+        /* Untextured level-of-detail water: the colour arrives as the vertex tint, so a
+           hash-based ripple stands in for the resource pack's texture and keeps the
+           surface from being a flat sheet. */
+        float synth = solHash(floor(worldSpacePos.xz * 8.0
+                                    + vec2(frameTimeCounter * 0.05)));
+        vec4 albedo = vec4(tint.rgb * (0.85 + 0.30 * synth), 0.86);
+    #else
+        vec4 albedo = texture2D(gcolor, texcoord) * tint;
+        if (albedo.a < 0.05) discard;
+    #endif
 
     vec3 normal = normalize(normalView);
 
@@ -66,6 +82,25 @@ void main() {
             worldNormal = normalize(worldNormal + vec3(slope.x, 0.0, slope.y) * 1.10);
             normal = normalize(mat3(gbufferModelView) * worldNormal);
         #else
+            #if defined SOLACE_DH_WATER
+                /* Far water fills a lot of screen at a distance where nobody can read
+                   a second layer of chop: one layer, two thirds of the cost. */
+                vec2 p1 = worldSpacePos.xz * (0.42 * WAVE_SCALE)
+                        + vec2(frameTimeCounter * WAVE_SPEED * 0.85,
+                               frameTimeCounter * WAVE_SPEED * 0.55);
+
+                float e = 0.08;
+                float a0 = solFbm(p1);
+                float ax = solFbm(p1 + vec2(e, 0.0));
+                float az = solFbm(p1 + vec2(0.0, e));
+
+                vec2 slope = vec2(ax - a0, az - a0) * 4.0
+                           * (1.0 - rainStrength * 0.35);
+
+                vec3 worldNormal = mat3(gbufferModelViewInverse) * normal;
+                worldNormal = normalize(worldNormal + vec3(slope.x, 0.0, slope.y) * 0.45);
+                normal = normalize(mat3(gbufferModelView) * worldNormal);
+            #else
             vec2 base = worldSpacePos.xz * (0.42 * WAVE_SCALE);
             float t = frameTimeCounter * WAVE_SPEED;
             vec2 p1 = base + vec2(t * 0.85, t * 0.55);
@@ -89,6 +124,7 @@ void main() {
             vec3 worldNormal = mat3(gbufferModelViewInverse) * normal;
             worldNormal = normalize(worldNormal + vec3(slope.x, 0.0, slope.y) * 0.45);
             normal = normalize(mat3(gbufferModelView) * worldNormal);
+            #endif
         #endif
     }
     #endif
@@ -146,7 +182,42 @@ void main() {
        only appear where nothing in the world blocks it. */
     float reflectionSky = 1.0;
 
-    #if WATER_SSR == 1
+    #if defined SOLACE_DH_WATER && WATER_SSR == 1 && WATER_REFLECTION == 1
+        /* Far water cannot march a ray: the depth buffer it would march holds the
+           near world, not the far one, so every step would either miss or hit
+           something that is not there. Project the mirror direction 768 blocks out
+           instead, sample the scene copy at that point, and fold the image at the
+           screen edge exactly as the march does. Where the near world covers that
+           pixel the copy holds the near world, not the sky, so the sky is used. */
+        vec3 mirrorPlayer = worldSpacePos - cameraPosition + reflectedWorld * 768.0;
+        vec4 mirrorClip = gbufferProjection * (gbufferModelView * vec4(mirrorPlayer, 1.0));
+
+        if (mirrorClip.w > 0.0001) {
+            vec2 uv = mirrorClip.xy / mirrorClip.w * 0.5 + 0.5;
+
+            float border = sat((1.0 - max(0.0, abs(uv.y - 0.5)) * 2.0) * 50.0);
+            float edgeY = sat(uv.y);
+            float edgeY5 = solPow5(edgeY);
+            border = sat(border - edgeY5 * edgeY5);
+
+            uv.x = abs(uv.x);
+            if (uv.x > 1.0) uv.x = 2.0 - uv.x;
+
+            vec2 sampledUV = clamp(uv, vec2(0.002), vec2(0.998));
+            float nearDepth = texture2D(depthtex0, sampledUV).r;
+
+            vec3 mirror = skyReflection;
+            if (nearDepth >= 0.99999) {
+                mirror = texture2D(gaux1, sampledUV).rgb;
+            }
+
+            reflectionColourOut = mix(skyReflection * 0.85, mirror, border);
+            reflection = sat(0.08 + fresnel * 0.92) * border;
+            reflectionSky = 1.0 - border;
+        }
+    #endif
+
+    #if WATER_SSR == 1 && !defined SOLACE_DH_WATER
         vec3 reflectedView = mat3(gbufferModelView) * reflectedWorld;
         bool found = false;
         vec2 hitUV = vec2(0.0);
@@ -292,16 +363,26 @@ void main() {
                of the squared thickness is the obvious choice, but it turns negative
                for thick water, so this uses an exponential: monotone, and it cannot
                overshoot. */
-            float surfaceDistance = waterLinearDepth(gl_FragCoord.z);
-            float sceneDistance = waterLinearDepth(texture2D(depthtex0, bent).r);
+            float surfaceDistance;
+            float sceneDistance;
 
-            /* Distant Horizons' terrain is not in depthtex0 at all: it has its own
-               depth buffer and its own near and far planes, so it is linearised
-               separately and the nearer of the two decides how much water the light
-               crossed. Without this an ocean over far terrain looked infinitely deep. */
-            #ifdef DISTANT_HORIZONS
-                float dhDistance = solDhLinearDepth(texture2D(dhDepthTex1, bent).r);
-                sceneDistance = min(sceneDistance, dhDistance);
+            #if defined SOLACE_DH_WATER && defined DISTANT_HORIZONS
+                /* Far water lives entirely in Distant Horizons' projection: both
+                   depths are linearised with its planes, and the scene behind it is
+                   only ever in its own depth buffer. */
+                surfaceDistance = solDhLinearDepth(gl_FragCoord.z);
+                sceneDistance = solDhLinearDepth(texture2D(dhDepthTex1, bent).r);
+            #else
+                surfaceDistance = waterLinearDepth(gl_FragCoord.z);
+                sceneDistance = waterLinearDepth(texture2D(depthtex0, bent).r);
+
+                /* Near water can have far land behind it: that terrain is not in
+                   depthtex0 at all, so it is linearised separately and the nearer of
+                   the two decides how much water the light crossed. */
+                #ifdef DISTANT_HORIZONS
+                    float dhDistance = solDhLinearDepth(texture2D(dhDepthTex1, bent).r);
+                    sceneDistance = min(sceneDistance, dhDistance);
+                #endif
             #endif
 
             float thickness = max(sceneDistance - surfaceDistance, 0.0);
