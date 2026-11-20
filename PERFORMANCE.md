@@ -171,6 +171,23 @@ Fixed by making the dependency explicit: `composite` runs whenever anything down
 reads `colortex1`. When only AA is on, that pass is a plain copy of the frame, which is
 exactly what the pass after it needs.
 
+### 14. Ambient occlusion without a matrix per sample
+
+The AO ring rebuilt a view-space position per sample with a full inverse projection and
+a divide: **twelve matrix multiplies per pixel** before the depth comparisons that the
+effect is actually made of. The view-space distance is available from the projection
+matrix directly - `p[3][2] / (p[2][2] + z_ndc)`, the same identity the water shader has
+used for its thickness since the beginning - so each sample is two multiplies, an add
+and a divide.
+
+### 15. Temporal AA: one fetch less, and no flash on load
+
+The 3x3 neighbourhood for the history clamp re-fetched the centre pixel the pass had
+already read; it is now passed in, which is one fetch off every pixel while AA is on.
+And because `colortex3` is deliberately not cleared, the first frames after the pack
+loads left the history holding whatever was in that memory: the mix now waits two frames
+before trusting it.
+
 ## The budget, and what it says to ignore
 
 At 1366x768 and 60 fps there are about 63 megapixels per second to shade, so:

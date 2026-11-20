@@ -57,11 +57,11 @@ vec2 previousUV(vec2 uv, float depth) {
    measured by its own mean and standard deviation. It is tighter than a plain min/max
    box: a thin edge through a flat area gets a narrow box, so an old ghost cannot
    survive beside it. The fourth component is the
-   size of that box, which sets how much of the history is trusted. */
-vec4 solHistoryBox(vec3 history, vec2 uv) {
+   size of that box, which sets how much of the history is trusted. `centre` is the
+   pixel the caller already fetched, so the centre is not fetched twice. */
+vec4 solHistoryBox(vec3 history, vec3 centre, vec2 uv) {
     vec2 texel = vec2(1.0 / viewWidth, 1.0 / viewHeight);
 
-    vec3 c = texture2D(colortex1, uv).rgb;
     vec3 l = texture2D(colortex1, uv - vec2(texel.x, 0.0)).rgb;
     vec3 r = texture2D(colortex1, uv + vec2(texel.x, 0.0)).rgb;
     vec3 d = texture2D(colortex1, uv - vec2(0.0, texel.y)).rgb;
@@ -71,8 +71,8 @@ vec4 solHistoryBox(vec3 history, vec2 uv) {
     vec3 ul = texture2D(colortex1, uv + vec2(-texel.x, texel.y)).rgb;
     vec3 ur = texture2D(colortex1, uv + vec2(texel.x, texel.y)).rgb;
 
-    vec3 sum = c + l + r + d + u + dl + dr + ul + ur;
-    vec3 sumSquares = c * c + l * l + r * r + d * d + u * u
+    vec3 sum = centre + l + r + d + u + dl + dr + ul + ur;
+    vec3 sumSquares = centre * centre + l * l + r * r + d * d + u * u
                     + dl * dl + dr * dr + ul * ul + ur * ur;
 
     vec3 mean = sum * (1.0 / 9.0);
@@ -105,8 +105,10 @@ void main() {
     #endif
 
     #if AA_TYPE == 1 || AA_TYPE == 2
-        if (previous.x >= 0.0 && previous.y >= 0.0) {
-            vec4 box = solHistoryBox(texture2D(colortex3, previous).rgb, uv);
+        /* The history buffer is not cleared, so on the first frames after the pack is
+           loaded it holds nothing meaningful; blending it in would flash. */
+        if (frameCounter > 1 && previous.x >= 0.0 && previous.y >= 0.0) {
+            vec4 box = solHistoryBox(texture2D(colortex3, previous).rgb, current, uv);
 
             /* How far the history had to be moved to fit, against the size of the
                box: the busier the neighbourhood, the less of the old frame survives,

@@ -26,17 +26,20 @@ of switching it off.
 
 uniform sampler2D depthtex0;
 
-vec4 viewPositionAt(vec2 uv, float depth) {
-    vec4 clip = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
-    vec4 view = gbufferProjectionInverse * clip;
-    return view / view.w;
+/* View-space distance of a depth-buffer value, straight out of the projection matrix:
+   two multiplies, an add and a divide. The obvious form - multiply the reversed clip
+   coordinate by the inverse projection - costs a full 4x4 matrix per sample, and the
+   ring below takes twelve samples. Sign is kept the same as the view-space z it
+   replaces (negative in front of the camera), so the comparisons below are unchanged. */
+float viewDepthAt(float depth) {
+    return -(gbufferProjection[3][2] / (gbufferProjection[2][2] + 2.0 * depth - 1.0));
 }
 
 float occlusionAt(vec2 uv, float centreZ, float rangeScale) {
     float depth = texture2D(depthtex0, uv).r;
     if (depth >= 1.0) return 0.0;
 
-    float neighbourZ = viewPositionAt(uv, depth).z;
+    float neighbourZ = viewDepthAt(depth);
     float difference = (centreZ - neighbourZ) * rangeScale;
 
     float angle = clamp(0.5 - difference, 0.0, 1.0);
@@ -48,7 +51,7 @@ float screenSpaceAO(vec2 uv) {
     float depth = texture2D(depthtex0, uv).r;
     if (depth >= 1.0) return 1.0;
 
-    float centreZ = viewPositionAt(uv, depth).z;
+    float centreZ = viewDepthAt(depth);
     float distanceFade = sat(1.0 - (-centreZ) / AO_FADE);
     if (distanceFade <= 0.001) return 1.0;
 
