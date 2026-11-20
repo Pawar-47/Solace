@@ -58,6 +58,9 @@ uniform int moonPhase;
     uniform sampler2D dhDepthTex1;   // far terrain, with its translucent part
     uniform float dhNearPlane;
     uniform float dhFarPlane;
+    /* The far terrain is projected with its own matrix, not the vanilla one - the
+       reference declares it the same way in solid_dh_blocks_vertex.glsl. */
+    uniform mat4 dhProjection;
 #endif
 
 #endif

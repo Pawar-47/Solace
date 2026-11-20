@@ -5,5 +5,6 @@ End far water. */
 
 #define SOLACE_DIM_END 1
 #define SOLACE_DH_GEOMETRY 1
+#define SOLACE_DH_WATER 1
 
 #include "/lib/vertex_geometry.glsl"

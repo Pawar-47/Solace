@@ -43,6 +43,14 @@ void main() {
     lmcoord = sat((gl_TextureMatrix[1] * gl_MultiTexCoord1).xy);
 
     vec4 viewPos = gl_ModelViewMatrix * gl_Vertex;
+
+    #if defined SOLACE_DH_GEOMETRY && defined SOLACE_DH_WATER
+        /* Distant Horizons draws its water surface exactly on the block boundary; the
+           reference pulls it down an eighth of a block so the far water does not fight
+           the near water for the same depth. */
+        viewPos.y -= 0.125;
+    #endif
+
     vec3 playerPos = (gbufferModelViewInverse * viewPos).xyz;
     vec3 worldPos = playerPos + cameraPosition;
 
@@ -69,7 +77,15 @@ void main() {
         }
     #endif
 
-    gl_Position = gl_ProjectionMatrix * viewPos;
+    #if defined SOLACE_DH_GEOMETRY && defined DISTANT_HORIZONS
+        /* Distant Horizons projects its far terrain with its own matrix against its own
+           far plane, so `gl_ProjectionMatrix` would place it at the wrong depth. The
+           second half of the guard keeps the program compiling if Iris ever asks for it
+           without the mod present. */
+        gl_Position = dhProjection * viewPos;
+    #else
+        gl_Position = gl_ProjectionMatrix * viewPos;
+    #endif
 
     #if AA_TYPE == 1 || AA_TYPE == 2
         /* Sub-pixel jitter for the temporal pass: eight positions instead of the four
@@ -111,8 +127,11 @@ void main() {
 
     /* The Nether has no horizon to look at: the reference caps its sight at half the
        render distance, up to 96 blocks (NETHER_FOG_DISTANCE), so the fog closes in
-       instead of ending at the build limit. */
-    #if SOLACE_DIM_NETHER == 1
+       instead of ending at the build limit. Far terrain fades against its own far
+       plane, which is much further out than the vanilla one. */
+    #if defined SOLACE_DH_GEOMETRY && defined DISTANT_HORIZONS
+        float sight = dhFarPlane;
+    #elif SOLACE_DIM_NETHER == 1
         float sight = min(far * 0.5, 96.0);
     #else
         float sight = far;
