@@ -127,11 +127,9 @@ void main() {
 
     /* The Nether has no horizon to look at: the reference caps its sight at half the
        render distance, up to 96 blocks (NETHER_FOG_DISTANCE), so the fog closes in
-       instead of ending at the build limit. Far terrain fades against its own far
-       plane, which is much further out than the vanilla one. */
-    #if defined SOLACE_DH_GEOMETRY && defined DISTANT_HORIZONS
-        float sight = dhFarPlane;
-    #elif SOLACE_DIM_NETHER == 1
+       instead of ending at the build limit. Far terrain keeps the overworld's sight so
+       that it and the near world meet at the same fog value. */
+    #if SOLACE_DIM_NETHER == 1
         float sight = min(far * 0.5, 96.0);
     #else
         float sight = far;
@@ -139,6 +137,17 @@ void main() {
 
     float fogExponent = mix(fogDensity * 2.0, 1.0, rainStrength);
     float fogAmount = pow(sat(fogDist / max(sight, 32.0)) * skyExposure, fogExponent);
+
+    /* Distant Horizons has to be *un*fogged where the near world is fading out, or the
+       two overlap as a bright band on a dim horizon. The reference does this with
+       TRANSITION_DH_SUP/INF: fog is removed over the last tenth of the near distance
+       and gone by the time the near world is fully faded. */
+    #if defined SOLACE_DH_GEOMETRY && defined DISTANT_HORIZONS
+        float transition = max(far - dhNearPlane, 1.0);
+        float clearStart = dhNearPlane + transition * 0.90;
+        float clearEnd = far - transition * 0.05;
+        fogAmount *= 1.0 - sat((fogDist - clearStart) / max(clearEnd - clearStart, 1.0));
+    #endif
 
     #if UNDERWATER_FOG == 1
         if (isEyeInWater == 1) {
