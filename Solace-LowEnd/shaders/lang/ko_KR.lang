@@ -122,3 +122,9 @@ option.COLORED_SHADOW=색깔 그림자
 value.COLORED_SHADOW.0=끔
 value.COLORED_SHADOW.1=켬
 option.SHADOW_LOCK=그림자 갱신
+
+
+option.CLOUD_HEIGHT=구름 높이
+option.CLOUD_THICKNESS=구름 두께
+option.BLOOM_LOD=블룸 범위
+option.AO_FADE=주변광 차폐 거리

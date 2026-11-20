@@ -347,3 +347,17 @@ value.COLORED_SHADOW.1=On
 
 option.SHADOW_LOCK=Shadow refresh
 option.SHADOW_LOCK.comment=Redraw the shadow map every N frames instead of every frame. 0 is every frame, 64 costs a sixty-fourth of the shadow pass.
+
+
+# Four options that had been added to the screen without a name here.
+option.CLOUD_HEIGHT=Cloud height
+option.CLOUD_HEIGHT.comment=Height of the cloud slab in blocks. Only used when volumetric clouds are on.
+
+option.CLOUD_THICKNESS=Cloud thickness
+option.CLOUD_THICKNESS.comment=Thickness of the cloud slab. A thicker slab reads darker from below.
+
+option.BLOOM_LOD=Bloom spread
+option.BLOOM_LOD.comment=Mip level the glow is gathered from. Higher is wider and cheaper, lower is tighter.
+
+option.AO_FADE=Occlusion distance
+option.AO_FADE.comment=Distance at which the ambient occlusion fades out.

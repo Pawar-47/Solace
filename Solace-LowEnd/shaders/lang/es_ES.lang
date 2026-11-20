@@ -122,3 +122,9 @@ option.COLORED_SHADOW=Sombras de color
 value.COLORED_SHADOW.0=Desactivado
 value.COLORED_SHADOW.1=Activado
 option.SHADOW_LOCK=Refresco de sombras
+
+
+option.CLOUD_HEIGHT=Altura de nubes
+option.CLOUD_THICKNESS=Espesor de nubes
+option.BLOOM_LOD=Extensión del brillo
+option.AO_FADE=Distancia de oclusión

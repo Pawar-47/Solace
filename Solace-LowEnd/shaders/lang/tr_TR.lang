@@ -122,3 +122,9 @@ option.COLORED_SHADOW=Renkli gölgeler
 value.COLORED_SHADOW.0=Kapalı
 value.COLORED_SHADOW.1=Açık
 option.SHADOW_LOCK=Gölge yenileme
+
+
+option.CLOUD_HEIGHT=Bulut yüksekliği
+option.CLOUD_THICKNESS=Bulut kalınlığı
+option.BLOOM_LOD=Parlama yayılımı
+option.AO_FADE=Gölgeleme mesafesi
