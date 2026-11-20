@@ -188,6 +188,34 @@ And because `colortex3` is deliberately not cleared, the first frames after the 
 loads left the history holding whatever was in that memory: the mix now waits two frames
 before trusting it.
 
+### 16. Depth only when something reads it
+
+`final` declared `depthtex0` and `depthtex1` at the top, unconditionally. `depthtex0` is
+the depth buffer *without* translucent geometry, and the mod produces it by copying the
+depth buffer after the opaque pass: a full-screen blit per frame, 1.4 million pixels at
+1600x900. Ambient occlusion and depth of field are the only things in that pass that
+read it, and both ship off, so the default profile was paying for a copy it never used.
+The declarations now sit inside the option guards.
+
+## A check for the bugs this work produced
+
+Two bugs on this branch came from a *pair* of files rather than a single one: a varying
+(`vertexLight`, then `skyRay`) that one stage declared and the other did not, and a pass
+that read a buffer another pass was not enabled to write. `tools/validate_pack.py` checks
+names, includes and balance, and cannot see either.
+
+`tools/check_stages.py` can. It expands the includes and compares each `.fsh`/`.vsh`
+pair on three things: a varying the fragment reads that the vertex never declares (a link
+error, or worse, a value that is undefined and looks *almost* right), a varying whose type
+differs between the stages, and the number of `DRAWBUFFERS`/`RENDERTARGETS` directives —
+exactly one per program, none in a vertex stage, none required in `final` because it
+writes the screen.
+
+It runs in both workflows. The first run reported 75 errors, every one of them the
+checker's own fault: it stripped comments before looking for the directive, and a
+shaderpack declares `DRAWBUFFERS` in a comment. Fixed in `aec70a0`; the varyings, which
+is what it was written for, came back clean.
+
 ## The budget, and what it says to ignore
 
 At 1366x768 and 60 fps there are about 63 megapixels per second to shade, so:
