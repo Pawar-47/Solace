@@ -61,8 +61,10 @@ produces.
    good starting point.
 2. **Resolution.** The pack is fill-rate bound, not geometry bound. 1600x900 or
    1366x768 is where an HD 5500 lives.
-3. **`-Xmx2G`.** Of 8 GB the desktop wants about 2, and the integrated GPU takes its
-   video memory out of the same pool.
+3. **Java: 3 GB, minimum equal to maximum.** `-Xms3G -Xmx3G` with the G1 flags, not
+   more — on 8 GB the desktop and the integrated GPU need the rest, and heap does not
+   raise frame rate, only smooth out hitching. All of it, with copy-paste arguments,
+   swap and the BIOS setting: [docs/linux-jvm.md](docs/linux-jvm.md).
 4. Start on the `LowEnd` profile, then try `Default`. `Beauty` and `PerformancePlus`
    exist for machines with more headroom.
 
@@ -72,6 +74,7 @@ produces.
 Solace-LowEnd/            the pack: copy this folder into shaderpacks/
   README.md               its own documentation: options, profiles, troubleshooting
   shaders/                the GLSL, block lists, languages, texture generator
+docs/linux-jvm.md         heap, JVM flags, swap and the iGPU on 8 GB / Mint XFCE
 tools/                    the checks that run in CI, also runnable by hand
 .github/workflows/        validation on every push, packaging on a version tag
 ```
