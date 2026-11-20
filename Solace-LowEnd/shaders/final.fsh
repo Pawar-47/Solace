@@ -49,7 +49,8 @@ varying vec2 texcoord;
 #define SOL_GOLDEN_ANGLE 2.39996322972865332
 
 /* My own tone curve. Monotonic, 1.0 in gives about 0.73 out and 2.0 gives about
-   0.93, so highlights roll off instead of clipping. */vec3 toneCurve(vec3 x) {
+   0.93, so highlights roll off instead of clipping. */
+vec3 toneCurve(vec3 x) {
     x = max(x, vec3(0.0));
     return (x * (2.0 + x)) / (x * (x + 1.5) + 1.6);
 }
@@ -327,7 +328,10 @@ void main() {
         vec2 direction = vec2(cos(startTurn), sin(startTurn));
         float ca = cos(SOL_GOLDEN_ANGLE);
         float sa = sin(SOL_GOLDEN_ANGLE);
-        float radius = 0.0;
+        /* The radius is an offset in uv, so it is a vec2: the tap walk adds one
+           `pixel`-sized ring per tap, which is exactly the radii the old form
+           computed from the loop counter. */
+        vec2 radius = vec2(0.0);
 
         for (int i = 0; i < 8; i++) {
             radius += BLOOM_RADIUS * 0.12 * pixel;
