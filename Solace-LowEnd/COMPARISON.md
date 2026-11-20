@@ -580,3 +580,18 @@ Noted, not changed: the reference derives its dither shift from Iris's `random()
 animate; the reference's is genuinely per-frame random rather than a one-second
 cycle, and switching would mean threading one more uniform through five programs for
 a difference the eye cannot resolve at one 8-bit step of amplitude.
+
+
+
+## 16. Ninth pass: ambient occlusion over water, and closing the audit
+
+| # | Reference behaviour | Mine before | Fix |
+| --- | --- | --- | --- |
+| 68 | `deferred_fragment.glsl` computes the screen-space AO **before** the translucent geometry is drawn, so a water pixel is never occluded by the shape of the river bed under it | AO ran in `final`, after everything, against `depthtex0` - which holds only the opaque scene. On water and glass it therefore read the depth of whatever was *behind* the surface and drew that shape onto it | `final` now compares `depthtex0` with `depthtex1` (which includes translucents) and skips the occlusion where they differ, i.e. exactly on the translucent surfaces. The reference solves the same problem by pass order; this pack has one pass fewer, so it solves it with one comparison |
+
+That closes the audit. Every reference file that has a counterpart here has been read
+line by line (80 files, 6,321 lines of the reference), 68 findings are recorded above,
+and what remains is the list this document keeps repeating because it is true: the
+Distant Horizons and Voxy families (no counterpart), coloured shadows and shadow lock
+(need a second shadow target and a pass switch the pack cannot ask for), the three PNG
+textures (everything here is computed), and native-reviewed translations.

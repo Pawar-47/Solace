@@ -41,6 +41,7 @@ result back in colortex0.
 uniform sampler2D SCENE;
 uniform sampler2D colortex6;
 uniform sampler2D depthtex0;
+uniform sampler2D depthtex1;
 
 varying vec2 texcoord;
 
@@ -286,7 +287,18 @@ void main() {
     #endif
 
     #if AO == 1
-        colour *= screenSpaceAO(uv);
+        /* The occlusion is measured from `depthtex0`, which holds the opaque scene
+           only. On a water or glass pixel that depth belongs to whatever is *behind*
+           the surface, so darkening by it would draw the shape of the river bed onto
+           the water. `depthtex1` includes the translucent geometry: where the two
+           differ, this pixel is in front of the opaque depth and is left alone. The
+           reference avoids the question by computing its AO in the deferred pass,
+           before the water is drawn. */
+        float opaqueDepth = texture2D(depthtex0, uv).r;
+        float surfaceDepth = texture2D(depthtex1, uv).r;
+        if (opaqueDepth - surfaceDepth < 0.00005) {
+            colour *= screenSpaceAO(uv);
+        }
     #endif
 
     #if BLOOM == 1
