@@ -1,17 +1,11 @@
+/* Solace - final.vsh
+One full-screen quad, texture coordinates from the model matrix. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - final.fsh
-Render: Final renderer
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+varying vec2 texcoord;
 
-#define USE_BASIC_SH // Sets the use of a "basic" or "generic" shader for custom dimensions, instead of the default overworld shader. This can solve some rendering issues as the shader is closer to vanilla rendering.
-
-#ifdef USE_BASIC_SH
-    #define UNKNOWN_DIM
-#endif
-#define FINAL_SHADER
-
-/* Config, uniforms, ins, outs */
-#include "/common/final_vertex.glsl"
+void main() {
+    gl_Position = ftransform();
+    texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
+}

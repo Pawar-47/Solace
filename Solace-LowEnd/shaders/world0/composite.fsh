@@ -1,11 +1,8 @@
+/* Solace - world0/composite.fsh
+Overworld light shafts and exposure, with the overworld palette. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - composite.fsh
-Render: Bloom and volumetric light
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_OVERWORLD 1
 
-#define COMPOSITE_SHADER
-
-#include "/common/composite_fragment.glsl"
+#include "/lib/composite_body.glsl"

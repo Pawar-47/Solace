@@ -1,17 +1,17 @@
+/* Solace - gbuffers_skybasic.vsh
+The sky dome. Only the texture coordinates are needed: the fragment stage
+rebuilds a ray per pixel from the projection matrices, so the dome shape does
+not matter. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_skybasic.vsh
-Render: Sky
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#include "/lib/config.glsl"
+#include "/lib/math.glsl"
+#include "/lib/uniforms.glsl"
 
-#define USE_BASIC_SH // Sets the use of a "basic" or "generic" shader for custom dimensions, instead of the default overworld shader. This can solve some rendering issues as the shader is closer to vanilla rendering.
+varying vec2 texcoord;
 
-#ifdef USE_BASIC_SH
-    #define UNKNOWN_DIM
-#endif
-#define GBUFFER_SKYBASIC
-#define NO_SHADOWS
-
-#include "/common/skybasic_vertex.glsl"
+void main() {
+    gl_Position = ftransform();
+    texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
+}

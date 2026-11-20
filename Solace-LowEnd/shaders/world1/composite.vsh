@@ -1,12 +1,15 @@
+/* Solace - world1/composite.vsh
+End light shafts and exposure pass. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - composite.fsh
-Render: Bloom and volumetric light
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_END 1
 
-#define THE_END
-#define COMPOSITE_SHADER
+#include "/lib/config.glsl"
 
-#include "/common/composite_vertex.glsl"
+varying vec2 texcoord;
+
+void main() {
+    gl_Position = ftransform();
+    texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
+}

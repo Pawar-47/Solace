@@ -1,13 +1,8 @@
+/* Solace - world0/gbuffers_clouds.fsh
+Overworld cloud geometry. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_clouds.fsh
-Render: sky, clouds
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_OVERWORLD 1
 
-#define GBUFFER_CLOUDS
-#define NO_SHADOWS
-#define SPECIAL_TRANS
-
-#include "/common/clouds_blocks_fragment.glsl"
+#include "/lib/fragment_clouds.glsl"

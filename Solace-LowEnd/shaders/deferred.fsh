@@ -1,17 +1,23 @@
-#version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - deferred.fsh
-Render: Ambient occlusion, volumetric clouds
+/* Solace - deferred.fsh
+Copies the scene, as it stands before any translucent geometry, into gaux1
+(colortex4). That copy is what the water shader reads when REFRACTION is on, so
+the surface can bend what is behind it instead of only tinting it.
 
-Javier Garduño - GNU Lesser General Public License v3.0
+Only runs when REFRACTION is 1; with it off the pass is switched off in
+shaders.properties and costs nothing.
 */
 
-#define USE_BASIC_SH // Sets the use of a "basic" or "generic" shader for custom dimensions, instead of the default overworld shader. This can solve some rendering issues as the shader is closer to vanilla rendering.
+#version 120
 
-#ifdef USE_BASIC_SH
-    #define UNKNOWN_DIM
-#endif
-#define DEFERRED_SHADER
-#define NO_SHADOWS
+#include "/lib/config.glsl"
 
-#include "/common/deferred_fragment.glsl"
+/* DRAWBUFFERS:4 */
+
+uniform sampler2D colortex0;
+
+varying vec2 texcoord;
+
+void main() {
+    vec4 scene = texture2D(colortex0, texcoord);
+    gl_FragData[0] = vec4(scene.rgb, 1.0);
+}

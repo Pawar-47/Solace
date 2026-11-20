@@ -1,12 +1,8 @@
+/* Solace - world0/gbuffers_skybasic.fsh
+Overworld sky, with the overworld palette. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_skybasic.fsh
-Render: Sky
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_OVERWORLD 1
 
-#define GBUFFER_SKYBASIC
-#define NO_SHADOWS
-
-#include "/common/skybasic_fragment.glsl"
+#include "/lib/fragment_skybasic.glsl"

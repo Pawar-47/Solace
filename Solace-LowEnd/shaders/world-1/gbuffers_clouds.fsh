@@ -1,13 +1,8 @@
+/* Solace - world-1/gbuffers_clouds.fsh
+Nether cloud program: nothing draws here, the palette still comes from the Nether. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_clouds.fsh
-Render: sky, clouds
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_NETHER 1
 
-#define NETHER
-#define GBUFFER_CLOUDS
-#define NO_SHADOWS
-
-#include "/common/clouds_blocks_fragment.glsl"
+#include "/lib/fragment_clouds.glsl"

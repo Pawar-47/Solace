@@ -1,11 +1,8 @@
+/* Solace - world0/gbuffers_hand.vsh
+Overworld held item. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_hand.vsh
-Render: Hand opaque objects
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_OVERWORLD 1
 
-#define GBUFFER_HAND
-
-#include "/common/solid_blocks_vertex.glsl"
+#include "/lib/vertex_geometry.glsl"

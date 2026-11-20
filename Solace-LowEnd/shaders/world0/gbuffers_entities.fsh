@@ -1,11 +1,8 @@
+/* Solace - world0/gbuffers_entities.fsh
+Overworld entities. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_entities.fsh
-Render: Droped objects, mobs and things like that
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_OVERWORLD 1
 
-#define GBUFFER_ENTITIES
-
-#include "/common/solid_blocks_fragment.glsl"
+#include "/lib/fragment_geometry.glsl"

@@ -1,13 +1,8 @@
+/* Solace - world-1/gbuffers_hand.fsh
+Nether held item. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_hand.fsh
-Render: Hand opaque objects
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_NETHER 1
 
-#define NETHER
-#define GBUFFER_HAND
-#define NO_SHADOWS
-
-#include "/common/solid_blocks_fragment.glsl"
+#include "/lib/fragment_geometry.glsl"

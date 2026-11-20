@@ -1,129 +1,279 @@
-#Profiles
-############################
-profile.no_effects=No effects
-profile.shadowless_low=Shadowless Low
-profile.shadowless_medium=Shadowless Medium
-profile.shadowless_high=Shadowless High
-profile.low=Low
-profile.medium=Medium
-profile.high=High
-profile.extremeplus=High (DoF)
+# Solace - en_US.lang
+# Names and tooltips for the options in lib/config.glsl.
 
-profile.comment=The "shadowless" profiles are designed for low-performance machines, disregarding the shadows. Traditional profiles slowly add higher quality shadows and more advanced heavy effects. Please experiment with the available options and find the best combination for you.
+option.WATER_WAVES=Water waves
+option.WATER_WAVES.comment=Animated normals on the water surface. Two noise layers, cheap, but not free.
+value.WATER_WAVES.0=Off
+value.WATER_WAVES.1=On
 
-#About
-#############################
-option.ACERCADE=MakeUp
-option.ACERCADE.comment=Thanks for using this shader! :). Set Optifine native quality controls on normal or default values for better quality.
-value.ACERCADE.0=v.9.6
+option.WAVE_SPEED=Wave speed
+option.WAVE_SPEED.comment=How fast the water surface moves.
 
-#Options
-#############################
-option.SHADOW_CASTING=Shadows
+option.WAVE_SCALE=Wave scale
+option.WAVE_SCALE.comment=Size of the wave pattern. Larger values give smaller, busier waves.
 
-option.SHADOW_DISTANCE_SLIDER=Shadow distance
-value.SHADOW_DISTANCE_SLIDER.0=Short
-value.SHADOW_DISTANCE_SLIDER.1=Medium
-value.SHADOW_DISTANCE_SLIDER.2=Far
+option.WATER_OPACITY=Water opacity
+option.WATER_OPACITY.comment=How much of the bottom shows through the water. Higher is more solid.
 
-option.SHADOW_QTY_SLIDER=Shadow quality
-value.SHADOW_QTY_SLIDER.0=None
-value.SHADOW_QTY_SLIDER.1=Low
-value.SHADOW_QTY_SLIDER.2=Medium
-value.SHADOW_QTY_SLIDER.3=High
+option.WATER_REFLECTION=Water reflection
+option.WATER_REFLECTION.comment=Paints the sky onto the water surface, stronger at shallow angles.
+value.WATER_REFLECTION.0=Off
+value.WATER_REFLECTION.1=On
 
-option.REFLECTION_SLIDER=Reflection
-value.REFLECTION_SLIDER.0=Off
-value.REFLECTION_SLIDER.1=Flipped image
-value.REFLECTION_SLIDER.2=Raymarching
+option.WATER_GLINT=Sun glint
+option.WATER_GLINT.comment=Highlight where the sun or moon reflects off the water.
+value.WATER_GLINT.0=Off
+value.WATER_GLINT.1=On
 
-option.SHADOW_TYPE=Shadow type
-value.SHADOW_TYPE.0=Simple
-value.SHADOW_TYPE.1=Filtered
+option.FOG_DENSITY=Fog density
+option.FOG_DENSITY.comment=How quickly the world fades into the sky colour with distance.
 
-option.SHADOW_BLUR=Shadow blur intensity
+option.UNDERWATER_FOG=Underwater fog
+option.UNDERWATER_FOG.comment=Dense blue-green fog while the camera is in water.
+value.UNDERWATER_FOG.0=Off
+value.UNDERWATER_FOG.1=On
 
-option.COLORED_SHADOW=Colored shadows
+option.SUN_SHADING=Sun shading
+option.SUN_SHADING.comment=Adds a directional sun term to lit surfaces. There is no shadow map in this pack, so skylight still decides what is lit.
+value.SUN_SHADING.0=Off
+value.SUN_SHADING.1=On
 
-option.VOL_LIGHT=Godrays
-value.VOL_LIGHT.0=Disabled
-value.VOL_LIGHT.1=Depth based
-value.VOL_LIGHT.2=Volumetric
+option.BLOCK_LIGHT=Torch light
+option.BLOCK_LIGHT.comment=Strength of torch, lava and other block light.
 
-option.DOF=Depth of field
+option.NIGHT_AMBIENT=Night brightness
+option.NIGHT_AMBIENT.comment=How much light the night sky gives.
 
-option.DOF_STRENGTH=DoF strength
+option.EYE_LIGHT=Night vision
+option.EYE_LIGHT.comment=Let the vanilla night vision effect add light.
+value.EYE_LIGHT.0=Off
+value.EYE_LIGHT.1=On
 
-option.DOF_SAMPLES_FACTOR=DoF samples factor
+option.SKY_SUN_GLOW=Sun halo
+option.SKY_SUN_GLOW.comment=Glow around the sun and the moon.
+value.SKY_SUN_GLOW.0=Off
+value.SKY_SUN_GLOW.1=On
+
+option.SKY_STARS=Stars
+option.SKY_STARS.comment=Stars at night.
+value.SKY_STARS.0=Off
+value.SKY_STARS.1=On
+
+option.EXPOSURE=Exposure
+option.EXPOSURE.comment=Overall brightness before the tone curve.
+
+option.SATURATION=Saturation
+option.SATURATION.comment=Colour strength. 1.0 leaves the image as it is.
+
+option.CONTRAST=Contrast
+option.CONTRAST.comment=Pushes darks and lights apart around mid grey.
+
+option.TONEMAP=Tone curve
+option.TONEMAP.comment=How bright values are rolled into the screen range.
+value.TONEMAP.0=Clamp
+value.TONEMAP.1=Soft
+value.TONEMAP.2=Gentle
+
+option.DITHER=Dither
+option.DITHER.comment=A sub-pixel of noise that hides banding in the sky gradient.
+value.DITHER.0=Off
+value.DITHER.1=On
+
+option.SHADOWS=Cast shadows
+option.SHADOWS.comment=Adds a 1024 shadow map over 96 blocks. A whole second scene render, so it is off: measure it before keeping it on.
+value.SHADOWS.0=Off
+value.SHADOWS.1=On
+
+profile.LowEnd=LowEnd
+profile.Default=Default
+profile.Beauty=Beauty
+
+
+option.WAVING=Plant waving
+option.WAVING.comment=Sways grass, ferns, flowers, crops, saplings and leaves. Uses the ids in block.properties.
+value.WAVING.0=Off
+value.WAVING.1=On
+
+option.WAVE_STRENGTH=Waving strength
+option.WAVE_STRENGTH.comment=How far plants lean. Vertex work on every plant, so it is the first thing to lower.
+
+option.HAND_LIGHT=Held torch light
+option.HAND_LIGHT.comment=A torch, lantern or lava bucket in your hand lights the surfaces within six blocks.
+value.HAND_LIGHT.0=Off
+value.HAND_LIGHT.1=On
+
+option.ENTITY_TINT=Damage tint
+option.ENTITY_TINT.comment=Keeps the red flash on a mob you just hit.
+value.ENTITY_TINT.0=Off
+value.ENTITY_TINT.1=On
+
+option.SHADOW_SOFT=Soft shadows
+option.SHADOW_SOFT.comment=Four-tap filtered shadow lookup instead of one hard tap. Ignores the shadow option being off.
+value.SHADOW_SOFT.0=Hard
+value.SHADOW_SOFT.1=Soft
 
 option.AO=Ambient occlusion
+option.AO.comment=Screen-space occlusion from the depth buffer, applied in the final pass. Six taps per pixel, so measure it.
 value.AO.0=Off
 value.AO.1=On
 
-option.AOSTEPS=AO sample pairs
-
 option.AO_STRENGTH=AO strength
+option.AO_STRENGTH.comment=How dark the corners get.
 
-option.AA_TYPE=Temporal sampling
-value.AA_TYPE.0=Off
-value.AA_TYPE.1=Denoise
-value.AA_TYPE.2=TAA
-value.AA_TYPE.3=TAA+
+option.AO_RADIUS=AO radius
+option.AO_RADIUS.comment=How far the occlusion reaches. Larger values are softer and cheaper to look at.
 
-option.MOTION_BLUR=Motion blur
-option.MOTION_BLUR_STRENGTH=Motion blur strength
-option.MOTION_BLUR_SAMPLES=Motion blur samples
+option.BLOOM=Bloom
+option.BLOOM.comment=Bright-pass glow gathered in the final pass. Eight taps per pixel.
+value.BLOOM.0=Off
+value.BLOOM.1=On
 
-option.VANILLA_WATER=Vanilla like water
+option.BLOOM_STRENGTH=Bloom strength
+option.BLOOM_STRENGTH.comment=How much glow is added back.
 
-option.WATER_TEXTURE=Water texture
-value.WATER_TEXTURE.0=No
-value.WATER_TEXTURE.1=Yes
+option.BLOOM_RADIUS=Bloom radius
+option.BLOOM_RADIUS.comment=How far the glow spreads.
 
-option.WATER_COLOR_SOURCE=Water color
-value.WATER_COLOR_SOURCE.0=Shader scheme
-value.WATER_COLOR_SOURCE.1=Resource Pack
+option.CHROMA_ABER=Chromatic aberration
+option.CHROMA_ABER.comment=Splits red and blue towards the edges of the screen.
+value.CHROMA_ABER.0=Off
+value.CHROMA_ABER.1=On
 
-option.REFLECTION=Reflection
-value.REFLECTION.0=Off
-value.REFLECTION.1=On
+option.CHROMA_STRENGTH=Aberration strength
+option.CHROMA_STRENGTH.comment=How far red and blue separate.
 
-option.REFRACTION=Refraction
+option.IMAGE_SHARPENING=Sharpening
+option.IMAGE_SHARPENING.comment=Unsharp mask against the four neighbouring pixels.
+value.IMAGE_SHARPENING.0=Off
+value.IMAGE_SHARPENING.1=On
+
+option.SHARPEN=Sharpening amount
+option.SHARPEN.comment=How strong the unsharp mask is.
+
+option.COLOR_BLINDNESS=Colour-blindness aid
+option.COLOR_BLINDNESS.comment=Pulls the picture towards the channels one kind of colour weakness still separates.
+value.COLOR_BLINDNESS.0=Off
+value.COLOR_BLINDNESS.1=On
+
+option.COLOR_BLIND_MODE=Aid mode
+option.COLOR_BLIND_MODE.comment=Which weakness to help with.
+value.COLOR_BLIND_MODE.0=None
+value.COLOR_BLIND_MODE.1=Red-weak
+value.COLOR_BLIND_MODE.2=Green-weak
+value.COLOR_BLIND_MODE.3=Blue-weak
+
+
+option.REFRACTION=Water refraction
+option.REFRACTION.comment=Bends what is behind the water. Needs a copy of the scene, so it costs a full-screen pass.
 value.REFRACTION.0=Off
 value.REFRACTION.1=On
 
-option.SSR_TYPE=Reflection type
-value.SSR_TYPE.0=Flipped image
-value.SSR_TYPE.1=Raymarching
+option.WATER_ABSORPTION=Water absorption
+option.WATER_ABSORPTION.comment=How fast light dies as it travels through water. Only used with refraction on.
 
-option.SUN_REFLECTION=Sun reflection
-value.SUN_REFLECTION.0=Off
-value.SUN_REFLECTION.1=On
+option.V_CLOUDS=Volumetric clouds
+option.V_CLOUDS.comment=A slab of procedural cloud marched in the sky pass. No texture, but several noise samples per sky pixel.
+value.V_CLOUDS.0=Off
+value.V_CLOUDS.1=On
 
-option.CLOUD_REFLECTION=Vol. clouds reflection
+option.CLOUD_STEPS=Cloud samples
+option.CLOUD_STEPS.comment=Samples taken through the cloud slab. The main cost of the effect.
 
-option.WAVING=Waving plants
-value.WAVING.0=No
-value.WAVING.1=Yes
+option.CLOUD_COVERAGE=Cloud coverage
+option.CLOUD_COVERAGE.comment=How much of the sky the clouds fill.
 
-option.CHROMA_ABER=Chroma aberration
-value.CHROMA_ABER.0=No
-value.CHROMA_ABER.1=Yes
+option.DOF=Depth of field
+option.DOF.comment=Blurs away from the block in the centre of the screen.
+value.DOF.0=Off
+value.DOF.1=On
 
-option.CHROMA_ABER_STRENGTH=Chroma aberration strength
+option.DOF_STRENGTH=Depth of field strength
+option.DOF_STRENGTH.comment=How quickly the blur grows away from the focus plane.
 
-option.WATER_ABSORPTION=Water absorption index
+option.AA_TYPE=Antialiasing
+option.AA_TYPE.comment=Temporal uses a history buffer and a sub-pixel jitter. FXAA blends along detected edges. Both together give the cleanest edges.
+value.AA_TYPE.0=Off
+value.AA_TYPE.1=Temporal
+value.AA_TYPE.2=Temporal + FXAA
+value.AA_TYPE.3=FXAA only
 
-option.WATER_TURBULENCE=Waves strength
-value.WATER_TURBULENCE.7.0=Very low
-value.WATER_TURBULENCE.1.75=Low
-value.WATER_TURBULENCE.0.9=Medium
-value.WATER_TURBULENCE.0.5=High
+option.TAA_WEIGHT=Temporal blend
+option.TAA_WEIGHT.comment=How much of the previous frame survives. Higher is smoother and can ghost.
 
-option.COLOR_SCHEME=Color scheme
+option.FXAA_EDGE=FXAA threshold
+option.FXAA_EDGE.comment=How much contrast counts as an edge. Lower blurs more.
+
+option.MOTION_BLUR=Motion blur
+option.MOTION_BLUR.comment=Blurs along the path the camera moved since the last frame.
+value.MOTION_BLUR.0=Off
+value.MOTION_BLUR.1=On
+
+option.MOTION_BLUR_SAMPLES=Motion blur samples
+option.MOTION_BLUR_SAMPLES.comment=Samples along the path.
+
+option.MOTION_BLUR_STRENGTH=Motion blur strength
+option.MOTION_BLUR_STRENGTH.comment=How far the blur reaches. Lower it when the framerate is low.
+
+option.AUTO_EXPOSURE=Auto exposure
+option.AUTO_EXPOSURE.comment=Adapts the exposure to the brightness of the scene and smooths it over frames.
+value.AUTO_EXPOSURE.0=Off
+value.AUTO_EXPOSURE.1=On
+
+option.AUTO_EXPOSURE_SPEED=Exposure speed
+option.AUTO_EXPOSURE_SPEED.comment=How fast the exposure follows the scene.
+
+option.VOL_LIGHT=Light shafts
+option.VOL_LIGHT.comment=Marks how much open sky lies between a surface and the sun, and adds sunlight there.
+value.VOL_LIGHT.0=Off
+value.VOL_LIGHT.1=On
+
+option.VOL_LIGHT_SAMPLES=Shaft samples
+option.VOL_LIGHT_SAMPLES.comment=Steps taken towards the sun. The main cost of the effect.
+
+option.VOL_LIGHT_STRENGTH=Light shaft strength
+option.VOL_LIGHT_STRENGTH.comment=How much sunlight is added.
+
+
+option.WATER_SSR=Water reflections
+option.WATER_SSR.comment=Marchers the reflected ray through the scene copy, so water reflects the world and not only the sky. Costs one march per water pixel.
+value.WATER_SSR.0=Off
+value.WATER_SSR.1=On
+
+option.SSR_STEPS=Reflection steps
+option.SSR_STEPS.comment=Steps of that march. More steps reach further.
+
+option.WATER_TEXTURE=Water texture
+option.WATER_TEXTURE.comment=Use the resource pack's water texture as the base colour.
+value.WATER_TEXTURE.0=Off
+value.WATER_TEXTURE.1=On
+
+option.VANILLA_WATER=Vanilla water colour
+option.VANILLA_WATER.comment=Use vanilla's biome water colour alone, without the pack's tint.
+value.VANILLA_WATER.0=Off
+value.VANILLA_WATER.1=On
+
+option.MATERIAL_GLOSS=Material gloss
+option.MATERIAL_GLOSS.comment=A highlight on metal, polished blocks and fabric, from the ids in block.properties.
+value.MATERIAL_GLOSS.0=Off
+value.MATERIAL_GLOSS.1=On
+
+option.GLOSS_STRENGTH=Gloss strength
+option.GLOSS_STRENGTH.comment=How bright the material highlight is.
+
+option.SHADOW_QTY_SLIDER=Shadow quality
+option.SHADOW_QTY_SLIDER.comment=Shadow map resolution. Only used when cast shadows are on.
+
+option.SHADOW_DISTANCE_SLIDER=Shadow distance
+option.SHADOW_DISTANCE_SLIDER.comment=How far shadows reach. Only used when cast shadows are on.
+
+option.SHADOW_BLUR=Shadow softness
+option.SHADOW_BLUR.comment=How far the shadow taps spread.
+
+option.COLOR_SCHEME=Colour scheme
+option.COLOR_SCHEME.comment=The sky and light palette. Custom uses the six values below.
 value.COLOR_SCHEME.0=Ethereal
-value.COLOR_SCHEME.1=New shoka
-value.COLOR_SCHEME.2=Shoka
+value.COLOR_SCHEME.1=Shoka
+value.COLOR_SCHEME.2=Classic
 value.COLOR_SCHEME.3=Legacy
 value.COLOR_SCHEME.4=Captain
 value.COLOR_SCHEME.5=Psychedelic
@@ -131,175 +281,15 @@ value.COLOR_SCHEME.6=Cocoa
 value.COLOR_SCHEME.7=Testigo
 value.COLOR_SCHEME.99=Custom
 
-option.LIGHT_SUNSET_COLOR_R=Sunset light R
-option.LIGHT_SUNSET_COLOR_G=Sunset light G
-option.LIGHT_SUNSET_COLOR_B=Sunset light B
-
-option.LIGHT_DAY_COLOR_R=Day light R
-option.LIGHT_DAY_COLOR_G=Day light G
-option.LIGHT_DAY_COLOR_B=Day light B
-
-option.LIGHT_NIGHT_COLOR_R=Night light R
-option.LIGHT_NIGHT_COLOR_G=Night light G
-option.LIGHT_NIGHT_COLOR_B=Night light B
-
-option.ZENITH_SUNSET_COLOR_R=Zenith sunset R
-option.ZENITH_SUNSET_COLOR_G=Zenith sunset G
-option.ZENITH_SUNSET_COLOR_B=Zenith sunset B
-
-option.ZENITH_DAY_COLOR_R=Zenith day R
-option.ZENITH_DAY_COLOR_G=Zenith day G
-option.ZENITH_DAY_COLOR_B=Zenith day B
-
-option.ZENITH_NIGHT_COLOR_R=Zenith night R
-option.ZENITH_NIGHT_COLOR_G=Zenith night G
-option.ZENITH_NIGHT_COLOR_B=Zenith night B
-
-option.HORIZON_SUNSET_COLOR_R=Horizon sunset R
-option.HORIZON_SUNSET_COLOR_G=Horizon sunset G
-option.HORIZON_SUNSET_COLOR_B=Horizon sunset B
-
-option.HORIZON_DAY_COLOR_R=Horizon day R
-option.HORIZON_DAY_COLOR_G=Horizon day G
-option.HORIZON_DAY_COLOR_B=Horizon day B
-
-option.HORIZON_NIGHT_COLOR_R=Horizon night R
-option.HORIZON_NIGHT_COLOR_G=Horizon night G
-option.HORIZON_NIGHT_COLOR_B=Horizon night B
-
-option.WATER_COLOR_R=Water R
-option.WATER_COLOR_G=Water G
-option.WATER_COLOR_B=Water B
-
-option.NV_COLOR_R=Night vision R multiplier
-option.NV_COLOR_G=Night vision G multiplier
-option.NV_COLOR_B=Night vision B multiplier
-
-option.OMNI_TINT_CUSTOM=Omni tint
-
-option.AVOID_DARK_LEVEL=Cave brightness
-
-option.NIGHT_BRIGHT=Night brightness
-
-option.V_CLOUDS=Clouds
-value.V_CLOUDS.0=Vanilla
-value.V_CLOUDS.1=Volumetric static
-value.V_CLOUDS.2=Volumetric dyn.
-
-option.CLOUD_VOL_STYLE=Volumetric cloud style
-value.CLOUD_VOL_STYLE.0=Natural
-value.CLOUD_VOL_STYLE.1=Boxy
-
-option.CLOUD_SPEED=Clouds speed
-value.CLOUD_SPEED.0=Normal
-value.CLOUD_SPEED.1=Time lapse 1
-value.CLOUD_SPEED.2=Time lapse 2
-
-option.END_CLOUDS=Clouds in The End
-
-option.CLOUD_STEPS_AVG=Cloud samples
-
-option.BLOOM=Bloom
-
-option.COLOR_BLINDNESS=Color blindness
-
-option.COLOR_BLIND_MODE=CB type
-value.COLOR_BLIND_MODE.0=Protanopia
-value.COLOR_BLIND_MODE.1=Deuteranopia
-value.COLOR_BLIND_MODE.2=Tritanopia
-
-option.DEBUG_MODE=Debug mode
-
-option.BLOOM_SAMPLES=Bloom sample pairs
-
-option.BLACK_ENTITY_FIX=Black entity BUGFIX
-value.BLACK_ENTITY_FIX.0=Off
-value.BLACK_ENTITY_FIX.1=On
-
-option.FOG_ACTIVE=Fog enabled
-
-option.FOG_ADJUST=Fog intensity
-value.FOG_ADJUST.20.0=No fog
-value.FOG_ADJUST.10.0=Ultra low
-value.FOG_ADJUST.8.0=Very low
-value.FOG_ADJUST.4.0=Low
-value.FOG_ADJUST.2.0=Medium
-value.FOG_ADJUST.1.0=High
-
-option.NETHER_FOG_DISTANCE=Nether fog distance
-value.NETHER_FOG_DISTANCE.0=Render Distance
-value.NETHER_FOG_DISTANCE.1=Vanilla
-
-option.BLOCKLIGHT_TEMP=Blocklight temp
-value.BLOCKLIGHT_TEMP.0=Warmer
-value.BLOCKLIGHT_TEMP.1=Warm
-value.BLOCKLIGHT_TEMP.2=Yellow
-value.BLOCKLIGHT_TEMP.3=Pale yellow
-value.BLOCKLIGHT_TEMP.4=White light
-
-option.sunPathRotation=Sun angle
-
-option.USE_BASIC_SH=Custom dimensions basic shader
-
-option.MATERIAL_GLOSS=Material gloss
-
-option.DYN_HAND_LIGHT=Fake dynamic light
-
-#Screens
-screen.ADVANCED_SCREEN=Advanced options
-screen.ADVANCED_SCREEN.comment=Set advanced options
-
-screen.COMPATIBILITY_SCREEN=Compatibility
-screen.COMPATIBILITY_SCREEN.comment=Set compatibility options
-
-screen.SHADOWS_SCREEN=Shadows
-screen.SHADOWS_SCREEN.comment=Set shadows options
-
-option.SHADOW_LOCK=Pixel locked shadows
-value.SHADOW_LOCK.0=Disabled
-value.SHADOW_LOCK.16=16x16
-value.SHADOW_LOCK.32=32x32
-value.SHADOW_LOCK.64=64x64
-value.SHADOW_LOCK.128=128x128
-value.SHADOW_LOCK.256=256x256
-
-screen.DOF_SCREEN=Depth of field
-screen.DOF_SCREEN.comment=Set depth of field options
-
-screen.AO_SCREEN=Ambient occlusion
-screen.AO_SCREEN.comment=Set ambient occlusion options
-
-screen.WATER_SCREEN=Water
-screen.WATER_SCREEN.comment=Set water options.
-
-screen.POST_SCREEN= Post effects
-screen.POST_SCREEN.comment=Set post effects options.
-
-screen.LIGHT_SCREEN=Light
-screen.LIGHT_SCREEN.comment=Set light options.
-
-screen.CLOUDS_SCREEN=Sun & clouds
-screen.CLOUDS_SCREEN.comment=Set sun and clouds options.
-
-screen.FOG_SCREEN=Fog
-screen.FOG_SCREEN.comment=Set fog options
-
-screen.MOTION_BLUR_SCREEN=Motion blur
-screen.MOTION_BLUR_SCREEN.comment=Set motion blur options
-
-screen.ACCESIBILITY_SCREEN=Accesibility
-screen.ACCESIBILITY_SCREEN.comment=Set accesibility options
-
-screen.CUSTOM_COLORS_SCREEN=Custom colors
-screen.CUSTOM_COLORS_SCREEN.comment=Set custom colors
-screen.CUSTOM_COLORS_DAY=Day custom colors
-screen.CUSTOM_COLORS_SUNSET=Sunset/dawn custom colors
-screen.CUSTOM_COLORS_NIGHT=Night custom colors
-screen.CUSTOM_COLORS_WATER=Water custom color
-screen.CUSTOM_COLORS_NV=Night vision custom color
-
-option.IMAGE_SHARPENING=Image sharpening
-option.SHARPENING=Sharpen strength
-
-option.SELECTIVE_TAA_V2=Selective temporal sampling
-option.SELECTIVE_TAA_V2.comment=Selectively apply temporal supersampling to avoid the ghosting effect that entities can produce. Medium impact.
+option.CUSTOM_ZENITH_R=Custom zenith red
+option.CUSTOM_ZENITH_R.comment=Red of the custom sky colour overhead.
+option.CUSTOM_ZENITH_G=Custom zenith green
+option.CUSTOM_ZENITH_G.comment=Green of the custom sky colour overhead.
+option.CUSTOM_ZENITH_B=Custom zenith blue
+option.CUSTOM_ZENITH_B.comment=Blue of the custom sky colour overhead.
+option.CUSTOM_HORIZON_R=Custom horizon red
+option.CUSTOM_HORIZON_R.comment=Red of the custom sky colour at the horizon.
+option.CUSTOM_HORIZON_G=Custom horizon green
+option.CUSTOM_HORIZON_G.comment=Green of the custom sky colour at the horizon.
+option.CUSTOM_HORIZON_B=Custom horizon blue
+option.CUSTOM_HORIZON_B.comment=Blue of the custom sky colour at the horizon.

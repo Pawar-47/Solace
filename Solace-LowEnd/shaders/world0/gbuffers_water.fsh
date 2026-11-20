@@ -1,12 +1,8 @@
+/* Solace - world0/gbuffers_water.fsh
+Overworld water and translucent blocks. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_water.fsh
-Render: Water and translucent blocks
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_OVERWORLD 1
 
-#define GBUFFER_WATER
-#define WATER_F
-
-#include "/common/water_blocks_fragment.glsl"
+#include "/lib/fragment_water.glsl"

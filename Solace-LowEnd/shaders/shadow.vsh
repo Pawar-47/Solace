@@ -1,14 +1,19 @@
+/* Solace - shadow.vsh
+The shadow pass, which only runs when SHADOWS is 1. Nothing here shades
+anything: the vertex stage is the plain transform plus the texture coordinates
+and tint the fragment stage needs for its alpha test. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - shadow.fsh
-Render: Shadowmap
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#include "/lib/config.glsl"
+#include "/lib/uniforms.glsl"
+#include "/lib/shadowmap.glsl"
 
-#ifdef USE_BASIC_SH
-    #define UNKNOWN_DIM
-#endif
-#define SHADOW_SHADER
+varying vec2 texcoord;
+varying vec4 tint;
 
-#include "/common/shadow_vertex.glsl"
+void main() {
+    gl_Position = ftransform();
+    texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
+    tint = gl_Color;
+}

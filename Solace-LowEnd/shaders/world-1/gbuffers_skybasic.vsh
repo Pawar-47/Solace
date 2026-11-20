@@ -1,13 +1,17 @@
+/* Solace - world-1/gbuffers_skybasic.vsh
+Nether sky: the dome is drawn with the Nether's ceiling colour. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_skybasic.vsh
-Render: Sky
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_NETHER 1
 
-#define NETHER
-#define GBUFFER_SKYBASIC
-#define NO_SHADOWS
+#include "/lib/config.glsl"
+#include "/lib/math.glsl"
+#include "/lib/uniforms.glsl"
 
-#include "/common/skybasic_vertex.glsl"
+varying vec2 texcoord;
+
+void main() {
+    gl_Position = ftransform();
+    texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
+}

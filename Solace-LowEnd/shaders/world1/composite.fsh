@@ -1,12 +1,8 @@
+/* Solace - world1/composite.fsh
+End light shafts and exposure, with the End palette. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - composite.fsh
-Render: Bloom and volumetric light
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_END 1
 
-#define THE_END
-#define COMPOSITE_SHADER
-
-#include "/common/composite_fragment.glsl"
+#include "/lib/composite_body.glsl"

@@ -1,17 +1,24 @@
+/* Solace - gbuffers_skytextured.fsh
+The sun disc and the moon disc. Brighter by day, lifted a little at night so
+the moon stays readable through the fog colour. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_skytextured.fsh
-Render: sun, moon
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#include "/lib/config.glsl"
+#include "/lib/math.glsl"
+#include "/lib/sky_model.glsl"
 
-#define USE_BASIC_SH // Sets the use of a "basic" or "generic" shader for custom dimensions, instead of the default overworld shader. This can solve some rendering issues as the shader is closer to vanilla rendering.
+uniform sampler2D gcolor;
 
-#ifdef USE_BASIC_SH
-    #define UNKNOWN_DIM
-#endif
-#define GBUFFER_SKYTEXTURED
-#define NO_SHADOWS
+varying vec2 texcoord;
+varying vec4 tint;
 
-#include "/common/skytextured_fragment.glsl"
+void main() {
+    vec4 disc = texture2D(gcolor, texcoord);
+    if (disc.a < 0.01) discard;
+
+    float bright = 1.0 + sat(sunHeight()) * 0.80 + (1.0 - dayFactor()) * 0.25;
+    vec3 colour = disc.rgb * tint.rgb * bright;
+
+    gl_FragData[0] = vec4(colour, disc.a * tint.a);
+}

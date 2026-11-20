@@ -1,13 +1,8 @@
+/* Solace - world0/gbuffers_terrain.vsh
+Overworld entry point: the shared vertex library, marked for the overworld. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_terrain.vsh
-Render: Almost everything
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_OVERWORLD 1
 
-#define GBUFFER_TERRAIN
-#define FOLIAGE_V
-#define EMMISIVE_V
-
-#include "/common/solid_blocks_vertex.glsl"
+#include "/lib/vertex_geometry.glsl"

@@ -1,12 +1,8 @@
+/* Solace - world1/gbuffers_textured.fsh
+End particles. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_textured.fsh
-Render: Particles
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_END 1
 
-#define THE_END
-#define GBUFFER_TEXTURED
-
-#include "/common/solid_blocks_fragment.glsl"
+#include "/lib/fragment_geometry.glsl"

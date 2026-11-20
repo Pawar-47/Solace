@@ -1,13 +1,8 @@
+/* Solace - world-1/gbuffers_skybasic.fsh
+Nether sky, with the Nether palette and no sun, moon or stars. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_skybasic.fsh
-Render: Sky
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_NETHER 1
 
-#define NETHER
-#define GBUFFER_SKYBASIC
-#define NO_SHADOWS
-
-#include "/common/skybasic_fragment.glsl"
+#include "/lib/fragment_skybasic.glsl"

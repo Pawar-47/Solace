@@ -1,13 +1,8 @@
+/* Solace - world0/gbuffers_entities_glowing.fsh
+Overworld glowing outline. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_entities_glowing.fsh
-Render: Droped objects, mobs and things like that... glowing
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_OVERWORLD 1
 
-#define GBUFFER_ENTITIES
-#define GBUFFER_ENTITY_GLOW
-
-#include "/common/solid_blocks_fragment.glsl"
-
+#include "/lib/fragment_glowing.glsl"

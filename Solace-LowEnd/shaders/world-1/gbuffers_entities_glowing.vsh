@@ -1,14 +1,8 @@
+/* Solace - world-1/gbuffers_entities_glowing.vsh
+Nether glowing outline. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_entities_glowing.vsh
-Render: Droped objects, mobs and things like that... glowing
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_NETHER 1
 
-#define NETHER
-#define GBUFFER_ENTITIES
-#define GBUFFER_ENTITY_GLOW
-#define CAVEENTITY_V
-
-#include "/common/solid_blocks_vertex.glsl"
+#include "/lib/vertex_geometry.glsl"

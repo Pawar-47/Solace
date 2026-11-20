@@ -4,10 +4,10 @@ This folder is **MakeUp - Ultra Fast v9.6** by Javier Garduño (KDXavier), tuned
 here for an **Intel Core i3-5005U** (2 cores / 4 threads, 15 W), **Intel HD
 Graphics 5500** (24 EUs, no dedicated VRAM) and **8 GB of RAM** on **Linux Mint**.
 
-`INVENTORY.md` lists every file in the pack, what it does, and what it costs.
-`Solace-LowEnd/` is the same pack rebuilt as a standalone shaderpack for this
-machine, and `Solace-LowEnd/README.md` has the install steps plus the launcher and
-in-game settings that matter more than the shader does.
+`INVENTORY.md` lists every file in the reference pack, what it does, and what it
+costs. `Solace-LowEnd/` is a different thing: a shader pack written from scratch
+for this machine, its 48 files mapped out in `Solace-LowEnd/README.md` together
+with the install steps and the settings that matter more than the shader.
 
 ## Licence and credit
 

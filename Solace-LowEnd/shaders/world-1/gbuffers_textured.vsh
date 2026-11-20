@@ -1,13 +1,8 @@
+/* Solace - world-1/gbuffers_textured.vsh
+Nether particles. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - gbuffers_textured.vsh
-Render: Particles
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_NETHER 1
 
-#define NETHER
-#define GBUFFER_TEXTURED
-#define NO_SHADOWS
-
-#include "/common/solid_blocks_vertex.glsl"
+#include "/lib/vertex_geometry.glsl"

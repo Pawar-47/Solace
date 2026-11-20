@@ -7,8 +7,9 @@ own `README.md` and `ParaDesarrolladores.ES.md`, the header of each shader, and
 the `#include` graph).
 
 Totals: **344 files under `shaders/`**, plus 4 documents and one archive at the
-top level. `Solace-LowEnd/` holds the rebuilt copy of the pack described at the
-end of this file.
+top level, and `Solace-LowEnd/` with 51 files of shader code written from scratch
+for this machine - it shares no file and no line with the pack above, which was
+used only as the guide to which programs Minecraft asks for.
 
 ---
 
@@ -23,7 +24,7 @@ end of this file.
 | `OPTIMIZED.md` | 114 | Tuning notes for this machine, with the code checks behind them |
 | `INVENTORY.md` | this file | The inventory and study |
 | `shaders/` | 344 files | The pack itself |
-| `Solace-LowEnd/` | 344 files + `README.md` | The rebuilt pack for the i3-5005U / HD 5500 / 8 GB machine |
+| `Solace-LowEnd/` | 48 files + `README.md` | A shader pack written from scratch for the i3-5005U / HD 5500 / 8 GB machine; the pack above is only its guide to which programs exist |
 
 The upstream publisher's `LICENSE` and `Credits` files are **not** in this folder;
 `README.md` carries the licence text and links instead. Anything redistributed

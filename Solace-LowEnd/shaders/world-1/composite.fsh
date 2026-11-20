@@ -1,13 +1,8 @@
+/* Solace - world-1/composite.fsh
+Nether light shafts and exposure, with the Nether palette. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - composite.fsh
-Render: Bloom and volumetric light
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#define SOLACE_DIM_NETHER 1
 
-#define NETHER
-#define COMPOSITE_SHADER
-#define NO_SHADOWS
-
-#include "/common/composite_fragment.glsl"
+#include "/lib/composite_body.glsl"

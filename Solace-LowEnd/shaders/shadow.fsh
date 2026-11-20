@@ -1,14 +1,21 @@
+/* Solace - shadow.fsh
+Depth only. The alpha test is what keeps leaves, grass and glass from casting
+solid squares, so it has to be here and it has to be the same threshold the
+solid geometry uses. */
+
 #version 120
-#extension GL_ARB_shader_texture_lod : enable
-/* MakeUp - shadow.fsh
-Render: Shadowmap
 
-Javier Garduño - GNU Lesser General Public License v3.0
-*/
+#include "/lib/config.glsl"
+#include "/lib/shadowmap.glsl"
 
-#ifdef USE_BASIC_SH
-    #define UNKNOWN_DIM
-#endif
-#define SHADOW_SHADER
+uniform sampler2D gcolor;
 
-#include "/common/shadow_fragment.glsl"
+varying vec2 texcoord;
+varying vec4 tint;
+
+void main() {
+    vec4 albedo = texture2D(gcolor, texcoord) * tint;
+    if (albedo.a < 0.10) discard;
+
+    gl_FragData[0] = vec4(1.0);
+}
