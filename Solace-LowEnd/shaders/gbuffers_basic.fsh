@@ -9,6 +9,8 @@ all a block outline or a leash can show.
 #include "/lib/config.glsl"
 #include "/lib/math.glsl"
 
+/* DRAWBUFFERS:0 */
+
 varying vec4 tint;
 varying vec3 basicLight;
 

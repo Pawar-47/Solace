@@ -23,6 +23,22 @@ Lighting for solid, textured geometry:
 #include "/lib/sky_model.glsl"
 #include "/lib/shadowmap.glsl"
 
+/* One target: the lit scene. Saying so is not decoration - with no DRAWBUFFERS or
+   RENDERTARGETS directive Iris binds the first eight colour attachments, and Intel
+   only supports seven. Every write to an attachment is bytes, and this program has
+   exactly one to make. */
+/* DRAWBUFFERS:0 */
+
+/* The one thing in this library that can switch off early-Z. Iris draws solid terrain
+   through gbuffers_terrain_solid, which compiles the test out, and cutout terrain
+   through gbuffers_terrain_cutout, which keeps it: with no discard in the solid
+   program the driver keeps early-Z, so terrain hidden behind terrain - the bulk of
+   the overdraw in a world - never reaches this shader at all. OptiFine has no such
+   split and falls back to gbuffers_terrain, where the default below keeps the test. */
+#ifndef SOLACE_ALPHA_TEST
+    #define SOLACE_ALPHA_TEST 1
+#endif
+
 uniform sampler2D gcolor;
 
 void main() {
@@ -42,7 +58,9 @@ void main() {
         albedo.rgb *= 0.95 + solHash(cell.xz + cell.y * 31.7) * 0.10;
     #else
         vec4 albedo = texture2D(gcolor, texcoord) * tint;
-        if (albedo.a < 0.10) discard;
+        #if SOLACE_ALPHA_TEST == 1
+            if (albedo.a < 0.10) discard;
+        #endif
     #endif
 
     #if defined SOLACE_WEATHER

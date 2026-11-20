@@ -29,6 +29,8 @@ by the fresnel curve, and an alpha that closes to opaque at grazing angles.
 #include "/lib/depth_dh.glsl"
 #include "/lib/pack_textures.glsl"
 
+/* DRAWBUFFERS:0 */
+
 uniform sampler2D gcolor;
 uniform sampler2D depthtex0;
 
@@ -149,10 +151,6 @@ void main() {
     vec3 toEye = normalize(-viewSpacePos);
     float viewDist = length(viewSpacePos);
 
-    /* Same de-biased lightmap and candle curve as the solid geometry. */
-    float skyLight = sat(max(lmcoord.y - 0.065, 0.0) * 1.06951871657754);
-    float blockCurve = lmcoord.x * sqrt(lmcoord.x) + solPow6(lmcoord.x * 1.17);
-
     /* One sin() for the whole water pixel, for the same reason as the solid geometry:
        day, dusk, the astro direction and its colour all come from one height. */
     float sunUp = sunHeight();
@@ -161,13 +159,28 @@ void main() {
     vec3 astroDir = normalize(mix(moonPosition, sunPosition, day));
     vec3 astroColour = mix(moonColour() * 2.5, sunColourAt(sat(sunUp)), day);
 
-    vec3 light = ambientColour(day, dusk) * (0.045 + 0.955 * (skyLight * skyLight))
-               + blockLightColour() * blockCurve * BLOCK_LIGHT
-               + astroColour * sat(dot(normal, astroDir)) * 0.35;
+    /* The sky channel is still wanted per pixel: glass mixes by it and the glint is
+       scaled by it. The palette mix and the candle curve are not, when the vertex stage
+       has already done them - it hands water the same ambient-plus-block light it hands
+       solid blocks, which takes a sqrt, a sixth power and the ambient palette out of
+       every water pixel. */
+    float skyLight = sat(max(lmcoord.y - 0.065, 0.0) * 1.06951871657754);
+
+    #if VERTEX_LIGHTING == 1
+        vec3 light = vertexLight;
+    #else
+        float blockCurve = lmcoord.x * sqrt(lmcoord.x) + solPow6(lmcoord.x * 1.17);
+        vec3 light = ambientColour(day, dusk) * (0.045 + 0.955 * (skyLight * skyLight))
+                   + blockLightColour() * blockCurve * BLOCK_LIGHT;
+    #endif
+
+    light += astroColour * sat(dot(normal, astroDir)) * 0.35;
 
     vec3 colour = waterBase * light;
 
-    float fresnel = pow(1.0 - sat(dot(normal, toEye)), 5.0);
+    /* x^5 as four multiplies: the fresnel curve needs a fifth power, and pow() is two
+       special functions for something a mul chain does. */
+    float fresnel = solPow5(1.0 - sat(dot(normal, toEye)));
     float reflection = 0.0;
 
     bool skyReflectionOn = false;
@@ -343,8 +356,10 @@ void main() {
         #if WATER_REFLECTION == 1
             /* The highlight lies on the reflected ray, not on the surface normal,
                and only where that ray reaches the sky: a surface under a roof gets
-               none of it, which the sky lightmap also enforces. */
-            float alignment = sat(dot(normalize(reflectedWorld), astroDir));
+               none of it, which the sky lightmap also enforces.
+               reflectedWorld is a rotation of a unit vector, so it is already unit
+               length - normalising it again was a sqrt for nothing. */
+            float alignment = sat(dot(reflectedWorld, astroDir));
             float glint = smoothstep(0.995, 1.0, alignment);
             colour += astroColour * glint * skyLight * reflectionSky
                     * (1.0 - rainStrength) * 3.0;

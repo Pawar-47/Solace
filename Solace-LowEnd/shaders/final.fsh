@@ -28,6 +28,8 @@ temporal pass, which has already put its result back in colortex0.
 #include "/lib/ssao.glsl"
 #include "/lib/buffers.glsl"
 
+/* DRAWBUFFERS:0 */
+
 #if (AA_TYPE == 1 || AA_TYPE == 2) || MOTION_BLUR == 1
     #define SCENE colortex0
 #elif VOL_LIGHT == 1 || AUTO_EXPOSURE == 1

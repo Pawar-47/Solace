@@ -151,7 +151,7 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
            same block id the near water uses. Only water ripples. */
         bool voxyGlass = (customId == SOLACE_GLASS);
         vec3 toEye = normalize(-view.xyz);
-        float fresnel = pow(1.0 - sat(dot(normal, toEye)), 5.0);
+        float fresnel = solPow5(1.0 - sat(dot(normal, toEye)));
         float voxyAlpha = sat(albedo.a * 0.85 + 0.15);
 
         /* The dome gradient stands in for the sky, and the only world it can reflect is

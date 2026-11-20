@@ -13,6 +13,8 @@ than a ray per pixel because the colour does not depend on the view direction.
 #include "/lib/uniforms.glsl"
 #include "/lib/sky_model.glsl"
 
+/* DRAWBUFFERS:0 */
+
 varying vec2 texcoord;
 
 void main() {

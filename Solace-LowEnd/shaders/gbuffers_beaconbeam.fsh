@@ -8,6 +8,8 @@ The beam is its own light source, so it is brightened and left unfogged. */
 #include "/lib/uniforms.glsl"
 #include "/lib/io_geometry.glsl"
 
+/* DRAWBUFFERS:0 */
+
 uniform sampler2D gcolor;
 
 void main() {

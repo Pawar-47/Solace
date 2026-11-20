@@ -272,7 +272,14 @@ vec3 skyColour(vec3 directionWorld, float day, float dusk, vec3 sunCol) {
            product cannot produce a visible halo. */
         if (sun > 0.02) {
             col += sunCol * pow(sun, 110.0) * 0.80;
-            col += sunCol * pow(sun, 9.0) * 0.075;
+
+            /* The 9th power as four multiplies. Up to about 16, a mul chain is cheaper
+               than the two special functions pow() costs; the tight 110th stays a
+               pow(), because its chain would be longer than that. */
+            float sun2 = sun * sun;
+            float sun4 = sun2 * sun2;
+            float sun8 = sun4 * sun4;
+            col += sunCol * (sun8 * sun) * 0.075;
         }
         if (moon > 0.02) {
             col += moonColour() * pow(moon, 70.0) * 0.60;

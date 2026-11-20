@@ -8,6 +8,8 @@ the moon stays readable through the fog colour. */
 #include "/lib/math.glsl"
 #include "/lib/sky_model.glsl"
 
+/* DRAWBUFFERS:0 */
+
 uniform sampler2D gcolor;
 
 varying vec2 texcoord;

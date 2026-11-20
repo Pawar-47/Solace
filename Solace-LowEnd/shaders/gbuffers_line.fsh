@@ -6,6 +6,8 @@ The line colour, unchanged. */
 #include "/lib/config.glsl"
 #include "/lib/math.glsl"
 
+/* DRAWBUFFERS:0 */
+
 varying vec4 tint;
 
 void main() {

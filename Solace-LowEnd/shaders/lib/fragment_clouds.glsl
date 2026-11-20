@@ -14,6 +14,8 @@ its own palette.
 #include "/lib/io_geometry.glsl"
 #include "/lib/sky_model.glsl"
 
+/* DRAWBUFFERS:0 */
+
 uniform sampler2D gcolor;
 
 void main() {

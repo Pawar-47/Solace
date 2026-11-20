@@ -9,6 +9,8 @@ fogged - only its own alpha matters. */
 #include "/lib/uniforms.glsl"
 #include "/lib/io_geometry.glsl"
 
+/* DRAWBUFFERS:0 */
+
 uniform sampler2D gcolor;
 
 void main() {

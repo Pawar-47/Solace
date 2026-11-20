@@ -85,17 +85,12 @@ void main() {
 
     float exposure = 1.0;
     #if AUTO_EXPOSURE == 1
-        vec3 taps = vec3(0.0);
-        taps += texture2D(colortex0, vec2(0.5, 0.5)).rgb;
-        taps += texture2D(colortex0, vec2(0.25, 0.25)).rgb;
-        taps += texture2D(colortex0, vec2(0.75, 0.25)).rgb;
-        taps += texture2D(colortex0, vec2(0.25, 0.75)).rgb;
-        taps += texture2D(colortex0, vec2(0.75, 0.75)).rgb;
-        taps += texture2D(colortex0, vec2(0.5, 0.2)).rgb;
-        taps += texture2D(colortex0, vec2(0.5, 0.8)).rgb;
-        taps += texture2D(colortex0, vec2(0.2, 0.5)).rgb;
-        taps += texture2D(colortex0, vec2(0.8, 0.5)).rgb;
-        float average = luma(taps / 9.0);
+        /* One fetch from a mip level instead of nine strided taps. colortex0 already
+           carries its mip chain - the bloom gathers from it - and a mip level is a true
+           box average of the whole frame, which is exactly what an exposure value is.
+           Nine taps were nine texture fetches on every pixel of the screen to produce
+           one number. */
+        float average = luma(texture2DLod(colortex0, vec2(0.5), 5.0).rgb);
 
         float target = sat(0.20 / max(average, 0.0005));
         float previous = texture2D(colortex6, vec2(0.5)).r;

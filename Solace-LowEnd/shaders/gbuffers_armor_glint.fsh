@@ -11,6 +11,8 @@ as pure light should not ride up and down with it.
 #include "/lib/config.glsl"
 #include "/lib/math.glsl"
 
+/* DRAWBUFFERS:0 */
+
 uniform sampler2D gcolor;
 
 varying vec2 texcoord;

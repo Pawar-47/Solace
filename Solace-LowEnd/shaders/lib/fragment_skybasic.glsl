@@ -18,6 +18,8 @@ without a second copy of any of it.
 #include "/lib/sky_model.glsl"
 #include "/lib/pack_textures.glsl"
 
+/* DRAWBUFFERS:0 */
+
 varying vec2 texcoord;
 
 vec3 skyViewRay() {
@@ -89,8 +91,13 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
         cloudColour = mix(ambientColour(day, dusk) * 1.15, sunColIn * 1.25, lit * 0.80);
 
         /* Silver lining: thin cloud in front of the sun scatters, thick cloud does
-           not, which is what keeps the edges of a deck bright and its body grey. */
-        float lining = pow(sat(dot(d, sunDir)), 8.0) * (1.0 - density);
+           not, which is what keeps the edges of a deck bright and its body grey.
+           The 8th power is three squarings, cheaper than the two special functions
+           pow() is made of. */
+        float towardsSun = sat(dot(d, sunDir));
+        float towardsSun2 = towardsSun * towardsSun;
+        float towardsSun4 = towardsSun2 * towardsSun2;
+        float lining = towardsSun4 * towardsSun4 * (1.0 - density);
         cloudColour += sunColIn * lining * (1.0 - rainStrength) * 1.60;
 
         cloudColour *= 0.62 + 0.55 * (1.0 - density);

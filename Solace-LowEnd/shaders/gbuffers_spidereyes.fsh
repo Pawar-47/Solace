@@ -8,6 +8,8 @@ Eyes glow on their own: no lightmap, no fog, just their texture lifted. */
 #include "/lib/uniforms.glsl"
 #include "/lib/io_geometry.glsl"
 
+/* DRAWBUFFERS:0 */
+
 uniform sampler2D gcolor;
 
 void main() {
