@@ -38,9 +38,10 @@ reflections and their step count, absorption, and whether the resource pack's wa
 texture or vanilla's colour wins.
 
 **Geometry** — plant waving and its strength, the cheap directional sun term, torch
-light strength and colour temperature, night brightness, night vision, held-light,
-the damage tint, the four material gloss classes and their strength, and the emissive
-boost that keeps glowstone and lava from looking dimmed.
+light strength and colour temperature, night brightness, the floor under the light in
+caves, night vision, held-light, the damage tint, the four material gloss classes and
+their strength, and the emissive boost that keeps glowstone and lava from looking
+dimmed.
 
 **Shadows** — cast shadows and their resolution and distance, the soft-tap filter and
 its spread, coloured shadows, and the refresh lock.
@@ -196,7 +197,8 @@ shaders/
   world1/       the End's
   lang/         nine languages; English carries the full tooltips
   textures/     the generator for the three optional textures, and their mcmeta files
-  block.properties   ten ids: waving, four gloss classes, emissive, portal, water, glass
+  block.properties   ten ids: waving, four gloss classes, emissive, portal, water,
+                     glass - listed twice, in modern and in pre-1.13 names
   item.properties    items that light the world when held
   entity.properties  the two entity ids the pack reacts to
   shaders.properties profiles, the options screen, pass switches, blend state

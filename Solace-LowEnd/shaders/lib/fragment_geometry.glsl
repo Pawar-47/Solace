@@ -100,8 +100,10 @@ void main() {
         facing *= (sky8 * sky2);
     #endif
 
-    /* 5. Ambient: palette colour with a floor, so caves keep some light. */
-    float ambientFloor = 0.045;
+    /* 5. Ambient: palette colour with a floor, so caves keep some light. The floor is
+       the setting a player actually wants here - some machines and monitors turn a
+       cave at 0.045 into a black screen. */
+    float ambientFloor = AVOID_DARK_LEVEL;
     vec3 ambient = ambientColour(day, dusk) * (ambientFloor + (1.0 - ambientFloor) * (skyLight * skyLight));
 
     vec3 light = ambient + candle;

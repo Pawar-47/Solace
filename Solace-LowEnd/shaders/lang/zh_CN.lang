@@ -128,3 +128,6 @@ option.CLOUD_HEIGHT=云层高度
 option.CLOUD_THICKNESS=云层厚度
 option.BLOOM_LOD=泛光范围
 option.AO_FADE=环境光遮蔽距离
+
+
+option.AVOID_DARK_LEVEL=洞穴最低亮度

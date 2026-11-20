@@ -128,3 +128,6 @@ option.CLOUD_HEIGHT=Altura de nubes
 option.CLOUD_THICKNESS=Espesor de nubes
 option.BLOOM_LOD=Extensión del brillo
 option.AO_FADE=Distancia de oclusión
+
+
+option.AVOID_DARK_LEVEL=Luz mínima en cuevas

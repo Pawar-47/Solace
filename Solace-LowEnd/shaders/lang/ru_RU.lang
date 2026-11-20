@@ -128,3 +128,6 @@ option.CLOUD_HEIGHT=Высота облаков
 option.CLOUD_THICKNESS=Толщина облаков
 option.BLOOM_LOD=Размах свечения
 option.AO_FADE=Дистанция затенения
+
+
+option.AVOID_DARK_LEVEL=Минимум света в пещерах

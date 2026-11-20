@@ -128,3 +128,6 @@ option.CLOUD_HEIGHT=Molnhöjd
 option.CLOUD_THICKNESS=Molntjocklek
 option.BLOOM_LOD=Glödutbredning
 option.AO_FADE=Skuggavstånd
+
+
+option.AVOID_DARK_LEVEL=Minimiljus i grottor

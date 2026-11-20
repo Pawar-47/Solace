@@ -128,3 +128,6 @@ option.CLOUD_HEIGHT=Bulut yüksekliği
 option.CLOUD_THICKNESS=Bulut kalınlığı
 option.BLOOM_LOD=Parlama yayılımı
 option.AO_FADE=Gölgeleme mesafesi
+
+
+option.AVOID_DARK_LEVEL=Mağara ışık tabanı

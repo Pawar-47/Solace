@@ -361,3 +361,7 @@ option.BLOOM_LOD.comment=Mip level the glow is gathered from. Higher is wider an
 
 option.AO_FADE=Occlusion distance
 option.AO_FADE.comment=Distance at which the ambient occlusion fades out.
+
+
+option.AVOID_DARK_LEVEL=Cave light floor
+option.AVOID_DARK_LEVEL.comment=The least light a cave or a moonless night gets. Raise it if the dark becomes a black screen on your monitor.

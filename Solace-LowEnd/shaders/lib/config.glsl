@@ -64,6 +64,7 @@ const bool shadowtex1Nearest = false;
 #define BLOCK_LIGHT 1.0        // [0.5 0.75 1.0 1.25 1.5] Torch and lava light strength.
 #define BLOCKLIGHT_TEMP 1      // [0 1 2 3 4] Torch colour: 0 orange, 2 warm white, 4 neutral.
 #define NIGHT_AMBIENT 0.055    // [0.03 0.045 0.055 0.07 0.09]
+#define AVOID_DARK_LEVEL 0.045 // [0.000 0.015 0.030 0.045 0.060] The floor under the light in caves.
 #define EYE_LIGHT 1            // [0 1] Night vision adds light, and tints it.
 #define NV_COLOR_R 1.05        // [0.9 1.0 1.05 1.15 1.3]
 #define NV_COLOR_G 1.00        // [0.9 1.0 1.05 1.15 1.3]

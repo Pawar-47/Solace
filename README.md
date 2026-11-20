@@ -28,13 +28,13 @@ not upwards.
   anti-aliasing, FXAA, motion blur, auto exposure, chromatic aberration, sharpening
 - Distant Horizons and Voxy support, so the far world is lit by the same model as
   the near world
-- 89 options in fourteen sub-screens, and nine languages
+- 90 options in fourteen sub-screens, and nine languages
 
 ## Requirements
 
 - **Iris 1.5.1 or newer**, or OptiFine
-- **Minecraft 1.20 – 1.21** is the comfortable range; older versions load, but the
-  block lists only carry modern block names
+- **Minecraft 1.20 – 1.21** is the comfortable range. Older versions load too: the
+  block lists carry both the modern names and the pre-1.13 ones
 - No mods required. Distant Horizons and Voxy are optional, and are detected if
   present
 
