@@ -1,13 +1,21 @@
 name: Validate shader pack
 
+# The pack ships no build system: it is GLSL that Iris and OptiFine read at load
+# time. What can be checked without a GPU is structure - an include that points
+# nowhere, an unbalanced #if, an option with no name - plus the texture generator,
+# whose output is generated rather than committed. That is this workflow.
+
 on:
   push:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   validate:
-    name: Structure, options and texture generator
+    name: Structure, options and textures
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -18,44 +26,19 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Structural checks
+      - name: Include graph, preprocessor balance, program pairs, DRAWBUFFERS
         run: python3 tools/validate_pack.py
 
-      - name: Generate the pack textures
-        working-directory: Solace-LowEnd/shaders/textures
-        run: |
-          python3 generate_textures.py
-          python3 - <<'PY'
-          import struct, sys
-          for name, width, height in [("noise.png", 256, 256),
-                                      ("clouds.png", 512, 512),
-                                      ("clouds_blocky.png", 512, 512)]:
-              with open(name, "rb") as handle:
-                  head = handle.read(33)
-              if head[:8] != b"\x89PNG\r\n\x1a\n":
-                  sys.exit("%s is not a PNG" % name)
-              if head[12:16] != b"IHDR":
-                  sys.exit("%s has no IHDR" % name)
-              got = struct.unpack(">II", head[16:24])
-              if got != (width, height):
-                  sys.exit("%s is %dx%d, expected %dx%d" % ((name,) + got + (width, height)))
-              print("%s ok, %dx%d" % ((name,) + got))
-          PY
+      - name: Options against the language files
+        run: python3 tools/check_lang.py
 
-      - name: Confirm option and language counts agree
+      - name: Texture generator
+        run: python3 tools/check_textures.py
+
+      - name: Summary
+        if: always()
         run: |
-          python3 - <<'PY'
-          import re, pathlib, sys
-          root = pathlib.Path("Solace-LowEnd/shaders")
-          text = (root / "lib" / "config.glsl").read_text(encoding="utf-8")
-          options = set(re.findall(r"^#define\s+(\w+)\s+[^\s/]+\s*//\s*\[", text, re.M))
-          lang = (root / "lang" / "en_US.lang").read_text(encoding="utf-8")
-          named = set(re.findall(r"^option\.(\w+)(?:\.comment)?=", lang, re.M))
-          missing = sorted(options - named)
-          extra = sorted(named - options)
-          print("options: %d, named in en_US: %d" % (len(options), len(named)))
-          if missing:
-              sys.exit("options without a name: %s" % ", ".join(missing))
-          if extra:
-              sys.exit("names without an option: %s" % ", ".join(extra))
-          PY
+          echo "Shader pack structure validated." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "A failure means a file the game would refuse to load, or a setting" >> "$GITHUB_STEP_SUMMARY"
+          echo "that would appear in the options screen as a raw identifier." >> "$GITHUB_STEP_SUMMARY"
