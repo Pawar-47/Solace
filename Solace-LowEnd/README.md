@@ -23,7 +23,7 @@ Everything here is one pack: the `shaders` folder next to this file.
 
 | Profile | What it is |
 | --- | --- |
-| `LowEnd` | The default. Water waves, reflection and glint off, cheapest fog. This is the one that runs on an HD 5500. |
+| `LowEnd` | The cheapest. Water waves, reflection and glint off, fog at its lightest. This is the one to start with on an HD 5500. |
 | `Default` | Waves, sky reflection and the sun glint on. Still no extra passes. |
 | `Beauty` | Adds the sun halo and stars, brighter exposure and a little more saturation. |
 | `PerformancePlus` | Every effect enabled at its cheapest setting: 512 px shadows over 75 blocks with hard taps, four-step reflections, four-tap occlusion, three-sample shafts, three-sample motion blur, temporal AA, four-sample depth of field, slow auto exposure. The heavy end of this pack, but nothing is turned off. |
