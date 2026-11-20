@@ -112,3 +112,13 @@ option.CUSTOM_AMBIENT=Luz de cielo del tema propio
 option.CUSTOM_WATER_R=Rojo del agua propia
 option.CUSTOM_WATER_G=Verde del agua propia
 option.CUSTOM_WATER_B=Azul del agua propia
+
+
+# Pack textures and the two shadow options.
+option.PACK_TEXTURES=Texturas del paquete
+value.PACK_TEXTURES.0=Calculadas
+value.PACK_TEXTURES.1=Desde archivos
+option.COLORED_SHADOW=Sombras de color
+value.COLORED_SHADOW.0=Desactivado
+value.COLORED_SHADOW.1=Activado
+option.SHADOW_LOCK=Refresco de sombras

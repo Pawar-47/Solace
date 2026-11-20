@@ -38,4 +38,14 @@ const bool colortex3Clear = false;
 const int colortex6Format = R16F;
 const bool colortex6Clear = false;
 
+/* Coloured shadows: the shadow pass writes the colour of whatever it draws into
+   shadowcolor0, so a stained-glass pane or a sheet of water tints the shadow under
+   it. The map is not cleared for two reasons - a shadow lock has to be able to skip
+   a frame without losing the previous map, and a stale colour is no worse than a
+   stale depth that comes with it. Declared unconditionally: a format the pass never
+   writes costs nothing. */
+const int shadowcolor0Format = RGBA16;
+const bool shadowtex0Clear = false;
+const bool shadowcolor0Clear = false;
+
 #endif

@@ -27,6 +27,8 @@ curve, and an alpha that closes to opaque at grazing angles.
 #include "/lib/uniforms.glsl"
 #include "/lib/io_geometry.glsl"
 #include "/lib/sky_model.glsl"
+#include "/lib/depth_dh.glsl"
+#include "/lib/pack_textures.glsl"
 
 uniform sampler2D gcolor;
 uniform sampler2D depthtex0;
@@ -52,28 +54,43 @@ void main() {
 
     #if WATER_WAVES == 1
     if (!glass) {
-        vec2 base = worldSpacePos.xz * (0.42 * WAVE_SCALE);
-        float t = frameTimeCounter * WAVE_SPEED;
-        vec2 p1 = base + vec2(t * 0.85, t * 0.55);
-        vec2 p2 = base * 2.10 - vec2(t * 0.65, t * 0.95);
+        #if PACK_TEXTURES == 1
+            /* Two texture fetches from textures/noise.png instead of the six noise
+               evaluations below, which is the whole reason the file exists. The UVs
+               are the reference's scale, so the ripples match its look. */
+            float t = frameTimeCounter * WAVE_SPEED;
+            vec2 base = worldSpacePos.xz * (0.05 * WAVE_SCALE);
+            vec2 waveA = texture2D(noise, base + vec2(t * 0.040, t * 0.030)).rg - 0.5;
+            vec2 waveB = texture2D(noise, base * 2.0 - vec2(t * 0.050, t * 0.020)).rg - 0.5;
+            vec2 slope = (waveA + waveB * 0.66) * (1.0 - rainStrength * 0.35);
 
-        float e = 0.08;
-        float a0 = solFbm(p1);
-        float ax = solFbm(p1 + vec2(e, 0.0));
-        float az = solFbm(p1 + vec2(0.0, e));
-        float b0 = solFbm3(p2);
-        float bx = solFbm3(p2 + vec2(e, 0.0));
-        float bz = solFbm3(p2 + vec2(0.0, e));
+            vec3 worldNormal = mat3(gbufferModelViewInverse) * normal;
+            worldNormal = normalize(worldNormal + vec3(slope.x, 0.0, slope.y) * 1.10);
+            normal = normalize(mat3(gbufferModelView) * worldNormal);
+        #else
+            vec2 base = worldSpacePos.xz * (0.42 * WAVE_SCALE);
+            float t = frameTimeCounter * WAVE_SPEED;
+            vec2 p1 = base + vec2(t * 0.85, t * 0.55);
+            vec2 p2 = base * 2.10 - vec2(t * 0.65, t * 0.95);
 
-        vec2 slope = vec2(ax - a0, az - a0) * 4.0
-                   + vec2(bx - b0, bz - b0) * 2.0;
+            float e = 0.08;
+            float a0 = solFbm(p1);
+            float ax = solFbm(p1 + vec2(e, 0.0));
+            float az = solFbm(p1 + vec2(0.0, e));
+            float b0 = solFbm3(p2);
+            float bx = solFbm3(p2 + vec2(e, 0.0));
+            float bz = solFbm3(p2 + vec2(0.0, e));
 
-        /* Rain flattens the chop, as the reference's turbulence term does. */
-        slope *= 1.0 - rainStrength * 0.35;
+            vec2 slope = vec2(ax - a0, az - a0) * 4.0
+                       + vec2(bx - b0, bz - b0) * 2.0;
 
-        vec3 worldNormal = mat3(gbufferModelViewInverse) * normal;
-        worldNormal = normalize(worldNormal + vec3(slope.x, 0.0, slope.y) * 0.45);
-        normal = normalize(mat3(gbufferModelView) * worldNormal);
+            /* Rain flattens the chop, as the reference's turbulence term does. */
+            slope *= 1.0 - rainStrength * 0.35;
+
+            vec3 worldNormal = mat3(gbufferModelViewInverse) * normal;
+            worldNormal = normalize(worldNormal + vec3(slope.x, 0.0, slope.y) * 0.45);
+            normal = normalize(mat3(gbufferModelView) * worldNormal);
+        #endif
     }
     #endif
 
@@ -280,6 +297,16 @@ void main() {
                this uses an exponential, which is monotone and cannot overshoot. */
             float surfaceDistance = waterLinearDepth(gl_FragCoord.z);
             float sceneDistance = waterLinearDepth(texture2D(depthtex0, bent).r);
+
+            /* Distant Horizons' terrain is not in depthtex0 at all: it has its own
+               depth buffer and its own near and far planes, so it is linearised
+               separately and the nearer of the two decides how much water the light
+               crossed. Without this an ocean over far terrain looked infinitely deep. */
+            #ifdef DISTANT_HORIZONS
+                float dhDistance = solDhLinearDepth(texture2D(dhDepthTex1, bent).r);
+                sceneDistance = min(sceneDistance, dhDistance);
+            #endif
+
             float thickness = max(sceneDistance - surfaceDistance, 0.0);
 
             /* Nothing behind the surface but sky: the reference treats that as

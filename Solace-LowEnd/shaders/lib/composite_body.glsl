@@ -21,6 +21,7 @@ buffer it reads (colortex0) is never written in the same pass.
 #include "/lib/math.glsl"
 #include "/lib/uniforms.glsl"
 #include "/lib/sky_model.glsl"
+#include "/lib/shadowmap.glsl"
 #include "/lib/buffers.glsl"
 
 /* DRAWBUFFERS:16 */
@@ -66,7 +67,19 @@ void main() {
             float shafts = openSkyTowardsSun(uv);
             vec3 sunDir = mat3(gbufferModelViewInverse) * normalize(sunPosition);
             float towardsSun = sat(sunDir.y * 2.0);
-            colour += sunColour() * shafts * towardsSun * (VOL_LIGHT_STRENGTH * 0.5);
+
+            /* With coloured shadows on, the shafts take the colour of what casts the
+               shadow under them - the same shadowcolor0 the geometry stage reads. */
+            vec3 shaftTint = vec3(1.0);
+            #if SHADOWS == 1 && COLORED_SHADOW == 1
+                vec4 view = gbufferProjectionInverse
+                          * vec4(uv * 2.0 - 1.0, surfaceDepth * 2.0 - 1.0, 1.0);
+                vec3 playerPosition = (gbufferModelViewInverse * (view / view.w)).xyz;
+                shaftTint = shadowTintAt(playerPosition);
+            #endif
+
+            colour += sunColour() * shaftTint * shafts * towardsSun
+                    * (VOL_LIGHT_STRENGTH * 0.5);
         }
     #endif
 

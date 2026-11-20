@@ -112,3 +112,13 @@ option.CUSTOM_AMBIENT=Свет неба своей темы
 option.CUSTOM_WATER_R=Красный своей воды
 option.CUSTOM_WATER_G=Зелёный своей воды
 option.CUSTOM_WATER_B=Синий своей воды
+
+
+# Pack textures and the two shadow options.
+option.PACK_TEXTURES=Текстуры пака
+value.PACK_TEXTURES.0=Вычисляемые
+value.PACK_TEXTURES.1=Из файлов
+option.COLORED_SHADOW=Цветные тени
+value.COLORED_SHADOW.0=Выкл.
+value.COLORED_SHADOW.1=Вкл.
+option.SHADOW_LOCK=Обновление теней

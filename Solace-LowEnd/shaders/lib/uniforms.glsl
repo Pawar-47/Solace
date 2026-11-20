@@ -50,4 +50,14 @@ uniform int isEyeInWater;
 uniform int worldTime;
 uniform int moonPhase;
 
+/* Distant Horizons. The mod renders the far terrain into its own depth buffers, at
+   its own near and far planes, and Iris only fills these when the mod is installed -
+   which is why they are inside the guard. */
+#ifdef DISTANT_HORIZONS
+    uniform sampler2D dhDepthTex0;   // far terrain, opaque
+    uniform sampler2D dhDepthTex1;   // far terrain, with its translucent part
+    uniform float dhNearPlane;
+    uniform float dhFarPlane;
+#endif
+
 #endif

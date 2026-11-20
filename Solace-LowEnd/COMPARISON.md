@@ -225,7 +225,7 @@ How each row was compared:
 
 | My file | Reference counterpart | How | Verdict |
 | --- | --- | --- | --- |
-| `lib/config.glsl` | `lib/config.glsl`, `lib/day_blend.glsl` | read | 86 options (counted, every `#define` with a value list); shadow sliders, palette + custom colours and custom water, torch light temperature, per-effect sample counts |
+| `lib/config.glsl` | `lib/config.glsl`, `lib/day_blend.glsl` | read | 89 options (counted, every `#define` with a value list); shadow sliders, palette + custom colours and custom water, torch light temperature, coloured shadows, shadow lock, pack textures, per-effect sample counts |
 | `lib/math.glsl` | `lib/basic_utils.glsl`, `lib/vector_utils.glsl`, `lib/luma.glsl`, `lib/dither.glsl` | read | hash, noise, dither computed instead of tabulated; integer powers as multiplications (`solPow4/5/6`), a tile-flipped dither and a per-frame rotated one, both new this pass |
 | `lib/uniforms.glsl` | declared per file there | read | matches, plus `blindness`/`darknessFactor`/`darknessLightFactor` which the reference takes from `finalcolor`/`composite` |
 | `lib/blockids.glsl` | `block.properties` ids | read | new this pass: the ids split out so the shadow programs see them |
@@ -571,7 +571,7 @@ Reconciled and deliberately left as they are:
 
 | # | Reference behaviour | Mine before | Fix |
 | --- | --- | --- | --- |
-| 65 | `shaders.properties:71-109` groups its options into named sub-screens (`[WATER_SCREEN]`, `[POST_SCREEN]`, `[CUSTOM_COLORS_SCREEN]`, ...) linked from a main screen, with `screen.columns` per screen | one `screen` line holding all 86 options: a single scrolling wall in which the fog sliders sit below the water ones | grouped into fourteen sub-screens (water, geometry, shadows, sky, AO, bloom, DOF, AA, motion blur, light, fog, colour, palette, accessibility) with a short main screen that carries the profile and the six options that change the picture most |
+| 65 | `shaders.properties:71-109` groups its options into named sub-screens (`[WATER_SCREEN]`, `[POST_SCREEN]`, `[CUSTOM_COLORS_SCREEN]`, ...) linked from a main screen, with `screen.columns` per screen | one `screen` line holding every option: a single scrolling wall in which the fog sliders sit below the water ones | grouped into fourteen sub-screens (water, geometry, shadows, sky, AO, bloom, DOF, AA, motion blur, light, fog, colour, palette, accessibility) with a short main screen that carries the profile and the options that change the picture most |
 | 66 | `shaders.properties:165-210` - the temporal offset walks a **sixteen-point pentagon** so consecutive frames never sample neighbouring sub-pixels | four corners of a square, repeating every four frames, which leaves a visible 2x2 pattern in the history | eight positions walked by a low-discrepancy pair, so the pattern repeats every eight frames and never lands on a neighbour. A `cos`/`sin` pair per vertex was not worth it; the golden-ratio pair costs two multiplies |
 | 67 | `block.properties:47` - the reference has **four** gloss classes: metal, polished, fabric and sand-like (`10410`) | three: metal, polished, fabric, so sand, gravel and concrete powder had no surface at all | sand-like id (10) added with the reference's own list and a 0.08 sheen |
 
@@ -595,3 +595,44 @@ and what remains is the list this document keeps repeating because it is true: t
 Distant Horizons and Voxy families (no counterpart), coloured shadows and shadow lock
 (need a second shadow target and a pass switch the pack cannot ask for), the three PNG
 textures (everything here is computed), and native-reviewed translations.
+
+
+
+## 17. Tenth pass: the four things that were called impossible
+
+Every item the earlier passes had listed as "cannot be done here" is now in the pack.
+Four of them needed code that does not exist in any file the older passes wrote; two
+of them needed a piece of the mods' API that the reference demonstrates, which is
+where its files were read for the contract rather than the shading.
+
+| # | Reference behaviour | Mine before | Now |
+| --- | --- | --- | --- |
+| 69 | `shadow_fragment.glsl` writes colour into `shadowcolor0` alongside depth in `shadowtex0`, and `solid_blocks_fragment.glsl` samples it so a translucent block tints its own shadow | no colour target at all, so every shadow was neutral | `shadow.fsh` writes `DRAWBUFFERS:01`: depth to shadowtex0, and for translucent geometry its own colour to shadowcolor0. `shadowmap.glsl` gained `shadowTintAt()`, the geometry stage multiplies its sun term by it, and the light shafts in `composite_body.glsl` take the same tint. `shadowcolor0Format`/`shadowcolor0Clear` declared in `buffers.glsl` |
+| 70 | `SHADOW_LOCK 0/16/32/64/128/256` throttles the shadow pass, and `shadowtex0Clear = false` is what makes that possible | no shadow lock, and no statement that the maps are not cleared | `SHADOW_LOCK` added. A shader cannot ask the mod to skip a pass, so `shadow.vsh` moves every vertex behind the near plane on the frames it skips - the whole frame is culled and the previous map survives, because `shadowtex0Clear` and `shadowcolor0Clear` are both false |
+| 71 | the `solid_dh_*`, `dh_water`, `lib/depth_dh.glsl` and `src/*_dh.glsl` families, plus `dhDepthTex0/1`, `dhNearPlane`, `dhFarPlane` and the `DISTANT_HORIZONS` guard | Distant Horizons geometry was not drawn by the pack at all | `dh_terrain` and `dh_water` programs at the root and in all three dimension folders (16 files), `lib/depth_dh.glsl` with `solDhLinearDepth`, the four DH uniforms under `#ifdef DISTANT_HORIZONS`, and `SOLACE_DH_GEOMETRY` in `vertex_geometry.glsl` so the shared stage compiles without Minecraft's block attributes. Water absorption now takes the nearer of `depthtex0` and `dhDepthTex1`, so an ocean over far land is no longer infinitely deep. `dhShadow.enabled = false` and `blend.dh_water` are declared in `shaders.properties` |
+| 72 | `voxy.json`, `voxy_opaque.glsl`, `voxy_translucent.glsl` and the `VoxyFragmentParameters` struct, with shading in `solid_voxy_blocks_fragment.glsl` | no Voxy support | `voxy.json` (uniforms, samplers, the two draw-buffer sets), the opaque and translucent entry points at the root and per dimension, and `lib/voxy_body.glsl`: the struct laid out exactly as Voxy fills it, `voxy_emitFragment()` as the entry point, the face index turned into a view-space normal, the lighting taken from the same palette functions, fog from the distance rebuilt through `vxProjInv` with the far plane pulled out of `vxProj`, and the opaque pass also writing colortex4 so the water's refraction copy contains far land |
+| 73 | `textures/water_256_RG_8bit.png`, `clouds_blocky_512_R_8bit.png`, `clouds_natural_512_R_8bit.png`, each with an `.mcmeta` | three PNGs that this environment cannot write, and no code that could read them | `textures/generate_textures.py` generates all three (pure standard library, tileable fBm, fixed seed), with the three `.mcmeta` files beside them. `PACK_TEXTURES 1` makes the water read two ripple channels in two fetches instead of six noise evaluations, and the cloud march one fetch instead of two octaves. The reference also carries a commented-out texture dither with the note that no such texture exists - the same conclusion this pack reached, so the dither stays computed |
+| 74 | `screen.SHADOWS_SCREEN` carries `COLORED_SHADOW` and `SHADOW_LOCK`; the texture switch lives with the water options | - | both added to the shadow sub-screen, `PACK_TEXTURES` to the main screen, and all three translated into the nine language files |
+
+What this changes about the honest caveats: not the caveats themselves. Coloured
+shadows, shadow lock, Distant Horizons, Voxy and the texture files are all **written
+here but never compiled or run** - there is no GPU, no Minecraft and neither mod on
+this machine. The parts of that work I am least sure of, in order:
+
+1. **Voxy.** The `VoxyFragmentParameters` layout and the `voxy_emitFragment` entry
+   point are copied from the reference's declaration of the same contract, and Iris
+   supplies the `vx*` uniforms; everything past that is my own shading. If a future
+   Iris changes the struct, this file is the one to fix.
+2. **Distant Horizons.** The program names and the `DISTANT_HORIZONS` guard match the
+   reference, and the depth linearisation is textbook; whether Iris hands `dh_terrain`
+   the same vertex attributes as terrain (which `SOLACE_DH_GEOMETRY` assumes it does
+   not fully) is the one thing I could not confirm.
+3. **Shadow lock.** The cull trick depends on the maps not being cleared, which is
+   what the reference's `shadowtex0Clear = false` states; if a driver or mod version
+   clears them anyway, shadows flicker at the lock interval instead of holding.
+4. **The texture files** do not exist until the generator is run. With
+   `PACK_TEXTURES 1` and no files, the water and clouds read an unbound sampler - so
+   the option ships at 0.
+
+Still genuinely out of reach, and unchanged: a native review of the eight translated
+language files, and any judgement about how the pack looks, which needs a GPU.

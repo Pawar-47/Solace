@@ -23,19 +23,30 @@ the program sets before including the file:
 #include "/lib/uniforms.glsl"
 #include "/lib/io_geometry.glsl"
 
+/* Minecraft's own per-vertex data. Distant Horizons draws its far terrain through the
+   same stage without them, so its programs set SOLACE_DH_GEOMETRY and neither the
+   attributes nor the waving that reads them are compiled there. */
+#if !defined SOLACE_DH_GEOMETRY
 attribute vec4 mc_Entity;
 attribute vec2 mc_midTexCoord;
+#endif
 
 void main() {
     texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
-    blockId = mc_Entity.x;
+
+    #if defined SOLACE_DH_GEOMETRY
+        blockId = 0.0;
+    #else
+        blockId = mc_Entity.x;
+    #endif
+
     lmcoord = sat((gl_TextureMatrix[1] * gl_MultiTexCoord1).xy);
 
     vec4 viewPos = gl_ModelViewMatrix * gl_Vertex;
     vec3 playerPos = (gbufferModelViewInverse * viewPos).xyz;
     vec3 worldPos = playerPos + cameraPosition;
 
-    #if WAVING == 1
+    #if WAVING == 1 && !defined SOLACE_DH_GEOMETRY
         float fromMiddle = clamp((mc_midTexCoord.y - texcoord.y) * 6.0, 0.0, 1.0);
 
         float amount = 0.0;

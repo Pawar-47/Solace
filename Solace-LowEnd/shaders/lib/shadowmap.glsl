@@ -78,6 +78,26 @@ float shadowFactor(vec3 playerPosition, float facing) {
     return mix(1.0, lit, fade);
 }
 
+#if COLORED_SHADOW == 1
+uniform sampler2D shadowcolor0;
+
+/* The colour of whatever stands between this point and the sun: the shadow pass
+   writes a translucent block's own colour into shadowcolor0, so stained glass tints
+   the shadow under it and water tints the bed it lies on. White where nothing is in
+   the way, which is also what a missing map gives. */
+vec3 shadowTintAt(vec3 playerPosition) {
+    vec4 clip = shadowProjection * (shadowModelView * vec4(playerPosition, 1.0));
+    vec3 coord = clip.xyz / clip.w;
+
+    if (coord.z > 1.0 || coord.x < 0.0 || coord.x > 1.0
+        || coord.y < 0.0 || coord.y > 1.0) {
+        return vec3(1.0);
+    }
+
+    return texture2D(shadowcolor0, coord.xy).rgb;
+}
+#endif
+
 #endif
 
 #endif

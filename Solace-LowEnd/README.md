@@ -188,10 +188,12 @@ mismatches found and fixed in that pass, and the list of what is still open.
 | Antialiasing | present but off (`AA_TYPE`): temporal with a variance-clipped history buffer and a sub-pixel jitter, plus FXAA 3.11, alone or after the temporal pass |
 | Bloom, DOF, motion blur | present but off; bloom and DOF are tap loops inside `final`, motion blur rides in `composite2` |
 | Screen-space reflections | `WATER_SSR` marchers the reflected ray through the scene copy, with the sky as fallback; off by default |
-| Coloured shadows | `COLORED_SHADOW` needs a second shadow target and translucent geometry in the shadow pass; the shadow pass itself ships off because of the GPU |
-| Auto exposure | present but off; the value lives in colortex6 between frames (`AUTO_EXPOSURE`) |
-| Distant Horizons, Voxy | those mods are not supported; their geometry would draw with vanilla's pipeline |
-| `item.properties`, `entity.properties` | not needed: nothing keys off item or entity ids. `block.properties` exists only for the two waving ids |
+| Coloured shadows | `COLORED_SHADOW`: the shadow pass writes the colour of each translucent block into shadowcolor0, the geometry samples it, and the light shafts take it too, so stained glass tints the shadow under it |
+| Shadow lock | `SHADOW_LOCK`: pushes the shadow geometry out of the clip volume on the frames it skips, and the shadow maps are never cleared, so the previous map survives; 64 costs a sixty-fourth of the shadow pass |
+| Distant Horizons | supported: `dh_terrain` and `dh_water` in every dimension, shaded by the same libraries, with the far depth linearised separately so water absorption still works over far land |
+| Voxy | supported: `voxy.json` plus the opaque and translucent entry points, shaded with the same palette model; no shadow map or reflection functions out there, because Voxy gives no basis for them |
+| Pack textures | supported, not shipped: `textures/generate_textures.py` writes `noise.png`, `clouds.png` and `clouds_blocky.png`, and `PACK_TEXTURES 1` makes the water and clouds read them instead of computing noise |
+| `item.properties`, `entity.properties` | present: the first lets a torch held as an item light the world, the second lets lightning and burning-entity fire be drawn as their own light |
 
 ## Install
 

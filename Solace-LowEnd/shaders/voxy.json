@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "uniforms": [
+    "worldTime",
+    "sunPosition",
+    "moonPosition",
+    "rainStrength",
+    "fogColor",
+    "isEyeInWater",
+    "eyeBrightnessSmooth",
+    "blindness",
+    "nightVision",
+    "frameTimeCounter",
+    "cameraPosition",
+    "viewWidth",
+    "viewHeight",
+    "vxRenderDistance",
+    "vxProj",
+    "vxProjInv",
+    "vxModelView",
+    "vxModelViewInv"
+  ],
+  "samplers": {
+    "vxDepthTexTrans": "sampler2D"
+  },
+  "opaqueDrawBuffers": [1, 4],
+  "translucentDrawBuffers": [1]
+}

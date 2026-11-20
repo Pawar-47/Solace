@@ -112,3 +112,13 @@ option.CUSTOM_AMBIENT=사용자 테마 하늘빛
 option.CUSTOM_WATER_R=사용자 물 빨강
 option.CUSTOM_WATER_G=사용자 물 초록
 option.CUSTOM_WATER_B=사용자 물 파랑
+
+
+# Pack textures and the two shadow options.
+option.PACK_TEXTURES=팩 텍스처
+value.PACK_TEXTURES.0=계산
+value.PACK_TEXTURES.1=파일에서
+option.COLORED_SHADOW=색깔 그림자
+value.COLORED_SHADOW.0=끔
+value.COLORED_SHADOW.1=켬
+option.SHADOW_LOCK=그림자 갱신

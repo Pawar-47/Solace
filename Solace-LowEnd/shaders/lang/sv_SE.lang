@@ -112,3 +112,13 @@ option.CUSTOM_AMBIENT=Egen temahimmelsljus
 option.CUSTOM_WATER_R=Eget vatten rött
 option.CUSTOM_WATER_G=Eget vatten grönt
 option.CUSTOM_WATER_B=Eget vatten blått
+
+
+# Pack textures and the two shadow options.
+option.PACK_TEXTURES=Paketets texturer
+value.PACK_TEXTURES.0=Beräknade
+value.PACK_TEXTURES.1=Från filer
+option.COLORED_SHADOW=Färgade skuggor
+value.COLORED_SHADOW.0=Av
+value.COLORED_SHADOW.1=På
+option.SHADOW_LOCK=Skugguppdatering

@@ -66,9 +66,15 @@ void main() {
         facing = sat(facing);
     }
 
+    /* Colour of whatever the sunlight had to pass through to reach this pixel. */
+    vec3 directTint = vec3(1.0);
+
     #if SHADOWS == 1
         vec3 playerPosition = (gbufferModelViewInverse * vec4(viewSpacePos, 1.0)).xyz;
         facing *= shadowFactor(playerPosition, facing);
+        #if COLORED_SHADOW == 1
+            directTint = shadowTintAt(playerPosition);
+        #endif
     #else
         /* No shadow map: sky exposure to the tenth power is the stand-in, as in
            the reference's fake shadows. Built from squares, no pow(). */
@@ -86,7 +92,7 @@ void main() {
 
     #if SUN_SHADING == 1
         vec3 astroColour = mix(moonColour() * 2.5, sunColour(), day);
-        light += astroColour * facing * 0.85 * (1.0 - rainStrength * 0.75);
+        light += astroColour * directTint * facing * 0.85 * (1.0 - rainStrength * 0.75);
     #endif
 
     #if EYE_LIGHT == 1

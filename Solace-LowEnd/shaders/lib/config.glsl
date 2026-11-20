@@ -38,6 +38,7 @@ const bool shadowHardwareFiltering = true;
 const bool shadowtex1Nearest = false;
 
 // ---- Water ---------------------------------------------------------------
+#define PACK_TEXTURES 0        // [0 1] Read textures/noise.png and clouds.png instead of computing the noise. Run textures/generate_textures.py first.
 #define WATER_WAVES 1          // [0 1] Animated water surface.
 #define WAVE_SPEED 0.55        // [0.2 0.35 0.55 0.8 1.1]
 #define WAVE_SCALE 1.0         // [0.5 1.0 1.5 2.0]
@@ -78,6 +79,8 @@ const bool shadowtex1Nearest = false;
 #define SHADOW_DISTANCE_SLIDER 0 // [0 1 2] Shadow distance: 75, 105, 255 blocks.
 #define SHADOW_SOFT 1          // [0 1] Four-tap filtered lookup instead of one hard tap.
 #define SHADOW_BLUR 1.0        // [0.5 1.0 1.5 2.0] How far the taps spread.
+#define COLORED_SHADOW 0       // [0 1] Tint a shadow with the colour of the glass or water above it.
+#define SHADOW_LOCK 0          // [0 16 32 64 128 256] Redraw shadows every N frames instead of every frame.
 
 // ---- Sky ----------------------------------------------------------------
 #define SKY_SUN_GLOW 1         // [0 1] Sun halo, moon halo.

@@ -16,6 +16,7 @@ without a second copy of any of it.
 #include "/lib/math.glsl"
 #include "/lib/uniforms.glsl"
 #include "/lib/sky_model.glsl"
+#include "/lib/pack_textures.glsl"
 
 varying vec2 texcoord;
 
@@ -45,7 +46,18 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk) {
                                (float(i) + offset) * stepLength - CLOUD_THICKNESS * 0.35,
                                0.0);
         vec2 drift = at.xz * 0.011 + vec2(frameTimeCounter * 0.0035, frameTimeCounter * 0.0022);
-        float n = solFbm(drift + at.y * 0.0016);
+
+        #if PACK_TEXTURES == 1
+            /* One fetch from textures/clouds.png instead of two noise octaves, and the
+               field is the one the generator made from the same kind of noise. */
+            float n = texture2D(clouds,
+                                at.xz * 0.0004
+                                + vec2(frameTimeCounter * 0.0009,
+                                       frameTimeCounter * 0.0006)).r;
+        #else
+            float n = solFbm(drift + at.y * 0.0016);
+        #endif
+
         density += smoothstep(CLOUD_COVERAGE, CLOUD_COVERAGE + 0.20, n);
 
         /* Early out: a saturated column needs no more samples. */

@@ -112,3 +112,13 @@ option.CUSTOM_AMBIENT=自定义主题天光
 option.CUSTOM_WATER_R=自定义水色红
 option.CUSTOM_WATER_G=自定义水色绿
 option.CUSTOM_WATER_B=自定义水色蓝
+
+
+# Pack textures and the two shadow options.
+option.PACK_TEXTURES=包内纹理
+value.PACK_TEXTURES.0=计算
+value.PACK_TEXTURES.1=使用文件
+option.COLORED_SHADOW=彩色阴影
+value.COLORED_SHADOW.0=关
+value.COLORED_SHADOW.1=开
+option.SHADOW_LOCK=阴影刷新

@@ -332,3 +332,18 @@ option.DOF_SAMPLES=Focus samples
 option.DOF_SAMPLES.comment=Samples in the depth-of-field blur ring.
 
 profile.PerformancePlus=Performance Plus
+
+
+# Pack textures and the two shadow options.
+option.PACK_TEXTURES=Pack textures
+option.PACK_TEXTURES.comment=Read the ripple and cloud textures from textures/ instead of computing them in the shader. Run textures/generate_textures.py once to create those files.
+value.PACK_TEXTURES.0=Computed
+value.PACK_TEXTURES.1=From files
+
+option.COLORED_SHADOW=Coloured shadows
+option.COLORED_SHADOW.comment=Tint a shadow with the colour of the glass or water the light passed through. Only does anything with cast shadows on.
+value.COLORED_SHADOW.0=Off
+value.COLORED_SHADOW.1=On
+
+option.SHADOW_LOCK=Shadow refresh
+option.SHADOW_LOCK.comment=Redraw the shadow map every N frames instead of every frame. 0 is every frame, 64 costs a sixty-fourth of the shadow pass.

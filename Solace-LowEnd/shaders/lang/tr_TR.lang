@@ -112,3 +112,13 @@ option.CUSTOM_AMBIENT=Özel tema gökyüzü ışığı
 option.CUSTOM_WATER_R=Özel su kırmızı
 option.CUSTOM_WATER_G=Özel su yeşil
 option.CUSTOM_WATER_B=Özel su mavi
+
+
+# Pack textures and the two shadow options.
+option.PACK_TEXTURES=Paket dokuları
+value.PACK_TEXTURES.0=Hesaplanan
+value.PACK_TEXTURES.1=Dosyadan
+option.COLORED_SHADOW=Renkli gölgeler
+value.COLORED_SHADOW.0=Kapalı
+value.COLORED_SHADOW.1=Açık
+option.SHADOW_LOCK=Gölge yenileme
