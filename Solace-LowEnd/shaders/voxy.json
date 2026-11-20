@@ -21,7 +21,8 @@
     "vxModelViewInv"
   ],
   "samplers": {
-    "vxDepthTexTrans": "sampler2D"
+    "vxDepthTexTrans": "sampler2D",
+    "gaux1": "sampler2D"
   },
   "opaqueDrawBuffers": [1, 4],
   "translucentDrawBuffers": [1]

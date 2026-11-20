@@ -20,6 +20,7 @@ Two entry points use this file:
 #include "/lib/config.glsl"
 #include "/lib/math.glsl"
 #include "/lib/uniforms.glsl"
+#include "/lib/blockids.glsl"
 #include "/lib/sky_model.glsl"
 
 /* The struct is declared by the pack, not by Iris: Voxy hands the fragment its data
@@ -110,25 +111,119 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
 
     vec3 colour = albedo.rgb * light;
 
-    #if defined VOXY_WATER
-        /* A sky reflection without the reflection functions: those want a world-space
-           ray built from gbufferModelViewInverse, which Voxy does not provide. The
-           dome gradient is close enough at this distance to be indistinguishable. */
-        vec3 skyProxy = mix(horizonColour(day, dusk), zenithColour(day, dusk), 0.45);
-        vec3 toEye = normalize(-view.xyz);
-        float fresnel = pow(1.0 - sat(dot(normal, toEye)), 5.0);
-        colour = mix(colour, skyProxy * 0.85, sat(0.08 + fresnel * 0.92));
+    /* Voxy hands the block.properties id in customId, so the far world gets the same
+       four material classes and the same emissive rule as the near one. Without this,
+       a distant copper roof and a distant stone floor were the same material. */
+    float customId = float(parameters.customId);
+
+    #if MATERIAL_GLOSS == 1
+        float gloss = 0.0;
+        if (customId == SOLACE_GLOSS_METAL) {
+            gloss = 0.85;
+        } else if (customId == SOLACE_GLOSS_POLISHED) {
+            gloss = 0.45;
+        } else if (customId == SOLACE_GLOSS_FABRIC) {
+            gloss = 0.16;
+        } else if (customId == SOLACE_GLOSS_SAND) {
+            gloss = 0.08;
+        }
+
+        if (gloss > 0.0) {
+            vec3 halfway = normalize(sunDir + normalize(view.xyz));
+            float highlight = pow(sat(dot(normal, halfway)), 44.0);
+            colour += mix(moonColour() * 2.5, sunColour(), day) * highlight * gloss
+                    * GLOSS_STRENGTH * facing * skyLight * (1.0 - rainStrength);
+        }
     #endif
 
-    /* Fog. The far plane has to come out of the projection matrix: Voxy hands over the
-       matrices but not the distance. For a standard projection, depth 1 lands on
-       P[3][2] / (P[2][2] + 1). */
+    #if EMISSIVE_GLOW == 1
+        if (customId == SOLACE_EMISSIVE) {
+            colour = max(colour, albedo.rgb * (0.90 + 0.35 * sat(lm.x)));
+        }
+    #endif
+
+    #if defined VOXY_WATER
+        /* Voxy's translucent pass carries water and glass together, told apart by the
+           same block id the near water uses. Only water ripples. */
+        bool voxyGlass = (customId == SOLACE_GLASS);
+        vec3 toEye = normalize(-view.xyz);
+        float fresnel = pow(1.0 - sat(dot(normal, toEye)), 5.0);
+        float voxyAlpha = sat(albedo.a * 0.85 + 0.15);
+
+        /* The dome gradient stands in for the sky, and the only world it can reflect is
+           the copy of the frame it can see - projected 768 blocks along the mirror
+           direction, because there is no depth buffer here to march. */
+        vec3 skyProxy = mix(horizonColour(day, dusk), zenithColour(day, dusk), 0.45);
+        vec3 mirror = skyProxy * 0.85;
+        float mirrorBorder = 0.0;
+
+        #if WATER_SSR == 1 && WATER_REFLECTION == 1
+            vec4 mirrorClip = vxProj * vec4(view.xyz + reflect(-toEye, normal) * 768.0, 1.0);
+            if (mirrorClip.w > 0.0001) {
+                vec2 mirrorUV = mirrorClip.xy / mirrorClip.w * 0.5 + 0.5;
+                mirrorBorder = sat((1.0 - max(0.0, abs(mirrorUV.y - 0.5)) * 2.0) * 50.0);
+
+                mirrorUV.x = abs(mirrorUV.x);
+                if (mirrorUV.x > 1.0) mirrorUV.x = 2.0 - mirrorUV.x;
+
+                mirror = texture2D(gaux1, clamp(mirrorUV, vec2(0.002), vec2(0.998))).rgb;
+            }
+        #endif
+
+        if (voxyGlass) {
+            /* Glass: a flat sheet that blends into the sky and then into the mirror
+               image, and closes to opaque at grazing angles. */
+            colour = mix(colour, skyProxy, fresnel);
+            colour = mix(colour, mix(skyProxy, mirror, mirrorBorder), fresnel * 0.5);
+            voxyAlpha = mix(voxyAlpha, 1.0, fresnel * 0.9);
+        } else {
+            float strength = sat(0.08 + fresnel * 0.92);
+            colour = mix(colour, mix(skyProxy, mirror, mirrorBorder), strength);
+
+            #if REFRACTION == 1
+                /* Voxy documents its depth as lying between 16 and 48000 blocks, so the
+                   thickness of water behind this pixel is worked out in that projection
+                   rather than the vanilla one. */
+                vec2 voxyUV = gl_FragCoord.xy / vec2(viewWidth, viewHeight);
+                vec2 bent = clamp(voxyUV
+                                  + normal.xy * (0.09 / (1.0 + length(view.xyz) * 0.25)),
+                                  vec2(0.002), vec2(0.998));
+                vec3 behind = texture2D(gaux1, bent).rgb;
+
+                const float voxyNear = 16.0;
+                const float voxyFar = 48000.0;
+                float surfaceDistance = 2.0 * voxyNear * voxyFar
+                    / (voxyFar + voxyNear
+                       - (2.0 * gl_FragCoord.z - 1.0) * (voxyFar - voxyNear));
+                float behindDistance = 2.0 * voxyNear * voxyFar
+                    / (voxyFar + voxyNear
+                       - (2.0 * texture2D(vxDepthTexTrans, bent).r - 1.0)
+                         * (voxyFar - voxyNear));
+                float thickness = max(behindDistance - surfaceDistance, 0.0);
+
+                float absorbed = 1.0 - exp(-thickness * thickness
+                                           * WATER_ABSORPTION * 0.5);
+                colour = mix(behind, colour, absorbed);
+            #endif
+        }
+    #endif
+
+    /* Fog. Voxy draws to its own render distance, in chunks, so that is what the fade
+       is normalised by - and its curve is as soft as the one far terrain uses, because
+       this is the same horizon seen by a different renderer. */
     float fogDist = length(view.xyz);
-    float sight = max(vxProj[3][2] / (vxProj[2][2] + 1.0), 64.0);
+    float sight = max(float(vxRenderDistance) * 16.0, 64.0);
     float skyExposure = max(float(eyeBrightnessSmooth.y) * 0.004166666666666667,
                             skyLight);
-    float fogAmount = pow(sat(fogDist / sight) * skyExposure, FOG_DENSITY * 2.0);
+    float fogAmount = pow(sat(fogDist / sight) * skyExposure,
+                          mix(0.30, 0.50, rainStrength));
     colour = mix(colour, fogColour(day, dusk), sat(fogAmount));
+
+    /* Night vision has to reach out here too, or drinking a potion lights the near
+       world and leaves the horizon black. Lifting towards the unlit albedo is the same
+       thing as lifting the light towards white. */
+    colour = mix(colour, albedo.rgb, sat(nightVision * 0.125));
+    colour *= mix(vec3(1.0), vec3(NV_COLOR_R, NV_COLOR_G, NV_COLOR_B), nightVision);
 
     /* Blindness and the Warden's darkness reach out here too. */
     float darkness = max(blindness, darknessFactor * darknessLightFactor);
@@ -139,8 +234,7 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
     colour = clamp(colour, vec3(0.0), vec3(50.0));
 
     #if defined VOXY_WATER
-        float alpha = sat(albedo.a * 0.85 + 0.15);
-        voxyColour = vec4(colour, alpha);
+        voxyColour = vec4(colour, sat(voxyAlpha));
     #else
         voxyColour = vec4(colour, albedo.a);
         /* The scene copy the water reads: far land has to be in it, or a reflection

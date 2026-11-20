@@ -135,6 +135,25 @@ void main() {
 
     vec3 colour = albedo.rgb * light;
 
+    #if defined SOLACE_DH_GEOMETRY && defined DISTANT_HORIZONS
+        /* Distant Horizons passes a material id for the far blocks it synthesises.
+           Glowstone, lanterns and lava are their own light out there too; without this
+           a far glowstone lamp was a dark cube at night, right next to a near one that
+           was not. The guards keep the file compiling against an Iris that does not
+           define these. */
+        #if defined DH_BLOCK_ILLUMINATED
+            if (dhMaterialId == DH_BLOCK_ILLUMINATED) {
+                colour = max(colour, albedo.rgb * 1.20);
+            }
+        #endif
+
+        #if defined DH_BLOCK_LAVA
+            if (dhMaterialId == DH_BLOCK_LAVA) {
+                colour = max(colour, albedo.rgb);
+            }
+        #endif
+    #endif
+
     #if MATERIAL_GLOSS == 1
         float gloss = 0.0;
         if (blockId == SOLACE_GLOSS_METAL) {
