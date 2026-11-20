@@ -43,7 +43,9 @@ not upwards.
 
 Easiest: download `Solace-LowEnd.zip` from the [Releases](../../releases) page — the
 `latest` release is rebuilt and re-uploaded on every push to `main` — and unpack it
-into your `shaderpacks` folder.
+into your `shaderpacks` folder. Builds from any other branch land in that same release
+as `perf-<branch>-Solace-LowEnd.zip`, so an experiment can be tried without a second
+release to find.
 
 Or copy the `Solace-LowEnd` folder from this repository, so the game finds
 `shaderpacks/Solace-LowEnd/shaders/`. Either way, then choose it in **Options → Video
@@ -99,8 +101,10 @@ load, or a setting that would show up in the options screen as a raw identifier.
 
 Packaging runs on the same trigger. Every push to `main` rebuilds `Solace-LowEnd.zip`
 and replaces it on the rolling **latest** release, so the download is always the
-current code; the zip is also attached to each run as a workflow artifact. Pushing a
-version tag (`v1.0.0`) publishes a release of its own with generated notes.
+current code; the zip is also attached to each run as a workflow artifact. A push to
+any other branch adds its own build to that same release instead, named
+`perf-<branch>-Solace-LowEnd.zip`, and leaves the stable `Solace-LowEnd.zip` alone.
+Pushing a version tag (`v1.0.0`) publishes a release of its own with generated notes.
 
 ## Status
 

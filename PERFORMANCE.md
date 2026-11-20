@@ -4,6 +4,10 @@ This is the `perf-experiments` branch. `main` is untouched: it still has the pac
 it was, and its rolling `latest` release still points there. Nothing here ships until
 it has been tried on the actual machine and has earned its place.
 
+Where to get it, though: every push to this branch publishes
+`perf-experiments-Solace-LowEnd.zip` into that same `latest` release, beside the stable
+`Solace-LowEnd.zip`, which it never touches. Same install steps as the pack itself.
+
 The target is an Intel HD 5500 — about 823 GFLOPs and 23 GB/s of shared memory
 bandwidth, with no VRAM of its own. On a GPU like that, the bill is paid per pixel and
 per byte moved, and the two currencies are not interchangeable: an ALU instruction is

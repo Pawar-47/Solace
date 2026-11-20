@@ -4,21 +4,25 @@ name: Release
 # `shaders/` at its top level, ready to drop into `shaderpacks/`.
 #
 # Every push to main publishes a rolling release tagged `latest`, so there is always
-# something to download without anyone having to create a tag first. Pushing a
-# version tag (`v1.0.0`) publishes a release of its own with generated notes.
+# something to download without anyone having to create a tag first. A push to any
+# other branch publishes its build into that same release under a `perf-` name, so an
+# experiment can be downloaded and tried without a second release to hunt for. A push
+# to a version tag (`v1.0.0`) publishes a release of its own with generated notes.
 # The zip is attached to the run as a workflow artifact either way.
 
 on:
   push:
-    branches: [main]
+    branches: ["**"]
     tags: ["v*"]
   workflow_dispatch:
 
 permissions:
   contents: write
 
+# One run per ref: pushing to an experiment must not cancel the run that publishes
+# main, and two experiments never fight over the same asset name.
 concurrency:
-  group: release
+  group: release-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -40,36 +44,80 @@ jobs:
           python3 tools/check_lang.py
           python3 tools/check_textures.py
 
+      - name: Name the asset
+        id: asset
+        run: |
+          # main and version tags keep the plain name players are told to download.
+          # Any other branch gets a `perf-` prefix, so a build of an experiment can
+          # sit in the same release without ever being mistaken for the stable one.
+          # A branch that already starts with `perf-` is not prefixed twice:
+          # `perf-experiments` publishes `perf-experiments-Solace-LowEnd.zip`.
+          if [ "$GITHUB_REF_TYPE" = "branch" ] && [ "$GITHUB_REF_NAME" != "main" ]; then
+            slug="$(printf '%s' "$GITHUB_REF_NAME" | sed 's|^perf[-_]||' | tr '/_' '--')"
+            if [ -z "$slug" ]; then
+              name="perf-Solace-LowEnd.zip"
+            else
+              name="perf-${slug}-Solace-LowEnd.zip"
+            fi
+          else
+            name="Solace-LowEnd.zip"
+          fi
+          echo "name=${name}" >> "$GITHUB_OUTPUT"
+          echo "Packaging as ${name}"
+
       - name: Build the zip
         run: |
           cd Solace-LowEnd
-          zip -r ../Solace-LowEnd.zip shaders README.md
+          zip -r "../${{ steps.asset.outputs.name }}" shaders README.md
           cd ..
-          ls -l Solace-LowEnd.zip
-          unzip -l Solace-LowEnd.zip | head -8
+          ls -l "${{ steps.asset.outputs.name }}"
+          unzip -l "${{ steps.asset.outputs.name }}" | head -8
 
       - name: Attach it to this run
         uses: actions/upload-artifact@v4
         with:
-          name: Solace-LowEnd
-          path: Solace-LowEnd.zip
+          name: ${{ steps.asset.outputs.name }}
+          path: ${{ steps.asset.outputs.name }}
           if-no-files-found: error
 
-      - name: Publish the rolling release (main)
-        if: github.ref == 'refs/heads/main'
+      - name: Make sure the rolling release exists
+        if: github.ref_type == 'branch'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          stage="$(date -u +%Y-%m-%d) at $(date -u +%H:%M) UTC"
           gh release view latest >/dev/null 2>&1 || gh release create latest \
             --title "Solace - latest build" \
             --notes "Placeholder" \
             --latest
-          gh release upload latest Solace-LowEnd.zip --clobber
+
+      - name: Publish the rolling release (main)
+        if: github.ref_type == 'branch' && github.ref_name == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          stage="$(date -u +%Y-%m-%d) at $(date -u +%H:%M) UTC"
+          gh release upload latest "${{ steps.asset.outputs.name }}" --clobber
           gh release edit latest \
             --notes "Download Solace-LowEnd.zip and unpack it into your shaderpacks folder, so the game finds shaderpacks/Solace-LowEnd/shaders/ - or copy the Solace-LowEnd folder from the repository.
 
+          Files named perf-*.zip in this release are builds from an experimental branch, named after it. They are there to be tried, not to be installed as the pack.
+
           Built from ${GITHUB_SHA:0:7} on ${stage}, after the pack passed its structural checks. Nobody has looked at the picture on real hardware yet; see the repository README for what to report if something breaks."
+
+      - name: Publish an experimental build (branch)
+        if: github.ref_type == 'branch' && github.ref_name != 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          stage="$(date -u +%Y-%m-%d) at $(date -u +%H:%M) UTC"
+          gh release upload latest "${{ steps.asset.outputs.name }}" --clobber
+          {
+            echo "### ${{ steps.asset.outputs.name }}"
+            echo ""
+            echo "Uploaded to the \`latest\` release from branch \`${GITHUB_REF_NAME}\`,"
+            echo "commit ${GITHUB_SHA:0:7}, ${stage}. The stable \`Solace-LowEnd.zip\`"
+            echo "was not touched."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish a versioned release (tag)
         if: startsWith(github.ref, 'refs/tags/')
@@ -80,4 +128,4 @@ jobs:
             "${GITHUB_REF_NAME}" \
             --title "Solace ${GITHUB_REF_NAME}" \
             --generate-notes
-          gh release upload "${GITHUB_REF_NAME}" Solace-LowEnd.zip --clobber
+          gh release upload "${GITHUB_REF_NAME}" "${{ steps.asset.outputs.name }}" --clobber
