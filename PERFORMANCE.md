@@ -129,6 +129,48 @@ nine taps, for one fetch.
 `normalize(reflectedWorld)` in the water glint: that vector is a rotation of a unit
 vector, so it is already unit length. The square root is gone.
 
+### 11. Water ripples: two noise evaluations instead of six
+
+The ripple normal was a finite difference of two noise layers: the height at the point
+and at two offsets, per layer. That is six evaluations, and each evaluation is four
+hashes, so 24 hashes for one water pixel — the most expensive single thing in the
+default frame, on a surface that can fill the screen.
+
+The patch is a smoothstep-interpolated bilinear surface, so its slope has a closed
+form: the four corner hashes are already there, and the derivative of the smoothstep
+weights (`6f(1-f)`) is one multiply each. `solNoiseSlope()` returns height and slope
+together, the two layers cost two evaluations, and the eight hashes it saves per layer
+buy the rest of the water shader. The finite difference's 0.08 step is kept as a gain,
+so the amplitude is the one the pack shipped with.
+
+### 12. The sky ray is per vertex
+
+`skyViewRay()` rebuilt the view ray per pixel with an inverse projection and a divide,
+on a third of the screen. The map from screen position to ray is affine, so it
+interpolates exactly: the vertex stage now computes one ray per vertex and the
+fragment stage normalises what arrives. Slightly smoother than "one per pixel" sounds,
+because nothing is lost to interpolation.
+
+### 13. A dependency the profile table hid
+
+`composite2` (temporal AA, motion blur) and `final` both read the shaded scene from
+`colortex1`, and `composite` is the pass that puts it there. But `composite` was only
+enabled for the light shafts and the exposure average:
+
+```
+program.composite.enabled   = VOL_LIGHT || AUTO_EXPOSURE
+program.composite2.enabled  = AA_TYPE == 1 || AA_TYPE == 2 || MOTION_BLUR
+```
+
+with `colortex1Clear = false`. So the **Beauty profile** — temporal AA on, shafts off,
+exposure off — had `composite2` reading a buffer nothing had written this frame. That is
+a real bug, not a performance note: it would have shown as a smeared or garbage frame
+the moment anyone tried AA.
+
+Fixed by making the dependency explicit: `composite` runs whenever anything downstream
+reads `colortex1`. When only AA is on, that pass is a plain copy of the frame, which is
+exactly what the pass after it needs.
+
 ## The budget, and what it says to ignore
 
 At 1366x768 and 60 fps there are about 63 megapixels per second to shade, so:

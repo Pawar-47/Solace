@@ -10,6 +10,9 @@ antialiasing, every edge against it smears. */
 #include "/lib/uniforms.glsl"
 
 varying vec2 texcoord;
+/* The ray, worked out once per vertex. It is affine in screen space, so interpolation
+   reproduces it exactly, and the sky covers a third of the screen. */
+varying vec3 skyRay;
 
 void main() {
     gl_Position = ftransform();
@@ -22,4 +25,10 @@ void main() {
             phase < 2.0 ? -0.25 : 0.25);
         gl_Position.xy += subPixel * vec2(2.0 / viewWidth, 2.0 / viewHeight) * gl_Position.w;
     #endif
+
+    /* After the jitter, so the ray moves with it: the sky has to follow the same
+       sub-pixel offset as the geometry or every edge against it smears. */
+    vec4 ray = gbufferProjectionInverse
+             * vec4(gl_Position.xy / gl_Position.w, 1.0, 1.0);
+    skyRay = ray.xyz / ray.w;
 }

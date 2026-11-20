@@ -59,6 +59,35 @@ float solNoise(vec2 p) {
     return mix(mix(a, b, w.x), mix(c, d, w.x), w.y);
 }
 
+/* The noise field and its slope, in one evaluation.
+
+   Water used to finite-difference this field to get a surface normal: two extra
+   evaluations per layer, each four hashes, sixteen hashes per water pixel that bought
+   nothing a derivative cannot give. The patch is a smoothstep-interpolated bilinear
+   surface, so its slope is closed form - the four corner hashes are already computed
+   and the derivative of the smoothstep weights is one multiply each.
+
+   Returns (height, d/dx, d/dy). The slope is not divided by anything, so the caller
+   scales it. */
+vec3 solNoiseSlope(vec2 p) {
+    vec2 cell = floor(p);
+    vec2 f = fract(p);
+    vec2 w = f * f * (3.0 - 2.0 * f);
+    vec2 dw = 6.0 * f * (1.0 - f);
+
+    float a = solHash(cell);
+    float b = solHash(cell + vec2(1.0, 0.0));
+    float c = solHash(cell + vec2(0.0, 1.0));
+    float d = solHash(cell + vec2(1.0, 1.0));
+
+    float bottom = mix(a, b, w.x);
+    float top = mix(c, d, w.x);
+
+    return vec3(mix(bottom, top, w.y),
+                mix(b - a, d - c, w.y) * dw.x,
+                (top - bottom) * dw.y);
+}
+
 /* Two octaves. */
 float solFbm(vec2 p) {
     return solNoise(p) * 0.62 + solNoise(p * 2.13 + 17.0) * 0.38;

@@ -10,8 +10,14 @@ End sky: the void and the star field, with the End palette. */
 #include "/lib/uniforms.glsl"
 
 varying vec2 texcoord;
+/* The ray, worked out once per vertex instead of once per sky pixel. */
+varying vec3 skyRay;
 
 void main() {
     gl_Position = ftransform();
     texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
+
+    vec4 ray = gbufferProjectionInverse
+             * vec4(gl_Position.xy / gl_Position.w, 1.0, 1.0);
+    skyRay = ray.xyz / ray.w;
 }

@@ -91,12 +91,10 @@ void main() {
                         + vec2(frameTimeCounter * WAVE_SPEED * 0.85,
                                frameTimeCounter * WAVE_SPEED * 0.55);
 
-                float e = 0.08;
-                float a0 = solNoise(p1);
-                float ax = solNoise(p1 + vec2(e, 0.0));
-                float az = solNoise(p1 + vec2(0.0, e));
-
-                vec2 slope = vec2(ax - a0, az - a0) * 4.0
+                /* One evaluation, not three: the slope comes from the derivative of the
+                   patch the height came from, so no finite difference is needed. The
+                   0.08 is the step the difference used, which keeps the amplitude. */
+                vec2 slope = solNoiseSlope(p1).yz * (4.0 * 0.08)
                            * (1.0 - rainStrength * 0.35);
 
                 vec3 worldNormal = mat3(gbufferModelViewInverse) * normal;
@@ -108,20 +106,15 @@ void main() {
             vec2 p1 = base + vec2(t * 0.85, t * 0.55);
             vec2 p2 = base * 2.10 - vec2(t * 0.65, t * 0.95);
 
-            /* One octave per layer, three samples each: six noise evaluations where
-               two octaves cost fifteen, and at wave scale the second octave was never
-               visible. On an HD 5500 this is the difference between water being free
-               and water being the most expensive thing on screen. */
-            float e = 0.08;
-            float a0 = solNoise(p1);
-            float ax = solNoise(p1 + vec2(e, 0.0));
-            float az = solNoise(p1 + vec2(0.0, e));
-            float b0 = solNoise(p2);
-            float bx = solNoise(p2 + vec2(e, 0.0));
-            float bz = solNoise(p2 + vec2(0.0, e));
+            /* Six noise evaluations became two. The slope comes from the derivative of
+               the same patch the height did, so the four extra evaluations a finite
+               difference needed - sixteen hashes per water pixel - are gone. The 0.08
+               factor is the step the old difference used, which keeps the amplitude
+               the pack shipped with. */
+            vec3 layerA = solNoiseSlope(p1);
+            vec3 layerB = solNoiseSlope(p2);
 
-            vec2 slope = vec2(ax - a0, az - a0) * 4.0
-                       + vec2(bx - b0, bz - b0) * 2.0;
+            vec2 slope = (layerA.yz * 4.0 + layerB.yz * 2.0) * 0.08;
 
             /* Rain flattens the chop: wet weather should not leave the surface
                looking windier than the dry. */

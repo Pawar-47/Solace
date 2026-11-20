@@ -22,10 +22,10 @@ without a second copy of any of it.
 
 varying vec2 texcoord;
 
-vec3 skyViewRay() {
-    vec4 ray = gbufferProjectionInverse * vec4(texcoord * 2.0 - 1.0, 1.0, 1.0);
-    return ray.xyz / ray.w;
-}
+/* The sky ray, interpolated from the vertex stage: one inverse projection per vertex
+   instead of one per pixel. The map from screen position to ray is affine, so the
+   interpolation reproduces it exactly and the fragment stage only normalises it. */
+varying vec3 skyRay;
 
 #if V_CLOUDS == 1
 vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
@@ -114,7 +114,7 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
 #endif
 
 void main() {
-    vec3 directionWorld = mat3(gbufferModelViewInverse) * normalize(skyViewRay());
+    vec3 directionWorld = mat3(gbufferModelViewInverse) * normalize(skyRay);
     float sunUp = sunHeight();
     float day = dayFrom(sunUp);
     float dusk = duskFrom(sunUp);
