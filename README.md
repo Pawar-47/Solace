@@ -41,9 +41,13 @@ not upwards.
 
 ## Install
 
-Copy the `Solace-LowEnd` folder into your `shaderpacks` folder so the game finds
-`shaderpacks/Solace-LowEnd/shaders/`, then choose it in **Options → Video Settings →
-Shader Packs**.
+Easiest: download `Solace-LowEnd.zip` from the [Releases](../../releases) page — the
+`latest` release is rebuilt and re-uploaded on every push to `main` — and unpack it
+into your `shaderpacks` folder.
+
+Or copy the `Solace-LowEnd` folder from this repository, so the game finds
+`shaderpacks/Solace-LowEnd/shaders/`. Either way, then choose it in **Options → Video
+Settings → Shader Packs**.
 
 Typical locations:
 
@@ -52,9 +56,6 @@ Linux     ~/.minecraft/shaderpacks/
 Windows   %APPDATA%\.minecraft\shaderpacks\
 Prism     <instance>/.minecraft/shaderpacks/
 ```
-
-A zip with `shaders/` at its top level works too — that is what a release build
-produces.
 
 ## Settings that matter more than the pack
 
@@ -79,7 +80,7 @@ Solace-LowEnd/            the pack: copy this folder into shaderpacks/
   shaders/                the GLSL, block lists, languages, texture generator
 docs/linux-jvm.md         heap, JVM flags, swap and the iGPU on 8 GB / Mint XFCE
 tools/                    the checks that run in CI, also runnable by hand
-.github/workflows/        validation on every push, packaging on a version tag
+.github/workflows/        validation on every push, packaging and the latest release
 ```
 
 ## Continuous integration
@@ -95,6 +96,11 @@ python3 tools/check_textures.py   # runs the texture generator and verifies its 
 
 All three need nothing but Python 3. A red run means a file the game would refuse to
 load, or a setting that would show up in the options screen as a raw identifier.
+
+Packaging runs on the same trigger. Every push to `main` rebuilds `Solace-LowEnd.zip`
+and replaces it on the rolling **latest** release, so the download is always the
+current code; the zip is also attached to each run as a workflow artifact. Pushing a
+version tag (`v1.0.0`) publishes a release of its own with generated notes.
 
 ## Status
 

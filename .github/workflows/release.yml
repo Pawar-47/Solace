@@ -1,16 +1,25 @@
 name: Release
 
-# Packaging only: on a version tag, check the pack and attach the zip a player
-# installs. The zip holds `shaders/` at its top level, which is what the game wants.
+# Packaging. A player needs exactly one thing from this repository: a zip with
+# `shaders/` at its top level, ready to drop into `shaderpacks/`.
+#
+# Every push to main publishes a rolling release tagged `latest`, so there is always
+# something to download without anyone having to create a tag first. Pushing a
+# version tag (`v1.0.0`) publishes a release of its own with generated notes.
+# The zip is attached to the run as a workflow artifact either way.
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: [main]
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: true
 
 jobs:
   package:
@@ -34,15 +43,41 @@ jobs:
       - name: Build the zip
         run: |
           cd Solace-LowEnd
-          zip -r "../Solace-LowEnd-${GITHUB_REF_NAME}.zip" shaders README.md
+          zip -r ../Solace-LowEnd.zip shaders README.md
           cd ..
-          unzip -l "Solace-LowEnd-${GITHUB_REF_NAME}.zip" | head -20
+          ls -l Solace-LowEnd.zip
+          unzip -l Solace-LowEnd.zip | head -8
 
-      - name: Attach it to the release
+      - name: Attach it to this run
+        uses: actions/upload-artifact@v4
+        with:
+          name: Solace-LowEnd
+          path: Solace-LowEnd.zip
+          if-no-files-found: error
+
+      - name: Publish the rolling release (main)
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
-            "Solace-LowEnd-${GITHUB_REF_NAME}.zip" \
+          stage="$(date -u +%Y-%m-%d) at $(date -u +%H:%M) UTC"
+          gh release view latest >/dev/null 2>&1 || gh release create latest \
+            --title "Solace - latest build" \
+            --notes "Placeholder" \
+            --latest
+          gh release upload latest Solace-LowEnd.zip --clobber
+          gh release edit latest \
+            --notes "Download Solace-LowEnd.zip and unpack it into your shaderpacks folder, so the game finds shaderpacks/Solace-LowEnd/shaders/ - or copy the Solace-LowEnd folder from the repository.
+
+          Built from ${GITHUB_SHA:0:7} on ${stage}, after the pack passed its structural checks. Nobody has looked at the picture on real hardware yet; see the repository README for what to report if something breaks."
+
+      - name: Publish a versioned release (tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || gh release create \
+            "${GITHUB_REF_NAME}" \
             --title "Solace ${GITHUB_REF_NAME}" \
             --generate-notes
+          gh release upload "${GITHUB_REF_NAME}" Solace-LowEnd.zip --clobber
