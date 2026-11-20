@@ -61,11 +61,16 @@ void main() {
     gl_Position = gl_ProjectionMatrix * viewPos;
 
     #if AA_TYPE == 1 || AA_TYPE == 2
-        float phase = float(frameCounter - 4 * (frameCounter / 4));
-        vec2 subPixel = vec2(
-            phase == 0.0 || phase == 3.0 ? -0.25 : 0.25,
-            phase < 2.0 ? -0.25 : 0.25);
-        gl_Position.xy += subPixel * vec2(2.0 / viewWidth, 2.0 / viewHeight) * gl_Position.w;
+        /* Sub-pixel jitter for the temporal pass: eight positions instead of the four
+           corners of a square, walked by a low-discrepancy pair so consecutive frames
+           never land next to each other. The reference walks a sixteen-point
+           pentagon for the same reason - the faster the samples move, the better the
+           history can absorb what a still pattern would leave as flicker. */
+        float phase = float(frameCounter % 8);
+        vec2 subPixel = fract(phase * vec2(0.75487766624669276, 0.569840290998) + 0.37)
+                      * 2.0 - 1.0;
+        gl_Position.xy += subPixel * 0.5 * vec2(2.0 / viewWidth, 2.0 / viewHeight)
+                        * gl_Position.w;
     #endif
 
     #if defined SOLACE_ENTITY_GLOW

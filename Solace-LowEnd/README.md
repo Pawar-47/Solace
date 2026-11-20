@@ -150,8 +150,8 @@ of them a decision, not an omission:
 - **Nine languages, thinner ones.** `en_US` is complete with tooltips; the other
   eight translate every option name and every enumerated value, and their long
   tooltips stay English for a native reviewer to finish.
-- **A short `block.properties`.** Nine ids instead of the reference's ~90 KB
-  catalogue: two for waving, three for the gloss classes, and one each for emissive
+- **A short `block.properties`.** Ten ids instead of the reference's ~90 KB
+  catalogue: two for waving, four for the gloss classes, and one each for emissive
   blocks, the End portal, water and glass. `item.properties` carries the ten or so
   items that light the world when held, and `entity.properties` the two entity ids the
   pack reacts to. Nothing else here keys off an id, and nothing in any of them needs a

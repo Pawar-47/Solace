@@ -121,6 +121,10 @@ void main() {
             gloss = 0.45;
         } else if (blockId == SOLACE_GLOSS_FABRIC) {
             gloss = 0.16;
+        } else if (blockId == SOLACE_GLOSS_SAND) {
+            /* Sand and gravel: a sheen, not a highlight. This is the reference's
+               fourth gloss class; it was the one category this pack left out. */
+            gloss = 0.08;
         }
 
         if (gloss > 0.0) {

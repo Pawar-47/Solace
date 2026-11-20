@@ -17,5 +17,6 @@ block.properties, never raw block numbers.
 #define SOLACE_PORTAL 7.0
 #define SOLACE_WATER 8.0
 #define SOLACE_GLASS 9.0
+#define SOLACE_GLOSS_SAND 10.0
 
 #endif

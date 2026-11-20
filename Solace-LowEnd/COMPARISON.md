@@ -564,3 +564,19 @@ Reconciled and deliberately left as they are:
   sunset/day/night light, zenith and horizon value; this pack exposes the custom
   zenith, horizon, ambient and water colours, which covers the same look with eleven
   options instead of eighteen.
+
+
+
+## 15. Eighth pass: the options screen, the jitter, the fourth material
+
+| # | Reference behaviour | Mine before | Fix |
+| --- | --- | --- | --- |
+| 65 | `shaders.properties:71-109` groups its options into named sub-screens (`[WATER_SCREEN]`, `[POST_SCREEN]`, `[CUSTOM_COLORS_SCREEN]`, ...) linked from a main screen, with `screen.columns` per screen | one `screen` line holding all 86 options: a single scrolling wall in which the fog sliders sit below the water ones | grouped into fourteen sub-screens (water, geometry, shadows, sky, AO, bloom, DOF, AA, motion blur, light, fog, colour, palette, accessibility) with a short main screen that carries the profile and the six options that change the picture most |
+| 66 | `shaders.properties:165-210` - the temporal offset walks a **sixteen-point pentagon** so consecutive frames never sample neighbouring sub-pixels | four corners of a square, repeating every four frames, which leaves a visible 2x2 pattern in the history | eight positions walked by a low-discrepancy pair, so the pattern repeats every eight frames and never lands on a neighbour. A `cos`/`sin` pair per vertex was not worth it; the golden-ratio pair costs two multiplies |
+| 67 | `block.properties:47` - the reference has **four** gloss classes: metal, polished, fabric and sand-like (`10410`) | three: metal, polished, fabric, so sand, gravel and concrete powder had no surface at all | sand-like id (10) added with the reference's own list and a 0.08 sheen |
+
+Noted, not changed: the reference derives its dither shift from Iris's `random()`
+(`shaders.properties:217`); this pack rotates its dither by `frameCounter % 64`. Both
+animate; the reference's is genuinely per-frame random rather than a one-second
+cycle, and switching would mean threading one more uniform through five programs for
+a difference the eye cannot resolve at one 8-bit step of amplitude.
