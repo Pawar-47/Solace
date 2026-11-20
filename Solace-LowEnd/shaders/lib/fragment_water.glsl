@@ -1,17 +1,25 @@
 /* Solace - lib/fragment_water.glsl
 
 The water surface: waves from two moving noise layers tilting the geometry normal,
-the surface lit like any other block, the sky reflected by a fresnel curve, a sun or
-moon highlight, fog, and two optional extras that both read the copy of the scene
-the deferred pass leaves in gaux1:
+the surface lit with the same de-biased lightmap and candle curve the solid geometry
+uses, the sky reflected by a fresnel curve, a sun or moon highlight, fog - and two
+optional extras that both read the copy of the scene the deferred pass leaves in
+gaux1:
 
   REFRACTION  the scene behind the surface is bent by the normal and darkened by the
-              distance the light travels through water.
+              distance the light travels through water - the thickness of water
+              behind the pixel, not the distance to the eye, which is what the
+              reference measures and what makes a shallow pool still show its floor.
   WATER_SSR   the reflected ray is marched through that same copy, so water reflects
               the world and not only the sky; the sky remains the fallback when the
               march finds nothing.
 
 WATER_TEXTURE and VANILLA_WATER choose where the base colour comes from.
+
+Glass is shaded as glass and not as flat water (the reference keeps a separate
+cristal shader for it): no ripples, no absorption, a squarer border fade on its
+reflection, its base colour already blended towards the reflection by the fresnel
+curve, and an alpha that closes to opaque at grazing angles.
 */
 
 #include "/lib/config.glsl"
@@ -27,13 +35,23 @@ uniform sampler2D depthtex0;
 uniform sampler2D gaux1;
 #endif
 
+/* View-space distance of a depth-buffer value. The reference derives it from the
+   projection matrix the same way, which avoids needing the near plane. */
+float waterLinearDepth(float depth) {
+    return gbufferProjection[3][2] / (gbufferProjection[2][2] + 2.0 * depth - 1.0);
+}
+
 void main() {
     vec4 albedo = texture2D(gcolor, texcoord) * tint;
     if (albedo.a < 0.05) discard;
 
     vec3 normal = normalize(normalView);
 
+    /* The reference shades water and glass separately: only water ripples. */
+    bool glass = (blockId == SOLACE_GLASS);
+
     #if WATER_WAVES == 1
+    if (!glass) {
         vec2 base = worldSpacePos.xz * (0.42 * WAVE_SCALE);
         float t = frameTimeCounter * WAVE_SPEED;
         vec2 p1 = base + vec2(t * 0.85, t * 0.55);
@@ -50,49 +68,87 @@ void main() {
         vec2 slope = vec2(ax - a0, az - a0) * 4.0
                    + vec2(bx - b0, bz - b0) * 2.0;
 
+        /* Rain flattens the chop, as the reference's turbulence term does. */
+        slope *= 1.0 - rainStrength * 0.35;
+
         vec3 worldNormal = mat3(gbufferModelViewInverse) * normal;
         worldNormal = normalize(worldNormal + vec3(slope.x, 0.0, slope.y) * 0.45);
         normal = normalize(mat3(gbufferModelView) * worldNormal);
+    }
     #endif
 
     vec3 waterBase;
     #if WATER_TEXTURE == 1
-        waterBase = albedo.rgb * tint.rgb;
+        /* The resource pack's texture decides the pattern; the theme decides how
+           blue it is, through a factor that stays near 1 so the texture is not
+           darkened by a theme whose water colour happens to be deep. */
+        waterBase = albedo.rgb * tint.rgb * (0.80 + 1.60 * themeWater());
     #else
-        waterBase = mix(vec3(0.16, 0.34, 0.42), tint.rgb, 0.55);
+        waterBase = mix(themeWater(), tint.rgb, 0.45);
     #endif
     #if VANILLA_WATER == 1
         waterBase = tint.rgb;
     #endif
 
     vec3 toEye = normalize(-viewSpacePos);
-    float skyLight = lmcoord.y;
-    float blockLight = lmcoord.x;
     float viewDist = length(viewSpacePos);
 
-    vec3 light = ambientColour() * (skyLight * skyLight)
-               + blockLightColour() * (blockLight * blockLight) * BLOCK_LIGHT;
+    /* Same de-biased lightmap and candle curve as the solid geometry. */
+    float skyLight = sat(max(lmcoord.y - 0.065, 0.0) * 1.06951871657754);
+    float blockCurve = lmcoord.x * sqrt(lmcoord.x) + solPow6(lmcoord.x * 1.17);
+
+    float day = dayFactor();
+    float dusk = duskFactor();
+    vec3 astroDir = normalize(mix(moonPosition, sunPosition, day));
+    vec3 astroColour = mix(moonColour() * 2.5, sunColour(), day);
+
+    vec3 light = ambientColour(day, dusk) * (0.045 + 0.955 * (skyLight * skyLight))
+               + blockLightColour() * blockCurve * BLOCK_LIGHT
+               + astroColour * sat(dot(normal, astroDir)) * 0.35;
 
     vec3 colour = waterBase * light;
 
     float fresnel = pow(1.0 - sat(dot(normal, toEye)), 5.0);
     float reflection = 0.0;
 
+    bool skyReflectionOn = false;
+    vec3 skyReflection = vec3(0.0);
+
+    /* Computed even with reflections off: the march and the glint both need it, and
+       one matrix multiply is cheaper than the branch that would guard it. */
+    vec3 reflectedWorld = mat3(gbufferModelViewInverse) * reflect(-toEye, normal);
+
     #if WATER_REFLECTION == 1
-        vec3 reflected = mat3(gbufferModelViewInverse) * reflect(-toEye, normal);
-        vec3 skyReflection = skyColour(reflected);
-        reflection = sat(0.08 + fresnel * 0.92);
-        colour = mix(colour, skyReflection * 0.85, reflection);
+        skyReflection = reflectionColour(reflectedWorld);
+        skyReflectionOn = true;
     #endif
 
+    /* The mirror image, from the sky, and the world where WATER_SSR finds it. */
+    vec3 reflectionColourOut = skyReflection * 0.85;
+    float reflectionBorder = 0.0;
+    /* How much of the mirror direction is still open sky: the highlight below may
+       only appear where nothing in the world blocks it. */
+    float reflectionSky = 1.0;
+
     #if WATER_SSR == 1
-        vec3 reflectedWorld = mat3(gbufferModelViewInverse) * reflect(-toEye, normal);
         vec3 reflectedView = mat3(gbufferModelView) * reflectedWorld;
         bool found = false;
-        vec3 foundColour = vec3(0.0);
+        vec2 hitUV = vec2(0.0);
+        float hitDistance = 0.0;
+
+        /* The reference marches its ray in exponentially growing steps and then
+           bisects to refine the hit: far fewer fetches than a fixed step, for the
+           same accuracy up close. Two blocks out to the last step's reach. */
+        float dither = solDitherShifted(gl_FragCoord.xy,
+                                        float(frameCounter % 64) * 0.015625);
+        float previousT = 0.0;
+        float currentT = 0.0;
 
         for (int i = 1; i <= SSR_STEPS; i++) {
-            vec3 probe = viewSpacePos + reflectedView * (0.35 * float(i));
+            previousT = currentT;
+            currentT = 2.0 * exp2(float(i) - 1.0 + dither * 0.4);
+
+            vec3 probe = viewSpacePos + reflectedView * currentT;
             vec4 clip = gbufferProjection * vec4(probe, 1.0);
             if (clip.w <= 0.0001) break;
 
@@ -108,44 +164,143 @@ void main() {
 
             if (probe.z < sceneZ) {
                 found = true;
-                foundColour = texture2D(gaux1, probeUV).rgb;
+                hitUV = probeUV;
+                hitDistance = currentT;
                 break;
             }
         }
 
+        /* Three bisections between the last miss and the hit, which turns the
+           exponential steps into a usable surface point. */
         if (found) {
-            float strength = sat(0.15 + fresnel * 0.95);
-            colour = mix(colour, foundColour, strength * 0.85);
-            reflection = max(reflection, strength * 0.85);
+            float lo = previousT;
+            float hi = currentT;
+            for (int r = 0; r < 3; r++) {
+                float mid = 0.5 * (lo + hi);
+                vec3 probe = viewSpacePos + reflectedView * mid;
+                vec4 clip = gbufferProjection * vec4(probe, 1.0);
+                if (clip.w <= 0.0001) break;
+
+                vec2 probeUV = clip.xy / clip.w * 0.5 + 0.5;
+                if (probeUV.x < 0.0 || probeUV.x > 1.0 || probeUV.y < 0.0 || probeUV.y > 1.0) break;
+
+                float sceneDepth = texture2D(depthtex0, probeUV).r;
+                if (sceneDepth >= 0.99999) { lo = mid; continue; }
+
+                vec4 sceneView = gbufferProjectionInverse
+                               * vec4(probeUV * 2.0 - 1.0, sceneDepth * 2.0 - 1.0, 1.0);
+                float sceneZ = sceneView.z / sceneView.w;
+
+                if (probe.z < sceneZ) { hi = mid; hitUV = probeUV; }
+                else { lo = mid; }
+            }
+            hitDistance = hi;
+        }
+
+        if (found) {
+            /* Off-screen reflection rays have nowhere to sample, so the image is
+               folded back at the screen edge and faded out towards it rather than
+               smeared along the border. The reference does the same, with a
+               squarer falloff on glass. */
+            vec2 uv = hitUV;
+            if (glass) {
+                float fx = abs(2.0 * uv.x - 1.0);
+                float fy = abs(2.0 * uv.y - 1.0);
+                fx *= fx; fx *= fx;
+                fy *= fy; fy *= fy;
+                reflectionBorder = sat(min(1.0 - fx, 1.0 - fy));
+            } else {
+                uv.x = abs(uv.x);
+                if (uv.x > 1.0) uv.x = 2.0 - uv.x;
+                reflectionBorder = sat((1.0 - max(0.0, abs(uv.y - 0.5)) * 2.0) * 50.0);
+                float edgeY = sat(uv.y);
+                float edgeY5 = solPow5(edgeY);
+                reflectionBorder = sat(reflectionBorder - edgeY5 * edgeY5);
+            }
+
+            vec3 sampled = texture2D(gaux1, clamp(uv, vec2(0.002), vec2(0.998))).rgb;
+            vec3 fallback = skyReflectionOn ? skyReflection : sampled;
+
+            /* The march can land on something further away than the water itself
+               only by mistake; a hit that close to the eye is dropped. */
+            float trust = sat((hitDistance - 0.35) * 4.0);
+            reflectionColourOut = mix(sampled, fallback, 1.0 - trust);
+            reflectionColourOut = mix(fallback, reflectionColourOut, reflectionBorder);
+            reflection = sat(0.08 + fresnel * 0.92) * reflectionBorder * trust;
+            reflectionSky = 1.0 - reflectionBorder * trust;
         }
     #endif
 
+    if (reflection <= 0.0 && skyReflectionOn) {
+        reflection = sat(0.08 + fresnel * 0.92);
+        reflectionColourOut = skyReflection * 0.85;
+    }
+
+    /* Glass blends its own colour towards the sky and then towards the mirror
+       image, both by fresnel; water mixes once, by the reflection strength. */
+    if (glass) {
+        vec3 glassSky = mix(colour, skyReflection, skyLight * skyLight);
+        colour = mix(colour, glassSky, fresnel);
+        colour = mix(colour, reflectionColourOut, fresnel);
+    } else {
+        colour = mix(colour, reflectionColourOut, reflection);
+    }
+
     #if WATER_GLINT == 1
-        float sunGlint = pow(sat(dot(normal, normalize(sunPosition))), 300.0);
-        float moonGlint = pow(sat(dot(normal, normalize(moonPosition))), 300.0);
-        colour += sunColour() * sunGlint * skyLight * 2.2;
-        colour += moonColour() * moonGlint * skyLight * 2.0;
+        #if WATER_REFLECTION == 1
+            /* The highlight lies on the reflected ray, not on the surface normal,
+               and only where that ray reaches the sky - the reference gates it on
+               its march's "infinite" flag and on the sky lightmap for the same
+               reason. */
+            float alignment = sat(dot(normalize(reflectedWorld), astroDir));
+            float glint = smoothstep(0.995, 1.0, alignment);
+            colour += astroColour * glint * skyLight * reflectionSky
+                    * (1.0 - rainStrength) * 3.0;
+        #else
+            float alignment = pow(sat(dot(normal, astroDir)), 300.0);
+            colour += astroColour * alignment * skyLight * 2.2;
+        #endif
     #endif
 
     float alpha = sat(WATER_OPACITY * 0.80 + fresnel * 0.55 + reflection * 0.25);
+    if (glass) alpha = mix(alpha, 1.0, fresnel * 0.9);
 
     #if REFRACTION == 1
-        vec2 bent = clamp(texcoord + normal.xy * 0.035, vec2(0.002), vec2(0.998));
-        vec3 behind = texture2D(gaux1, bent).rgb;
-        behind *= exp(-min(viewDist, 64.0) * WATER_ABSORPTION * 0.60);
-        colour = mix(behind, colour, alpha);
-        alpha = 1.0;
+        /* Glass does not bend what is behind it in the reference either: it is
+           drawn as opaque geometry with its own alpha. */
+        if (!glass && isEyeInWater == 0) {
+            vec2 bent = clamp(texcoord + normal.xy
+                              * (0.09 / (1.0 + viewDist * 0.25)),
+                              vec2(0.002), vec2(0.998));
+            vec3 behind = texture2D(gaux1, bent).rgb;
+
+            /* How much water the light crosses behind this pixel. The reference
+               squares the thickness and feeds it through a rational curve; that
+               curve turns negative for thick water at its default constant, so
+               this uses an exponential, which is monotone and cannot overshoot. */
+            float surfaceDistance = waterLinearDepth(gl_FragCoord.z);
+            float sceneDistance = waterLinearDepth(texture2D(depthtex0, bent).r);
+            float thickness = max(sceneDistance - surfaceDistance, 0.0);
+
+            /* Nothing behind the surface but sky: the reference treats that as
+               fully absorbed, which stops the sky showing through the water. */
+            float absorbed = 1.0 - exp(-thickness * thickness
+                                       * WATER_ABSORPTION * 0.5);
+
+            colour = mix(behind, colour, absorbed);
+        }
     #endif
 
-    vec3 fogTint = fogColour();
-    float fogAmount = 1.0 - exp(-viewDist * (2.2 * FOG_DENSITY) / max(far, 32.0));
-
+    vec3 fogTint = fogColour(day, dusk);
     if (isEyeInWater == 1) {
         fogTint = vec3(0.050, 0.180, 0.240);
-        fogAmount = 1.0 - exp(-viewDist * 0.09);
+    } else if (isEyeInWater == 2) {
+        fogTint = vec3(0.55, 0.12, 0.02);
+    } else if (isEyeInWater == 3) {
+        fogTint = vec3(0.80, 0.86, 0.92);
     }
 
-    colour = mix(colour, fogTint, sat(fogAmount));
+    colour = mix(colour, fogTint, fogFactor);
 
-    gl_FragData[0] = vec4(colour, alpha);
+    gl_FragData[0] = vec4(clamp(colour, vec3(0.0), vec3(50.0)), alpha);
 }

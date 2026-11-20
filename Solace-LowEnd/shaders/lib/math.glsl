@@ -22,6 +22,25 @@ float luma(vec3 c) {
     return dot(c, vec3(0.2126, 0.7152, 0.0722));
 }
 
+/* Small integer powers as multiplications. pow(x, 6.0) is a logarithm and an
+   exponential on most drivers, and the lightmap candle curve is evaluated on every
+   lit pixel, so this is not a micro-optimisation. The reference keeps the same
+   helpers (basic_utils.glsl) for the same reason. */
+float solPow4(float x) {
+    float t = x * x;
+    return t * t;
+}
+
+float solPow5(float x) {
+    float t = x * x;
+    return t * t * x;
+}
+
+float solPow6(float x) {
+    float t = x * x;
+    return t * t * t;
+}
+
 /* A hash that only needs two multiplies and a dot. Used for the water surface,
    for the stars and for the dither, where exactness does not matter. */
 float solHash(vec2 p) {
@@ -56,6 +75,26 @@ float solFbm3(vec2 p) {
 /* Signed dither in units of one 8-bit step. */
 float solDither(vec2 pixel) {
     return solHash(pixel) - 0.5;
+}
+
+/* A dithered sample position, in [0, 1), with a 2x2 tile flip: neighbouring tiles
+   mirror each other, so the pattern the eye sees is far closer to noise than a
+   single hash, which repeats visibly at large flat areas. The two constants are a
+   low-discrepancy pair, the same trick the reference uses in its `semiblue` dither
+   and in most of its sampling. */
+float solDitherBlue(vec2 pixel) {
+    vec2 tile = floor(pixel * 0.25);
+    float flip = mod(tile.x + tile.y, 2.0);
+    vec2 q = mix(pixel, pixel.yx, flip);
+    return fract(dot(vec2(0.7548776662466928, 0.56984029099805), q)
+                 + solHash(tile) * 0.6180339887498949);
+}
+
+/* The same, rotated by the frame counter, for effects that gather samples over the
+   screen: a still dither becomes a fixed pattern in the image, a moving one averages
+   out over a few frames. shift is frameCounter % 64 moved into [0, 1). */
+float solDitherShifted(vec2 pixel, float shift) {
+    return fract(solDitherBlue(pixel + vec2(shift * 7.0, shift * 23.0)) + shift);
 }
 
 #endif

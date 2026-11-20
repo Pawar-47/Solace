@@ -99,3 +99,16 @@ value.COLOR_SCHEME.5=Psikedelik
 value.COLOR_SCHEME.6=Kakao
 value.COLOR_SCHEME.7=Testigo
 value.COLOR_SCHEME.99=Özel
+
+
+# Torch colour temperature, and the custom theme's sky light and water colour.
+option.BLOCKLIGHT_TEMP=Meşale ışığı sıcaklığı
+value.BLOCKLIGHT_TEMP.0=Turuncu
+value.BLOCKLIGHT_TEMP.1=Kehribar
+value.BLOCKLIGHT_TEMP.2=Sıcak beyaz
+value.BLOCKLIGHT_TEMP.3=Krem
+value.BLOCKLIGHT_TEMP.4=Nötr
+option.CUSTOM_AMBIENT=Özel tema gökyüzü ışığı
+option.CUSTOM_WATER_R=Özel su kırmızı
+option.CUSTOM_WATER_G=Özel su yeşil
+option.CUSTOM_WATER_B=Özel su mavi

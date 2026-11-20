@@ -99,3 +99,16 @@ value.COLOR_SCHEME.5=Психоделика
 value.COLOR_SCHEME.6=Какао
 value.COLOR_SCHEME.7=Тестиго
 value.COLOR_SCHEME.99=Своя
+
+
+# Torch colour temperature, and the custom theme's sky light and water colour.
+option.BLOCKLIGHT_TEMP=Температура света факела
+value.BLOCKLIGHT_TEMP.0=Оранжевый
+value.BLOCKLIGHT_TEMP.1=Янтарный
+value.BLOCKLIGHT_TEMP.2=Тёплый белый
+value.BLOCKLIGHT_TEMP.3=Кремовый
+value.BLOCKLIGHT_TEMP.4=Нейтральный
+option.CUSTOM_AMBIENT=Свет неба своей темы
+option.CUSTOM_WATER_R=Красный своей воды
+option.CUSTOM_WATER_G=Зелёный своей воды
+option.CUSTOM_WATER_B=Синий своей воды

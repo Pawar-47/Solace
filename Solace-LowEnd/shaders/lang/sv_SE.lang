@@ -99,3 +99,16 @@ value.COLOR_SCHEME.5=Psykedelisk
 value.COLOR_SCHEME.6=Kakao
 value.COLOR_SCHEME.7=Testigo
 value.COLOR_SCHEME.99=Egen
+
+
+# Torch colour temperature, and the custom theme's sky light and water colour.
+option.BLOCKLIGHT_TEMP=Facklans färgtemperatur
+value.BLOCKLIGHT_TEMP.0=Orange
+value.BLOCKLIGHT_TEMP.1=Bärnstensgul
+value.BLOCKLIGHT_TEMP.2=Varmvit
+value.BLOCKLIGHT_TEMP.3=Gräddvit
+value.BLOCKLIGHT_TEMP.4=Neutral
+option.CUSTOM_AMBIENT=Egen temahimmelsljus
+option.CUSTOM_WATER_R=Eget vatten rött
+option.CUSTOM_WATER_G=Eget vatten grönt
+option.CUSTOM_WATER_B=Eget vatten blått

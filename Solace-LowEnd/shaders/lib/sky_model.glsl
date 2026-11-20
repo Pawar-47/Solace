@@ -1,14 +1,16 @@
 /* Solace - lib/sky_model.glsl
 
 The pack's colour model, in one place so the sky, the fog on every surface and the
-water reflection cannot disagree: sun height from worldTime, a palette, a dome
-gradient, light colours and the fog colour.
+water reflection cannot disagree.
 
-The palette is picked in two steps: themePalette() reads COLOR_SCHEME (eight
-presets plus the custom slot), and palette() lets a dimension override it. The
-dimension folders set SOLACE_DIM_NETHER or SOLACE_DIM_END before including a
-program, which is how the Nether and the End get their own sky without a separate
-copy of any shader body.
+The day and dusk factors are **parameters**, not functions called from inside every
+colour function: `sunHeight()` costs a sin(), and the reference keeps a precomputed
+day mixer for exactly this reason. Each program now computes them once and passes
+them down, so a sky pixel pays one sin() instead of eight.
+
+The palette is picked in two steps: themePalette() reads COLOR_SCHEME (eight presets
+plus the custom slot), and palette() lets a dimension override it. The dimension
+folders set SOLACE_DIM_NETHER or SOLACE_DIM_END before including a program.
 */
 
 #ifndef SOLACE_SKY_MODEL
@@ -23,7 +25,6 @@ float sunHeight() {
     return sin(float(worldTime) * (TAU_SOLACE / 24000.0));
 }
 
-/* The Nether and the End have no day, so their light does not swing with sunrise. */
 float dayFactor() {
     #if SOLACE_DIM_NETHER == 1 || SOLACE_DIM_END == 1
         return 1.0;
@@ -72,14 +73,22 @@ void themePalette(out vec3 zenith, out vec3 horizon) {
     #endif
 }
 
-/* The dimension has the last word over the theme. */
+/* The dimension has the last word over the theme.
+
+   Both other dimensions are nearly neutral in the reference (`lib/color_utils_nether.glsl`
+   and `lib/color_utils_end.glsl`): the End sky is (0.0465, 0.0375, 0.0465) and the
+   Nether's is (0.0480, 0.0434, 0.0425) - almost grey, with the colour coming from the
+   light and the fog rather than from the palette. This pack had a bright orange
+   Nether and a violet End, which made the fog in both far stronger than the
+   reference's. The Nether takes most of its colour from vanilla's fog now. */
 void palette(out vec3 zenith, out vec3 horizon) {
     #if SOLACE_DIM_NETHER == 1
-        zenith = vec3(0.230, 0.055, 0.030);
-        horizon = vec3(0.520, 0.160, 0.065);
+        vec3 neutral = vec3(0.0480, 0.0434, 0.0425);
+        zenith = mix(neutral, fogColor, 0.35);
+        horizon = mix(neutral, fogColor, 0.85);
     #elif SOLACE_DIM_END == 1
-        zenith = vec3(0.070, 0.035, 0.130);
-        horizon = vec3(0.230, 0.150, 0.330);
+        zenith = vec3(0.0465, 0.0375, 0.0465);
+        horizon = vec3(0.0465, 0.0375, 0.0465);
     #else
         themePalette(zenith, horizon);
     #endif
@@ -96,70 +105,174 @@ vec3 moonColour() {
     return vec3(0.40, 0.50, 0.78) * 0.30;
 }
 
-vec3 zenithColour() {
+/* How much skylight a theme gives. The reference gives every theme its own level,
+   from a dim 0.25 for New Shoka to a bright 0.65 for Testigo, and without it the
+   eight presets differ only in hue and all sit at the same brightness. */
+float themeAmbient() {
+    #if COLOR_SCHEME == 0
+        return 0.40;   // Ethereal
+    #elif COLOR_SCHEME == 1
+        return 0.25;   // Shoka
+    #elif COLOR_SCHEME == 2
+        return 0.50;   // Classic
+    #elif COLOR_SCHEME == 3
+        return 0.50;   // Legacy
+    #elif COLOR_SCHEME == 4
+        return 0.50;   // Captain
+    #elif COLOR_SCHEME == 5
+        return 0.45;   // Psychedelic
+    #elif COLOR_SCHEME == 6
+        return 0.40;   // Cocoa
+    #elif COLOR_SCHEME == 7
+        return 0.65;   // Testigo
+    #else
+        return CUSTOM_AMBIENT;
+    #endif
+}
+
+/* The colour water takes on from a theme, so a Cocoa ocean is not the same blue as
+   an Ethereal one. The reference keeps a water colour per theme for the same
+   reason; before this the pack had one fixed colour whatever the theme. */
+vec3 themeWater() {
+    #if COLOR_SCHEME == 0
+        return vec3(0.050, 0.100, 0.110);
+    #elif COLOR_SCHEME == 1
+        return vec3(0.050, 0.100, 0.110);
+    #elif COLOR_SCHEME == 2
+        return vec3(0.016, 0.139, 0.165);
+    #elif COLOR_SCHEME == 3
+        return vec3(0.016, 0.139, 0.165);
+    #elif COLOR_SCHEME == 4
+        return vec3(0.050, 0.100, 0.110);
+    #elif COLOR_SCHEME == 5
+        return vec3(0.018, 0.120, 0.180);
+    #elif COLOR_SCHEME == 6
+        return vec3(0.020, 0.180, 0.322);
+    #elif COLOR_SCHEME == 7
+        return vec3(0.012, 0.110, 0.192);
+    #else
+        return vec3(CUSTOM_WATER_R, CUSTOM_WATER_G, CUSTOM_WATER_B);
+    #endif
+}
+
+/* Torch and lava light: warm orange, a little paler towards yellow at full
+   strength, and redder in the Nether where the reference recolours it too.
+   It was being called from the geometry, water and glowing stages without ever
+   being defined, which stopped the pack from compiling at all. BLOCKLIGHT_TEMP
+   moves the light from orange through warm white to neutral, as the reference's
+   own temperature setting does. */
+vec3 blockLightColour() {
+    #if SOLACE_DIM_NETHER == 1
+        return vec3(1.00, 0.46, 0.20);
+    #else
+        #if BLOCKLIGHT_TEMP == 0
+            return vec3(1.00, 0.56, 0.28);
+        #elif BLOCKLIGHT_TEMP == 1
+            return vec3(1.00, 0.66, 0.40);
+        #elif BLOCKLIGHT_TEMP == 2
+            return vec3(1.00, 0.75, 0.52);
+        #elif BLOCKLIGHT_TEMP == 3
+            return vec3(1.00, 0.83, 0.68);
+        #else
+            return vec3(1.00, 0.92, 0.85);
+        #endif
+    #endif
+}
+
+vec3 zenithColour(float day, float dusk) {
     vec3 dayZenith;
     vec3 dayHorizon;
     palette(dayZenith, dayHorizon);
 
     vec3 night = vec3(0.006, 0.010, 0.026);
-    vec3 dusk = dayZenith * 0.55 + vec3(0.030, 0.010, 0.040);
-    vec3 c = mix(night, dayZenith, dayFactor());
-    return mix(c, dusk, duskFactor() * 0.65);
+    vec3 duskColour = dayZenith * 0.55 + vec3(0.030, 0.010, 0.040);
+    vec3 c = mix(night, dayZenith, day);
+    return mix(c, duskColour, dusk * 0.65);
 }
 
-vec3 horizonColour() {
+vec3 horizonColour(float day, float dusk) {
     vec3 dayZenith;
     vec3 dayHorizon;
     palette(dayZenith, dayHorizon);
 
     vec3 night = vec3(0.020, 0.028, 0.055);
-    vec3 dusk = mix(dayHorizon, vec3(0.980, 0.560, 0.330), 0.65);
-    vec3 c = mix(night, dayHorizon, dayFactor());
-    return mix(c, dusk, duskFactor() * 0.85);
+    vec3 duskColour = mix(dayHorizon, vec3(0.980, 0.560, 0.330), 0.65);
+    vec3 c = mix(night, dayHorizon, day);
+    return mix(c, duskColour, dusk * 0.85);
 }
 
 /* Ambient skylight: the colour that reaches a surface facing up. */
-vec3 ambientColour() {
+vec3 ambientColour(float day, float dusk) {
     vec3 dayZenith;
     vec3 dayHorizon;
     palette(dayZenith, dayHorizon);
 
     vec3 night = vec3(0.020, 0.026, 0.050) * (0.6 + NIGHT_AMBIENT * 8.0);
-    vec3 day = mix(dayZenith, dayHorizon, 0.55) * 1.35 + vec3(0.10);
-    return mix(night, day, dayFactor());
+    /* The 2.1 keeps the pack's overall brightness where it was and lets the theme
+       only spread it: the eight levels run 0.25 to 0.65, centred near 0.47. */
+    vec3 dayColour = (mix(dayZenith, dayHorizon, 0.55) * 1.35 + vec3(0.10))
+                   * (themeAmbient() * 2.1);
+    return mix(night, dayColour, day);
 }
 
-vec3 blockLightColour() {
-    return vec3(1.00, 0.70, 0.40);
-}
-
-vec3 fogColour() {
-    vec3 c = mix(horizonColour(), zenithColour(), 0.35);
+vec3 fogColour(float day, float dusk) {
+    vec3 c = mix(horizonColour(day, dusk), zenithColour(day, dusk), 0.35);
     return c * (1.0 - rainStrength * 0.30);
+}
+
+/* A cheap reflection: the dome gradient plus one soft glow at the light source, with
+   no stars and no tight halo. The reference computes its reflection colours in the
+   water vertex stage for the same reason - a reflected pixel must not pay for the
+   whole sky. */
+vec3 reflectionColour(vec3 directionWorld) {
+    float day = dayFactor();
+    float dusk = duskFactor();
+
+    vec3 d = normalize(directionWorld);
+    float band = solPow4(1.0 - sat(d.y));
+    vec3 col = mix(zenithColour(day, dusk), horizonColour(day, dusk), band);
+
+    vec3 astroDir = mat3(gbufferModelViewInverse) * normalize(mix(moonPosition, sunPosition, day));
+    float astro = sat(dot(d, astroDir));
+    col += mix(moonColour() * 2.5, sunColour(), day) * astro * astro * astro * 0.12;
+
+    col *= 1.0 - rainStrength * 0.40;
+    return col;
 }
 
 /* directionWorld is normalised and in world space. */
 vec3 skyColour(vec3 directionWorld) {
+    float day = dayFactor();
+    float dusk = duskFactor();
+
     vec3 d = normalize(directionWorld);
-    float band = pow(1.0 - sat(d.y), 4.0);
-    vec3 col = mix(zenithColour(), horizonColour(), band);
+    float band = solPow4(1.0 - sat(d.y));
+    vec3 col = mix(zenithColour(day, dusk), horizonColour(day, dusk), band);
 
     #if SKY_SUN_GLOW == 1
         vec3 sunDir = mat3(gbufferModelViewInverse) * normalize(sunPosition);
         vec3 moonDir = mat3(gbufferModelViewInverse) * normalize(moonPosition);
         float sun = sat(dot(d, sunDir));
         float moon = sat(dot(d, moonDir));
-        col += sunColour() * pow(sun, 110.0) * 0.80;
-        col += sunColour() * pow(sun, 9.0) * 0.075;
-        col += moonColour() * pow(moon, 70.0) * 0.60;
+
+        /* Three pow() calls are the most expensive thing on a sky pixel, and most
+           sky pixels are nowhere near the sun or the moon: skip them when the dot
+           product cannot produce a visible halo. */
+        if (sun > 0.02) {
+            col += sunColour() * pow(sun, 110.0) * 0.80;
+            col += sunColour() * pow(sun, 9.0) * 0.075;
+        }
+        if (moon > 0.02) {
+            col += moonColour() * pow(moon, 70.0) * 0.60;
+        }
     #endif
 
     if (d.y < 0.0) {
-        col = mix(col, fogColour() * 0.75, sat(-d.y * 2.5));
+        col = mix(col, fogColour(day, dusk) * 0.75, sat(-d.y * 2.5));
     }
 
     #if SKY_STARS == 1
-        float night = sat(1.0 - dayFactor() * 1.4);
+        float night = sat(1.0 - day * 1.4);
         if (night > 0.01 && d.y > 0.0) {
             vec3 cell = floor(d * 260.0);
             float h = solHash(cell.xy + cell.z * 31.7);

@@ -150,16 +150,17 @@ of them a decision, not an omission:
 - **Nine languages, thinner ones.** `en_US` is complete with tooltips; the other
   eight translate every option name and every enumerated value, and their long
   tooltips stay English for a native reviewer to finish.
-- **A short `block.properties`.** Five ids instead of the reference's ~90 KB
-  catalogue: two for waving, three for the gloss classes. Nothing else here keys
-  off a block id, and `item.properties` / `entity.properties` would have no reader.
+- **A short `block.properties`.** Nine ids instead of the reference's ~90 KB
+  catalogue: two for waving, three for the gloss classes, and one each for emissive
+  blocks, the End portal, water and glass. Nothing else here keys off a block id, and
+  `item.properties` / `entity.properties` would have no reader.
 - **No Distant Horizons or Voxy entry points.** Those mods ask for extra programs;
   this pack does not support them, so the files would be dead.
 - **Every pass earns its place.** `deferred`, `composite` and `composite2` exist and
   are switched on only by the option that needs them, so the cheap configuration
   still spends one full-screen pass and the expensive one spends four.
 - **The shadow pass exists, but ships off** (`SHADOWS 0`): the file pair and the
-  lookup are there, which is why there are 23 program pairs and not 22.
+  lookup are there, which is why there are 24 program pairs and not 23.
 
 What is still not here, and cannot be honestly written in this environment:
 **coloured shadows** (needs a shadow colour target plus translucent geometry in the
@@ -182,7 +183,7 @@ mismatches found and fixed in that pass, and the list of what is still open.
 | Shadow map on by default | ships off (`SHADOWS 0`); with it on there are cast shadows to 96 blocks, with it off `SUN_SHADING` only shades faces by their angle to the sun, modulated by skylight |
 | Clouds | vanilla geometry, or the opt-in procedural slab (`V_CLOUDS`) with no texture and no extra pass |
 | Light shafts | `VOL_LIGHT`, off by default: marches towards the sun's screen position |
-| Antialiasing | present but off (`AA_TYPE`): temporal with a history buffer and a sub-pixel jitter, plus a compact FXAA |
+| Antialiasing | present but off (`AA_TYPE`): temporal with a variance-clipped history buffer and a sub-pixel jitter, plus FXAA 3.11, alone or after the temporal pass |
 | Bloom, DOF, motion blur | present but off; bloom and DOF are tap loops inside `final`, motion blur rides in `composite2` |
 | Screen-space reflections | `WATER_SSR` marchers the reflected ray through the scene copy, with the sky as fallback; off by default |
 | Coloured shadows | `COLORED_SHADOW` needs a second shadow target and translucent geometry in the shadow pass; the shadow pass itself ships off because of the GPU |
@@ -199,7 +200,9 @@ mismatches found and fixed in that pass, and the list of what is still open.
    `~/.local/share/PrismLauncher/instances/<instance>/.minecraft/shaderpacks/Solace-LowEnd`.
 3. **Options > Video Settings > Shader Packs**, pick `Solace-LowEnd`.
 4. In **Shader Pack Settings**, the profile list has `LowEnd` (water waves,
-   reflection and glint off - the cheapest), `Default` and `Beauty`.
+   reflection and glint off - the cheapest), `Default`, `Beauty`, and
+   `PerformancePlus`, which turns every heavy effect on at its cheapest setting
+   rather than switching any of them off.
 
 ## Settings that matter more than the pack
 

@@ -1,19 +1,21 @@
 /* Solace - lib/io_geometry.glsl
 
-What the geometry vertex stage hands to its fragment stage. Both sides include
-this file, so the names and types cannot drift apart, and so can the block id
-constants - blockId is the value of mc_Entity.x, which this pack's block.properties
-fills in for waving and for the gloss classes.
+What the geometry vertex stage hands to its fragment stage, plus the block ids the
+pack reads. Both stages include this file, so the names, the types and the ids
+cannot drift apart.
+
+fogFactor is computed per vertex and only mixed per pixel: the reference does the
+same, and it is one exp() per vertex instead of one per pixel.
+
+blockId is mc_Entity.x. The ids are the ones this pack writes into
+block.properties, not raw block numbers, so nothing outside those lists can be
+mistaken for a plant, a metal or a portal.
 */
 
 #ifndef SOLACE_IO_GEOMETRY
 #define SOLACE_IO_GEOMETRY
 
-#define SOLACE_WAVE_PLANT 1.0
-#define SOLACE_WAVE_LEAVES 2.0
-#define SOLACE_GLOSS_METAL 3.0
-#define SOLACE_GLOSS_POLISHED 4.0
-#define SOLACE_GLOSS_FABRIC 5.0
+#include "/lib/blockids.glsl"
 
 varying vec2 texcoord;
 varying vec2 lmcoord;
@@ -22,5 +24,6 @@ varying vec3 normalView;
 varying vec3 viewSpacePos;
 varying vec3 worldSpacePos;
 varying float blockId;
+varying float fogFactor;
 
 #endif

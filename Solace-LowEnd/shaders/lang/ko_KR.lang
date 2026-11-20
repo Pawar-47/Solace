@@ -99,3 +99,16 @@ value.COLOR_SCHEME.5=사이키델릭
 value.COLOR_SCHEME.6=코코아
 value.COLOR_SCHEME.7=테스티고
 value.COLOR_SCHEME.99=사용자
+
+
+# Torch colour temperature, and the custom theme's sky light and water colour.
+option.BLOCKLIGHT_TEMP=횃불 빛 색온도
+value.BLOCKLIGHT_TEMP.0=주황
+value.BLOCKLIGHT_TEMP.1=호박색
+value.BLOCKLIGHT_TEMP.2=따뜻한 흰색
+value.BLOCKLIGHT_TEMP.3=크림색
+value.BLOCKLIGHT_TEMP.4=중성
+option.CUSTOM_AMBIENT=사용자 테마 하늘빛
+option.CUSTOM_WATER_R=사용자 물 빨강
+option.CUSTOM_WATER_G=사용자 물 초록
+option.CUSTOM_WATER_B=사용자 물 파랑

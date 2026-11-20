@@ -41,6 +41,14 @@ value.SUN_SHADING.1=On
 option.BLOCK_LIGHT=Torch light
 option.BLOCK_LIGHT.comment=Strength of torch, lava and other block light.
 
+option.BLOCKLIGHT_TEMP=Torch light colour
+option.BLOCKLIGHT_TEMP.comment=Temperature of torch and lava light, from deep orange to neutral white.
+value.BLOCKLIGHT_TEMP.0=Orange
+value.BLOCKLIGHT_TEMP.1=Amber
+value.BLOCKLIGHT_TEMP.2=Warm white
+value.BLOCKLIGHT_TEMP.3=Cream
+value.BLOCKLIGHT_TEMP.4=Neutral
+
 option.NIGHT_AMBIENT=Night brightness
 option.NIGHT_AMBIENT.comment=How much light the night sky gives.
 
@@ -293,3 +301,34 @@ option.CUSTOM_HORIZON_G=Custom horizon green
 option.CUSTOM_HORIZON_G.comment=Green of the custom sky colour at the horizon.
 option.CUSTOM_HORIZON_B=Custom horizon blue
 option.CUSTOM_HORIZON_B.comment=Blue of the custom sky colour at the horizon.
+option.CUSTOM_AMBIENT=Custom sky light
+option.CUSTOM_AMBIENT.comment=How much light the custom theme's sky gives. The eight presets set their own.
+option.CUSTOM_WATER_R=Custom water red
+option.CUSTOM_WATER_R.comment=Red of the water colour of the custom theme.
+option.CUSTOM_WATER_G=Custom water green
+option.CUSTOM_WATER_G.comment=Green of the water colour of the custom theme.
+option.CUSTOM_WATER_B=Custom water blue
+option.CUSTOM_WATER_B.comment=Blue of the water colour of the custom theme.
+
+
+option.NV_COLOR_R=Night vision red
+option.NV_COLOR_R.comment=Red of the tint night vision puts over the picture.
+option.NV_COLOR_G=Night vision green
+option.NV_COLOR_G.comment=Green of the tint night vision puts over the picture.
+option.NV_COLOR_B=Night vision blue
+option.NV_COLOR_B.comment=Blue of the tint night vision puts over the picture.
+
+option.EMISSIVE_GLOW=Emissive blocks
+option.EMISSIVE_GLOW.comment=Glowstone, lava, lanterns and the rest are never dimmed by the light level around them.
+value.EMISSIVE_GLOW.0=Off
+value.EMISSIVE_GLOW.1=On
+
+option.AO_TAPS=Occlusion samples
+option.AO_TAPS.comment=Ring samples for the ambient occlusion. Four is the cheap setting that keeps the effect on.
+value.AO_TAPS.4=Four
+value.AO_TAPS.6=Six
+
+option.DOF_SAMPLES=Focus samples
+option.DOF_SAMPLES.comment=Samples in the depth-of-field blur ring.
+
+profile.PerformancePlus=Performance Plus

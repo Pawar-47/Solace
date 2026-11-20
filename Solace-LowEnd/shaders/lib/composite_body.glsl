@@ -21,10 +21,9 @@ buffer it reads (colortex0) is never written in the same pass.
 #include "/lib/math.glsl"
 #include "/lib/uniforms.glsl"
 #include "/lib/sky_model.glsl"
+#include "/lib/buffers.glsl"
 
 /* DRAWBUFFERS:16 */
-
-const int colortex6Format = R16F;
 
 uniform sampler2D colortex0;
 uniform sampler2D colortex6;
@@ -39,11 +38,18 @@ float openSkyTowardsSun(vec2 uv) {
     vec2 sunUV = (sunClip.xy / sunClip.w) * 0.5 + 0.5;
     vec2 stepUV = (sunUV - uv) / float(VOL_LIGHT_SAMPLES);
 
+    /* The march starts at a different point in the first step for every pixel and
+       every frame; without it the three to six samples leave visible bands running
+       along the ray, which is the one thing that makes a cheap shaft effect look
+       cheap. The reference dithers its ray the same way. */
+    float dither = solDitherShifted(gl_FragCoord.xy,
+                                    float(frameCounter % 64) * 0.015625);
+
     float open = 0.0;
-    vec2 probe = uv;
+    vec2 probe = uv + stepUV * dither;
     for (int i = 0; i < VOL_LIGHT_SAMPLES; i++) {
-        probe = clamp(probe + stepUV, vec2(0.0), vec2(1.0));
-        float probeDepth = texture2D(depthtex0, probe).r;
+        probe += stepUV;
+        float probeDepth = texture2D(depthtex0, clamp(probe, vec2(0.0), vec2(1.0))).r;
         open += step(0.99999, probeDepth);
     }
     return open / float(VOL_LIGHT_SAMPLES);
@@ -81,10 +87,17 @@ void main() {
         float target = sat(0.20 / max(average, 0.0005));
         float previous = texture2D(colortex6, vec2(0.5)).r;
         if (previous <= 0.0) previous = target;
-        exposure = clamp(mix(previous, target, AUTO_EXPOSURE_SPEED), 0.40, 4.0);
+
+        /* The reference smooths its exposure by `exp(-frameTime * 1.25)`, i.e. by how
+           much time passed, not by a fixed step per frame. A fixed step converges
+           twice as fast at 60 fps as at 30 and the picture pumps when the framerate
+           changes; this is the same shape, scaled by the option. */
+        float blend = 1.0 - exp(-max(frameTime, 0.001)
+                                * (AUTO_EXPOSURE_SPEED * 8.0));
+        exposure = clamp(mix(previous, target, blend), 0.40, 4.0);
     #endif
 
-    gl_FragData[0] = vec4(colour, 1.0);
+    gl_FragData[0] = vec4(clamp(colour, vec3(0.0), vec3(50.0)), 1.0);
     gl_FragData[1] = vec4(exposure, 0.0, 0.0, 1.0);
 }
 

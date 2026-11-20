@@ -1,15 +1,23 @@
 /* Solace - deferred.fsh
-Copies the scene, as it stands before any translucent geometry, into gaux1
-(colortex4). That copy is what the water shader reads when REFRACTION is on, so
-the surface can bend what is behind it instead of only tinting it.
 
-Only runs when REFRACTION is 1; with it off the pass is switched off in
-shaders.properties and costs nothing.
+Copies the finished scene into gaux1 (colortex4). That copy is what the water shader
+reads when REFRACTION or WATER_SSR is on, so the surface can bend what is behind it
+and reflect the world instead of only the sky.
+
+The copy is taken after the translucent geometry, so it contains the water surface
+itself; a reflection that lands on water therefore shows water, which is what the
+reference's copy does as well. It also means the copy water reads is one frame old,
+because this pass runs after gbuffers_water - the reason colortex4 is never cleared
+(see lib/buffers.glsl).
+
+Only runs when one of those two options is 1; with both off the pass is switched off
+in shaders.properties and costs nothing.
 */
 
 #version 120
 
 #include "/lib/config.glsl"
+#include "/lib/buffers.glsl"
 
 /* DRAWBUFFERS:4 */
 

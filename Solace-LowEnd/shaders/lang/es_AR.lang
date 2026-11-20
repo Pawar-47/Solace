@@ -99,3 +99,16 @@ value.COLOR_SCHEME.5=Psicodélico
 value.COLOR_SCHEME.6=Cacao
 value.COLOR_SCHEME.7=Testigo
 value.COLOR_SCHEME.99=Propio
+
+
+# Torch colour temperature, and the custom theme's sky light and water colour.
+option.BLOCKLIGHT_TEMP=Temperatura de la luz de antorcha
+value.BLOCKLIGHT_TEMP.0=Naranja
+value.BLOCKLIGHT_TEMP.1=Ámbar
+value.BLOCKLIGHT_TEMP.2=Blanco cálido
+value.BLOCKLIGHT_TEMP.3=Crema
+value.BLOCKLIGHT_TEMP.4=Neutro
+option.CUSTOM_AMBIENT=Luz de cielo del tema propio
+option.CUSTOM_WATER_R=Rojo del agua propia
+option.CUSTOM_WATER_G=Verde del agua propia
+option.CUSTOM_WATER_B=Azul del agua propia

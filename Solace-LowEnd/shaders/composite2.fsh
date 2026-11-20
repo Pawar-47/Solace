@@ -1,16 +1,19 @@
 /* Solace - composite2.fsh
 
-Temporal antialiasing, FXAA and motion blur, in one pass, because all three need
-the picture as a whole.
+Temporal antialiasing and motion blur, in one pass, because both need the whole
+picture and the previous frame's camera.
 
-  reprojection - each pixel's view position is rebuilt from depth, moved back to
-                 where it was last frame with the previous camera matrix, and
-                 projected with the previous projection. History is sampled there,
-                 clamped to the neighbourhood of the current pixel so a moving
-                 object cannot smear its colour across the screen.
+  reprojection - each pixel's view position is rebuilt from depthtex1 (the depth
+                 that includes translucent geometry, as the reference uses, so
+                 water reprojects correctly), moved back to where it was last frame
+                 with the previous camera matrix, and projected with the previous
+                 projection. History is sampled there and clamped to the
+                 neighbourhood of the current pixel, so a moving object cannot smear
+                 its colour across the screen.
   motion blur  - the same previous position, walked in MOTION_BLUR_SAMPLES steps.
-  FXAA         - a luma-compared edge blend in the current frame, for AA_TYPE 2
-                 and 3, and for whatever the temporal part leaves behind.
+
+FXAA-only mode is not here: it needs no history and costs no extra pass, so it runs
+in `final` instead, which is also what the reference does.
 
 Reads the shaded scene from colortex1, writes the result to colortex0 and the new
 history to colortex3, so nothing is read from the buffer being written.
@@ -21,14 +24,13 @@ history to colortex3, so nothing is read from the buffer being written.
 #include "/lib/config.glsl"
 #include "/lib/math.glsl"
 #include "/lib/uniforms.glsl"
+#include "/lib/buffers.glsl"
 
 /* DRAWBUFFERS:03 */
 
-const int colortex3Format = RGBA16F;
-
 uniform sampler2D colortex1;
 uniform sampler2D colortex3;
-uniform sampler2D depthtex0;
+uniform sampler2D depthtex1;
 
 varying vec2 texcoord;
 
@@ -38,8 +40,8 @@ vec4 viewPosition(vec2 uv, float depth) {
     return view / view.w;
 }
 
-/* Where this pixel was on the previous frame, or a negative coordinate when it
-   was off screen (there is nothing to blend with then). */
+/* Where this pixel was on the previous frame, or a negative coordinate when it was
+   off screen or in the sky (there is nothing to blend with then). */
 vec2 previousUV(vec2 uv, float depth) {
     if (depth >= 1.0) return vec2(-1.0);
 
@@ -51,49 +53,40 @@ vec2 previousUV(vec2 uv, float depth) {
     return (previousClip.xy / previousClip.w) * 0.5 + 0.5;
 }
 
-vec3 neighbourhoodClamp(vec3 history, vec2 uv) {
+/* The history is clipped into the box the current 3x3 neighbourhood occupies when
+   measured by its own mean and standard deviation. The reference clips the same way,
+   and it is tighter than a plain min/max box: a thin edge through a flat area gets a
+   narrow box, so an old ghost cannot survive beside it. The fourth component is the
+   size of that box, which sets how much of the history is trusted. */
+vec4 solHistoryBox(vec3 history, vec2 uv) {
     vec2 texel = vec2(1.0 / viewWidth, 1.0 / viewHeight);
-    vec3 low = history;
-    vec3 high = history;
-    vec3 a = texture2D(colortex1, uv + vec2( texel.x, 0.0)).rgb;
-    vec3 b = texture2D(colortex1, uv + vec2(-texel.x, 0.0)).rgb;
-    vec3 c = texture2D(colortex1, uv + vec2(0.0,  texel.y)).rgb;
-    vec3 d = texture2D(colortex1, uv + vec2(0.0, -texel.y)).rgb;
-    low = min(low, min(min(a, b), min(c, d)));
-    high = max(high, max(max(a, b), max(c, d)));
-    return clamp(history, low, high);
-}
 
-vec3 applyFxaa(vec2 uv) {
-    vec2 texel = vec2(1.0 / viewWidth, 1.0 / viewHeight);
-    vec3 centre = texture2D(colortex1, uv).rgb;
-    float centreLuma = luma(centre);
+    vec3 c = texture2D(colortex1, uv).rgb;
+    vec3 l = texture2D(colortex1, uv - vec2(texel.x, 0.0)).rgb;
+    vec3 r = texture2D(colortex1, uv + vec2(texel.x, 0.0)).rgb;
+    vec3 d = texture2D(colortex1, uv - vec2(0.0, texel.y)).rgb;
+    vec3 u = texture2D(colortex1, uv + vec2(0.0, texel.y)).rgb;
+    vec3 dl = texture2D(colortex1, uv + vec2(-texel.x, -texel.y)).rgb;
+    vec3 dr = texture2D(colortex1, uv + vec2(texel.x, -texel.y)).rgb;
+    vec3 ul = texture2D(colortex1, uv + vec2(-texel.x, texel.y)).rgb;
+    vec3 ur = texture2D(colortex1, uv + vec2(texel.x, texel.y)).rgb;
 
-    float lumaA = luma(texture2D(colortex1, uv + vec2( texel.x, 0.0)).rgb);
-    float lumaB = luma(texture2D(colortex1, uv + vec2(-texel.x, 0.0)).rgb);
-    float lumaC = luma(texture2D(colortex1, uv + vec2(0.0,  texel.y)).rgb);
-    float lumaD = luma(texture2D(colortex1, uv + vec2(0.0, -texel.y)).rgb);
+    vec3 sum = c + l + r + d + u + dl + dr + ul + ur;
+    vec3 sumSquares = c * c + l * l + r * r + d * d + u * u
+                    + dl * dl + dr * dr + ul * ul + ur * ur;
 
-    float low = min(centreLuma, min(min(lumaA, lumaB), min(lumaC, lumaD)));
-    float high = max(centreLuma, max(max(lumaA, lumaB), max(lumaC, lumaD)));
-    float contrast = high - low;
-    if (contrast < FXAA_EDGE) return centre;
+    vec3 mean = sum * (1.0 / 9.0);
+    vec3 deviation = sqrt(abs(sumSquares * (1.0 / 9.0) - mean * mean));
 
-    vec2 direction = vec2(-(lumaA - lumaB), lumaC - lumaD);
-    float length_ = abs(direction.x) + abs(direction.y);
-    if (length_ < 0.0001) return centre;
-    direction = normalize(direction) * texel * 1.4;
+    vec3 low = mean - deviation;
+    vec3 high = mean + deviation;
 
-    vec3 blended = texture2D(colortex1, uv + direction).rgb
-                 + texture2D(colortex1, uv - direction).rgb;
-    blended *= 0.5;
-
-    return mix(centre, blended, sat(contrast * 2.5));
+    return vec4(clamp(history, low, high), length(high - low));
 }
 
 void main() {
     vec2 uv = texcoord;
-    float depth = texture2D(depthtex0, uv).r;
+    float depth = texture2D(depthtex1, uv).r;
     vec3 current = texture2D(colortex1, uv).rgb;
     vec2 previous = previousUV(uv, depth);
 
@@ -111,16 +104,23 @@ void main() {
         }
     #endif
 
-    #if AA_TYPE == 2 || AA_TYPE == 3
-        result = applyFxaa(uv);
-    #endif
-
     #if AA_TYPE == 1 || AA_TYPE == 2
         if (previous.x >= 0.0 && previous.y >= 0.0) {
-            vec3 history = neighbourhoodClamp(texture2D(colortex3, previous).rgb, uv);
-            result = mix(result, history, TAA_WEIGHT);
+            vec4 box = solHistoryBox(texture2D(colortex3, previous).rgb, uv);
+
+            /* How far the history had to be moved to fit, against the size of the
+               box: the busier the neighbourhood, the less of the old frame survives,
+               which is what stops a fast edge from leaving a trail. */
+            float moved = length(current - box.rgb);
+            float ponderation = sat(moved / max(box.a, 0.0001));
+            float weight = TAA_WEIGHT
+                         * (1.0 - 0.34 * smoothstep(0.0, 1.0, ponderation));
+
+            result = mix(result, box.rgb, weight);
         }
     #endif
+
+    result = clamp(result, vec3(0.0), vec3(50.0));
 
     gl_FragData[0] = vec4(result, 1.0);
     gl_FragData[1] = vec4(result, 1.0);

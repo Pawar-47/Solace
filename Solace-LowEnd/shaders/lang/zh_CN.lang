@@ -99,3 +99,16 @@ value.COLOR_SCHEME.5=迷幻
 value.COLOR_SCHEME.6=可可
 value.COLOR_SCHEME.7=幻想
 value.COLOR_SCHEME.99=自定义
+
+
+# Torch colour temperature, and the custom theme's sky light and water colour.
+option.BLOCKLIGHT_TEMP=火把光色温
+value.BLOCKLIGHT_TEMP.0=橙色
+value.BLOCKLIGHT_TEMP.1=琥珀色
+value.BLOCKLIGHT_TEMP.2=暖白
+value.BLOCKLIGHT_TEMP.3=米白
+value.BLOCKLIGHT_TEMP.4=中性
+option.CUSTOM_AMBIENT=自定义主题天光
+option.CUSTOM_WATER_R=自定义水色红
+option.CUSTOM_WATER_G=自定义水色绿
+option.CUSTOM_WATER_B=自定义水色蓝

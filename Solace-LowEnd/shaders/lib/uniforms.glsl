@@ -1,7 +1,9 @@
 /* Solace - lib/uniforms.glsl
 
 The uniforms Iris and OptiFine provide that this pack uses, declared once so no
-program has to repeat them. Declaring one a program does not use costs nothing.
+program has to repeat them. Declaring one a program does not use costs nothing, and
+a uniform the running version does not provide simply reads as zero - which is why
+blindness and darknessFactor can be declared without a version guard.
 */
 
 #ifndef SOLACE_UNIFORMS
@@ -24,12 +26,23 @@ uniform vec4 entityColor;      // damage tint, only filled for entity programs
 uniform float heldBlockLightValue;
 
 uniform float frameTimeCounter;
+uniform float frameTime;
+uniform float centerDepthSmooth;
 uniform float rainStrength;
+uniform ivec2 eyeBrightnessSmooth;
 uniform float nightVision;
+uniform float blindness;
+uniform float darknessFactor;
+uniform float darknessLightFactor;
 uniform float far;
 uniform float viewWidth;
 uniform float viewHeight;
 uniform float aspectRatio;
+
+/* Vanilla's fog colour for the dimension. The Nether has no sky to take a colour
+   from, so its palette is built from this instead of from a theme, which is what the
+   reference does with the same uniform. */
+uniform vec3 fogColor;
 
 uniform int frameCounter;
 uniform int isEyeInWater;
