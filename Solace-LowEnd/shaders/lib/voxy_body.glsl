@@ -46,8 +46,10 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
     vec4 albedo = parameters.sampledColour * parameters.tinting;
     vec2 lm = sat(parameters.lightMap);
 
-    float day = dayFactor();
-    float dusk = duskFactor();
+    float sunUp = sunHeight();
+    float day = dayFrom(sunUp);
+    float dusk = duskFrom(sunUp);
+    vec3 astroColour = mix(moonColour() * 2.5, sunColourAt(sat(sunUp)), day);
 
     /* Where this fragment is, in view space, rebuilt from its own depth. Everything
        below needs it: the fog distance, the water ripples and the eye vector. */
@@ -77,13 +79,15 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
             vec2 p1 = base + vec2(t * 0.85, t * 0.55);
             vec2 p2 = base * 2.10 - vec2(t * 0.65, t * 0.95);
 
+            /* Same trade as the near water: one octave per layer, six samples instead
+               of fifteen. Far water can cover a third of the screen. */
             float e = 0.08;
-            float a0 = solFbm(p1);
-            float ax = solFbm(p1 + vec2(e, 0.0));
-            float az = solFbm(p1 + vec2(0.0, e));
-            float b0 = solFbm3(p2);
-            float bx = solFbm3(p2 + vec2(e, 0.0));
-            float bz = solFbm3(p2 + vec2(0.0, e));
+            float a0 = solNoise(p1);
+            float ax = solNoise(p1 + vec2(e, 0.0));
+            float az = solNoise(p1 + vec2(0.0, e));
+            float b0 = solNoise(p2);
+            float bx = solNoise(p2 + vec2(e, 0.0));
+            float bz = solNoise(p2 + vec2(0.0, e));
 
             vec2 slope = vec2(ax - a0, az - a0) * 4.0
                        + vec2(bx - b0, bz - b0) * 2.0;
@@ -106,7 +110,7 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
 
     vec3 light = ambientColour(day, dusk) * (0.045 + 0.955 * skyLight * skyLight)
                + blockLightColour() * blockCurve * BLOCK_LIGHT
-               + mix(moonColour() * 2.5, sunColour(), day) * facing * 0.85
+               + astroColour * facing * 0.85
                  * (1.0 - rainStrength * 0.75);
 
     vec3 colour = albedo.rgb * light;
@@ -131,7 +135,7 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
         if (gloss > 0.0) {
             vec3 halfway = normalize(sunDir + normalize(view.xyz));
             float highlight = pow(sat(dot(normal, halfway)), 44.0);
-            colour += mix(moonColour() * 2.5, sunColour(), day) * highlight * gloss
+            colour += astroColour * highlight * gloss
                     * GLOSS_STRENGTH * facing * skyLight * (1.0 - rainStrength);
         }
     #endif

@@ -23,10 +23,11 @@ Everything here is one pack: the `shaders` folder next to this file.
 
 | Profile | What it is |
 | --- | --- |
-| `LowEnd` | The cheapest. Water waves, reflection and glint off, fog at its lightest. This is the one to start with on an HD 5500. |
-| `Default` | Waves, sky reflection and the sun glint on. Still no extra passes. |
-| `Beauty` | Adds the sun halo and stars, brighter exposure and a little more saturation. |
-| `PerformancePlus` | Every effect enabled at its cheapest setting: 512 px shadows over 75 blocks with hard taps, four-step reflections, four-tap occlusion, three-sample shafts, three-sample motion blur, temporal AA, four-sample depth of field, slow auto exposure. The heavy end of this pack, but nothing is turned off. |
+| `Potato` | The cheapest pack that still looks shaded: no waves, nothing reflected, no waving, flat grading. For 1366x768 on the iGPU when you want the framerate. |
+| `LowEnd` | What the pack ships on, and what it was written for. Waving, gloss, stars and the sun halo, but no water effects — water is where the fill rate goes on an HD 5500. |
+| `Default` | Water comes alive: ripples, the sky reflection, the sun glint. Still no extra passes, so the frame cost barely moves from `LowEnd`. |
+| `Beauty` | The same frame graded warmer and slower, with temporal AA on. For looking at the picture rather than at the framerate counter. |
+| `PerformancePlus` | Every effect enabled at its cheapest sample count: 512 px shadows over 75 blocks with hard taps, four-step reflections and clouds, four AO taps, three-sample shafts and motion blur, four-sample depth of field, slow auto exposure. The heavy end, and it exists so nothing has to be switched off. |
 
 ## The options, by screen
 
@@ -66,8 +67,11 @@ follows the scene.
 
 **Fog** — density, and the underwater fog.
 
-**Colour** — exposure, saturation, contrast, the tone curve, dithering, chromatic
-aberration and its strength, sharpening and its amount.
+**Colour** — exposure, saturation, contrast, the tone curve, red/green/blue channel
+gain, output gamma, dithering, chromatic aberration and its strength, sharpening and
+its amount. The channel gains and the gamma are what you reach for when the picture is
+right but your monitor is not: they cost nothing at their defaults, because the
+shader drops both steps from the compiled program at 100.
 
 **Palette** — the theme (eight presets plus custom) and the custom zenith, horizon,
 ambient and water colours.

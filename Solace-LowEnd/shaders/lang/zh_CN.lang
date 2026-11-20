@@ -131,3 +131,10 @@ option.AO_FADE=环境光遮蔽距离
 
 
 option.AVOID_DARK_LEVEL=洞穴最低亮度
+
+
+option.COLOR_R=红色增益
+option.COLOR_G=绿色增益
+option.COLOR_B=蓝色增益
+option.GAMMA=伽马
+profile.Potato=土豆

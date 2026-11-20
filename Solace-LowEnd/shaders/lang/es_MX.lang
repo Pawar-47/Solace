@@ -131,3 +131,10 @@ option.AO_FADE=Distancia de oclusión
 
 
 option.AVOID_DARK_LEVEL=Luz mínima en cuevas
+
+
+option.COLOR_R=Ganancia de rojo
+option.COLOR_G=Ganancia de verde
+option.COLOR_B=Ganancia de azul
+option.GAMMA=Gamma
+profile.Potato=Mínimo

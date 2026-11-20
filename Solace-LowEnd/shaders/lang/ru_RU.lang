@@ -131,3 +131,10 @@ option.AO_FADE=Дистанция затенения
 
 
 option.AVOID_DARK_LEVEL=Минимум света в пещерах
+
+
+option.COLOR_R=Усиление красного
+option.COLOR_G=Усиление зелёного
+option.COLOR_B=Усиление синего
+option.GAMMA=Гамма
+profile.Potato=Картошка

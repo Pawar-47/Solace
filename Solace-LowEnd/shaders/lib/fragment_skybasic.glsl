@@ -26,7 +26,7 @@ vec3 skyViewRay() {
 }
 
 #if V_CLOUDS == 1
-vec4 cloudLayer(vec3 directionWorld, float day, float dusk) {
+vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
     vec3 d = normalize(directionWorld);
     float aboveClouds = CLOUD_HEIGHT - cameraPosition.y;
     if (d.y < 0.02 || aboveClouds <= 0.0) return vec4(0.0);
@@ -83,12 +83,12 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk) {
         float lit = sat(dot(d, sunDir) * 0.5 + 0.5);
         lit = mix(lit, 0.5, rainStrength * 0.6);
 
-        cloudColour = mix(ambientColour(day, dusk) * 1.15, sunColour() * 1.25, lit * 0.80);
+        cloudColour = mix(ambientColour(day, dusk) * 1.15, sunColIn * 1.25, lit * 0.80);
 
         /* Silver lining: thin cloud in front of the sun scatters, thick cloud does
            not, which is what keeps the edges of a deck bright and its body grey. */
         float lining = pow(sat(dot(d, sunDir)), 8.0) * (1.0 - density);
-        cloudColour += sunColour() * lining * (1.0 - rainStrength) * 1.60;
+        cloudColour += sunColIn * lining * (1.0 - rainStrength) * 1.60;
 
         cloudColour *= 0.62 + 0.55 * (1.0 - density);
     #endif
@@ -105,12 +105,14 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk) {
 
 void main() {
     vec3 directionWorld = mat3(gbufferModelViewInverse) * normalize(skyViewRay());
-    float day = dayFactor();
-    float dusk = duskFactor();
-    vec3 colour = skyColour(directionWorld);
+    float sunUp = sunHeight();
+    float day = dayFrom(sunUp);
+    float dusk = duskFrom(sunUp);
+    vec3 sunCol = sunColourAt(sat(sunUp));
+    vec3 colour = skyColour(directionWorld, day, dusk, sunCol);
 
     #if V_CLOUDS == 1
-        vec4 cloud = cloudLayer(directionWorld, day, dusk);
+        vec4 cloud = cloudLayer(directionWorld, day, dusk, sunCol);
         colour = mix(colour, cloud.rgb, cloud.a);
     #endif
 

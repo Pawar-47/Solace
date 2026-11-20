@@ -330,6 +330,18 @@ void main() {
         colour = sat(colour);
     #endif
 
+    /* Channel gains, then output gamma - the two things a monitor needs and a shader
+       cannot guess. Both are integer percents so the preprocessor drops the block
+       entirely at 100: the default configuration costs nothing, and only a player who
+       moves the slider pays for it. */
+    #if COLOR_R != 100 || COLOR_G != 100 || COLOR_B != 100
+        colour *= vec3(float(COLOR_R), float(COLOR_G), float(COLOR_B)) * 0.01;
+    #endif
+
+    #if GAMMA != 100
+        colour = pow(max(colour, vec3(0.0)), vec3(100.0 / float(GAMMA)));
+    #endif
+
     #if COLOR_BLINDNESS == 1
         colour = colourBlindAid(colour);
     #endif

@@ -28,7 +28,8 @@ not upwards.
   anti-aliasing, FXAA, motion blur, auto exposure, chromatic aberration, sharpening
 - Distant Horizons and Voxy support, so the far world is lit by the same model as
   the near world
-- 90 options in fourteen sub-screens, and nine languages
+- 94 options in fourteen sub-screens, and nine languages
+- Five profiles, from `Potato` to `PerformancePlus`
 
 ## Requirements
 
@@ -65,8 +66,10 @@ produces.
    more — on 8 GB the desktop and the integrated GPU need the rest, and heap does not
    raise frame rate, only smooth out hitching. All of it, with copy-paste arguments,
    swap and the BIOS setting: [docs/linux-jvm.md](docs/linux-jvm.md).
-4. Start on the `LowEnd` profile, then try `Default`. `Beauty` and `PerformancePlus`
-   exist for machines with more headroom.
+4. Profiles, in order of cost: `Potato` (holds 60 fps at 1366x768), `LowEnd` (what
+   the pack ships on, and what it was written for), `Default` (water comes alive),
+   `Beauty` (warmer grading and temporal AA), `PerformancePlus` (every effect on at
+   its cheapest samples).
 
 ## Repository layout
 

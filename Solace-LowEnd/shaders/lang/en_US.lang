@@ -365,3 +365,20 @@ option.AO_FADE.comment=Distance at which the ambient occlusion fades out.
 
 option.AVOID_DARK_LEVEL=Cave light floor
 option.AVOID_DARK_LEVEL.comment=The least light a cave or a moonless night gets. Raise it if the dark becomes a black screen on your monitor.
+
+
+# Channel gains and gamma: the two things a monitor needs and a shader cannot guess.
+option.COLOR_R=Red gain
+option.COLOR_R.comment=Red channel gain, in percent. Lower it if your display runs warm.
+option.COLOR_G=Green gain
+option.COLOR_G.comment=Green channel gain, in percent.
+option.COLOR_B=Blue gain
+option.COLOR_B.comment=Blue channel gain, in percent. Raise it a little if the picture looks yellow.
+option.GAMMA=Gamma
+option.GAMMA.comment=Output gamma, in percent. Above 100 lifts the midtones without moving black or white - the control to raise on a dim laptop panel.
+
+profile.Potato=Potato
+profile.LowEnd=Low end
+profile.Default=Default
+profile.Beauty=Beauty
+profile.PerformancePlus=Performance plus

@@ -28,7 +28,8 @@ void main() {
     float blockCurve = lightCoord.x * lightCoord.x
                      + solPow6(lightCoord.x * 1.165);
 
-    basicLight = ambientColour(dayFactor(), duskFactor())
+    float sunUp = sunHeight();
+    basicLight = ambientColour(dayFrom(sunUp), duskFrom(sunUp))
                  * (0.30 + 0.70 * skyLight * skyLight)
                + blockLightColour() * blockCurve * BLOCK_LIGHT;
 }

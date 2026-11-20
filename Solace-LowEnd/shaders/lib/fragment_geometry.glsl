@@ -53,9 +53,13 @@ void main() {
         albedo.rgb = mix(albedo.rgb, entityColor.rgb, entityColor.a);
     #endif
 
-    /* One sin() for the whole pixel, passed down to every colour function. */
-    float day = dayFactor();
-    float dusk = duskFactor();
+    /* One sin() for the whole pixel: the day and dusk mixers and the sun colour are
+       pure functions of the sun's height, so they are all taken from it here rather
+       than recomputed inside each colour function. */
+    float sunUp = sunHeight();
+    float day = dayFrom(sunUp);
+    float dusk = duskFrom(sunUp);
+    vec3 astroColour = mix(moonColour() * 2.5, sunColourAt(sat(sunUp)), day);
 
     /* 1. De-biased lightmap. */
     float skyLight = sat(max(lmcoord.y - 0.065, 0.0) * 1.06951871657754);
@@ -71,9 +75,11 @@ void main() {
     float blockCurve = rawBlock * sqrt(rawBlock) + solPow6(rawBlock * 1.17);
     vec3 candle = blockLightColour() * blockCurve * BLOCK_LIGHT;
 
-    /* 3. Direct term: the sun by day, the moon by night. */
+    /* 3. Direct term: the sun by day, the moon by night. The normal is normalised
+       once and reused by the gloss highlight below. */
     vec3 astroDir = normalize(mix(moonPosition, sunPosition, day));
-    float facing = dot(normalize(normalView), astroDir);
+    vec3 viewNormal = normalize(normalView);
+    float facing = dot(viewNormal, astroDir);
 
     /* 4. Leaves are not walls. */
     if (blockId == SOLACE_WAVE_LEAVES) {
@@ -109,7 +115,6 @@ void main() {
     vec3 light = ambient + candle;
 
     #if SUN_SHADING == 1
-        vec3 astroColour = mix(moonColour() * 2.5, sunColour(), day);
         light += astroColour * directTint * facing * 0.85 * (1.0 - rainStrength * 0.75);
     #endif
 
@@ -172,10 +177,9 @@ void main() {
 
         if (gloss > 0.0) {
             vec3 halfway = normalize(astroDir + normalize(-viewSpacePos));
-            float highlight = pow(sat(dot(normalize(normalView), halfway)), 44.0);
+            float highlight = pow(sat(dot(viewNormal, halfway)), 44.0);
             /* Rain kills the highlight: wet metal should not specular like dry. */
-            colour += mix(moonColour() * 2.5, sunColour(), day)
-                    * highlight * gloss * GLOSS_STRENGTH * facing * skyLight
+            colour += astroColour * highlight * gloss * GLOSS_STRENGTH * facing * skyLight
                     * (1.0 - rainStrength);
         }
     #endif

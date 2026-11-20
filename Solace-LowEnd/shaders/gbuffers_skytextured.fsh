@@ -17,7 +17,8 @@ void main() {
     vec4 disc = texture2D(gcolor, texcoord);
     if (disc.a < 0.01) discard;
 
-    float bright = 1.0 + sat(sunHeight()) * 0.80 + (1.0 - dayFactor()) * 0.25;
+    float sunUp = sunHeight();
+    float bright = 1.0 + sat(sunUp) * 0.80 + (1.0 - dayFrom(sunUp)) * 0.25;
     vec3 colour = disc.rgb * tint.rgb * bright;
 
     gl_FragData[0] = vec4(colour, disc.a * tint.a);

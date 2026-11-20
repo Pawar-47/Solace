@@ -20,9 +20,10 @@ void main() {
     vec4 albedo = texture2D(gcolor, texcoord) * tint;
     if (albedo.a < 0.02) discard;
 
-    float day = dayFactor();
-    float dusk = duskFactor();
-    vec3 astroColour = mix(moonColour() * 2.5, sunColour(), day);
+    float sunUp = sunHeight();
+    float day = dayFrom(sunUp);
+    float dusk = duskFrom(sunUp);
+    vec3 astroColour = mix(moonColour() * 2.5, sunColourAt(sat(sunUp)), day);
 
     vec3 light = ambientColour(day, dusk) * 1.05 + astroColour * 0.30 + vec3(0.04);
     vec3 colour = albedo.rgb * light;

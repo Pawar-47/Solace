@@ -16,8 +16,9 @@ than a ray per pixel because the colour does not depend on the view direction.
 varying vec2 texcoord;
 
 void main() {
-    float day = dayFactor();
-    float dusk = duskFactor();
+    float sunUp = sunHeight();
+    float day = dayFrom(sunUp);
+    float dusk = duskFrom(sunUp);
     vec3 background = fogColour(day, dusk);
     gl_FragData[0] = vec4(background, 1.0);
 }

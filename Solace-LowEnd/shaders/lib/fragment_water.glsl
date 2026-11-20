@@ -90,9 +90,9 @@ void main() {
                                frameTimeCounter * WAVE_SPEED * 0.55);
 
                 float e = 0.08;
-                float a0 = solFbm(p1);
-                float ax = solFbm(p1 + vec2(e, 0.0));
-                float az = solFbm(p1 + vec2(0.0, e));
+                float a0 = solNoise(p1);
+                float ax = solNoise(p1 + vec2(e, 0.0));
+                float az = solNoise(p1 + vec2(0.0, e));
 
                 vec2 slope = vec2(ax - a0, az - a0) * 4.0
                            * (1.0 - rainStrength * 0.35);
@@ -106,13 +106,17 @@ void main() {
             vec2 p1 = base + vec2(t * 0.85, t * 0.55);
             vec2 p2 = base * 2.10 - vec2(t * 0.65, t * 0.95);
 
+            /* One octave per layer, three samples each: six noise evaluations where
+               two octaves cost fifteen, and at wave scale the second octave was never
+               visible. On an HD 5500 this is the difference between water being free
+               and water being the most expensive thing on screen. */
             float e = 0.08;
-            float a0 = solFbm(p1);
-            float ax = solFbm(p1 + vec2(e, 0.0));
-            float az = solFbm(p1 + vec2(0.0, e));
-            float b0 = solFbm3(p2);
-            float bx = solFbm3(p2 + vec2(e, 0.0));
-            float bz = solFbm3(p2 + vec2(0.0, e));
+            float a0 = solNoise(p1);
+            float ax = solNoise(p1 + vec2(e, 0.0));
+            float az = solNoise(p1 + vec2(0.0, e));
+            float b0 = solNoise(p2);
+            float bx = solNoise(p2 + vec2(e, 0.0));
+            float bz = solNoise(p2 + vec2(0.0, e));
 
             vec2 slope = vec2(ax - a0, az - a0) * 4.0
                        + vec2(bx - b0, bz - b0) * 2.0;
@@ -149,10 +153,13 @@ void main() {
     float skyLight = sat(max(lmcoord.y - 0.065, 0.0) * 1.06951871657754);
     float blockCurve = lmcoord.x * sqrt(lmcoord.x) + solPow6(lmcoord.x * 1.17);
 
-    float day = dayFactor();
-    float dusk = duskFactor();
+    /* One sin() for the whole water pixel, for the same reason as the solid geometry:
+       day, dusk, the astro direction and its colour all come from one height. */
+    float sunUp = sunHeight();
+    float day = dayFrom(sunUp);
+    float dusk = duskFrom(sunUp);
     vec3 astroDir = normalize(mix(moonPosition, sunPosition, day));
-    vec3 astroColour = mix(moonColour() * 2.5, sunColour(), day);
+    vec3 astroColour = mix(moonColour() * 2.5, sunColourAt(sat(sunUp)), day);
 
     vec3 light = ambientColour(day, dusk) * (0.045 + 0.955 * (skyLight * skyLight))
                + blockLightColour() * blockCurve * BLOCK_LIGHT
@@ -171,7 +178,7 @@ void main() {
     vec3 reflectedWorld = mat3(gbufferModelViewInverse) * reflect(-toEye, normal);
 
     #if WATER_REFLECTION == 1
-        skyReflection = reflectionColour(reflectedWorld);
+        skyReflection = reflectionColour(reflectedWorld, day, dusk, astroColour);
         skyReflectionOn = true;
     #endif
 

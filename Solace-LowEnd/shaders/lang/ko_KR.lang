@@ -131,3 +131,10 @@ option.AO_FADE=주변광 차폐 거리
 
 
 option.AVOID_DARK_LEVEL=동굴 최소 밝기
+
+
+option.COLOR_R=빨강 게인
+option.COLOR_G=초록 게인
+option.COLOR_B=파랑 게인
+option.GAMMA=감마
+profile.Potato=감자

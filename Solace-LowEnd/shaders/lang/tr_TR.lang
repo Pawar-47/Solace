@@ -131,3 +131,10 @@ option.AO_FADE=Gölgeleme mesafesi
 
 
 option.AVOID_DARK_LEVEL=Mağara ışık tabanı
+
+
+option.COLOR_R=Kırmızı kazancı
+option.COLOR_G=Yeşil kazancı
+option.COLOR_B=Mavi kazancı
+option.GAMMA=Gama
+profile.Potato=Patates

@@ -131,3 +131,10 @@ option.AO_FADE=Skuggavstånd
 
 
 option.AVOID_DARK_LEVEL=Minimiljus i grottor
+
+
+option.COLOR_R=Rött förstärkning
+option.COLOR_G=Grönt förstärkning
+option.COLOR_B=Blått förstärkning
+option.GAMMA=Gamma
+profile.Potato=Potatis

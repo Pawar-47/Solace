@@ -20,25 +20,38 @@ folders set SOLACE_DIM_NETHER or SOLACE_DIM_END before including a program.
 #include "/lib/config.glsl"
 #include "/lib/uniforms.glsl"
 
-/* worldTime: 0 sunrise, 6000 noon, 12000 sunset, 18000 midnight. */
+/* worldTime: 0 sunrise, 6000 noon, 12000 sunset, 18000 midnight.
+   One sin() is the whole cost of the sun's height, so it is computed once per pixel
+   and everything else takes the result: the day and dusk mixers and the sun colour
+   are pure functions of it. */
 float sunHeight() {
     return sin(float(worldTime) * (TAU_SOLACE / 24000.0));
 }
 
-float dayFactor() {
+float dayFrom(float height) {
     #if SOLACE_DIM_NETHER == 1 || SOLACE_DIM_END == 1
         return 1.0;
     #else
-        return sat(sunHeight() * 1.7 + 0.30);
+        return sat(height * 1.7 + 0.30);
     #endif
 }
 
-float duskFactor() {
+float duskFrom(float height) {
     #if SOLACE_DIM_NETHER == 1 || SOLACE_DIM_END == 1
         return 0.0;
     #else
-        return sat(1.0 - abs(sunHeight()) * 3.2);
+        return sat(1.0 - abs(height) * 3.2);
     #endif
+}
+
+/* For the places that need the mixers and nothing else. A program that also wants
+   the sun colour should compute sunHeight() itself and use the *From forms. */
+float dayFactor() {
+    return dayFrom(sunHeight());
+}
+
+float duskFactor() {
+    return duskFrom(sunHeight());
 }
 
 /* The two colours a theme is built from. */
@@ -93,11 +106,16 @@ void palette(out vec3 zenith, out vec3 horizon) {
     #endif
 }
 
-vec3 sunColour() {
-    float h = sat(sunHeight());
+/* h is sat(sunHeight()). Kept separate so a program that already has the height does
+   not pay for the sin() a second time. */
+vec3 sunColourAt(float h) {
     vec3 low = vec3(1.00, 0.55, 0.26);
     vec3 high = vec3(1.00, 0.94, 0.84);
     return mix(low, high, smoothstep(0.0, 0.55, h)) * (0.30 + 0.80 * h);
+}
+
+vec3 sunColour() {
+    return sunColourAt(sat(sunHeight()));
 }
 
 vec3 moonColour() {
@@ -219,28 +237,26 @@ vec3 fogColour(float day, float dusk) {
 
 /* A cheap reflection: the dome gradient plus one soft glow at the light source, with
    no stars and no tight halo. A reflected pixel must not pay for the whole sky, so
-   everything only the sky itself needs is left out. */
-vec3 reflectionColour(vec3 directionWorld) {
-    float day = dayFactor();
-    float dusk = duskFactor();
+   everything only the sky itself needs is left out.
 
+   day, dusk and the astro colour come in as arguments: a water pixel has already
+   worked them out, and recomputing them here would cost it three more sin(). */
+vec3 reflectionColour(vec3 directionWorld, float day, float dusk, vec3 astroColour) {
     vec3 d = normalize(directionWorld);
     float band = solPow4(1.0 - sat(d.y));
     vec3 col = mix(zenithColour(day, dusk), horizonColour(day, dusk), band);
 
     vec3 astroDir = mat3(gbufferModelViewInverse) * normalize(mix(moonPosition, sunPosition, day));
     float astro = sat(dot(d, astroDir));
-    col += mix(moonColour() * 2.5, sunColour(), day) * astro * astro * astro * 0.12;
+    col += astroColour * astro * astro * astro * 0.12;
 
     col *= 1.0 - rainStrength * 0.40;
     return col;
 }
 
-/* directionWorld is normalised and in world space. */
-vec3 skyColour(vec3 directionWorld) {
-    float day = dayFactor();
-    float dusk = duskFactor();
-
+/* directionWorld is normalised and in world space. day, dusk and the sun colour are
+   arguments for the same reason as above. */
+vec3 skyColour(vec3 directionWorld, float day, float dusk, vec3 sunCol) {
     vec3 d = normalize(directionWorld);
     float band = solPow4(1.0 - sat(d.y));
     vec3 col = mix(zenithColour(day, dusk), horizonColour(day, dusk), band);
@@ -255,8 +271,8 @@ vec3 skyColour(vec3 directionWorld) {
            sky pixels are nowhere near the sun or the moon: skip them when the dot
            product cannot produce a visible halo. */
         if (sun > 0.02) {
-            col += sunColour() * pow(sun, 110.0) * 0.80;
-            col += sunColour() * pow(sun, 9.0) * 0.075;
+            col += sunCol * pow(sun, 110.0) * 0.80;
+            col += sunCol * pow(sun, 9.0) * 0.075;
         }
         if (moon > 0.02) {
             col += moonColour() * pow(moon, 70.0) * 0.60;

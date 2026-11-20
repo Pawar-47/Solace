@@ -40,12 +40,12 @@ const bool shadowtex1Nearest = false;
 
 // ---- Water ---------------------------------------------------------------
 #define PACK_TEXTURES 0        // [0 1] Read textures/noise.png and clouds.png instead of computing the noise. Run textures/generate_textures.py first.
-#define WATER_WAVES 1          // [0 1] Animated water surface.
+#define WATER_WAVES 0          // [0 1] Animated water surface. Off as shipped: this is the most expensive per-pixel thing the pack does, and the Default profile turns it on.
 #define WAVE_SPEED 0.55        // [0.2 0.35 0.55 0.8 1.1]
 #define WAVE_SCALE 1.0         // [0.5 1.0 1.5 2.0]
 #define WATER_OPACITY 0.72     // [0.40 0.55 0.65 0.72 0.85 1.0]
-#define WATER_REFLECTION 1     // [0 1] Reflect the sky on the water surface.
-#define WATER_GLINT 1          // [0 1] Sun and moon highlight on water.
+#define WATER_REFLECTION 0     // [0 1] Reflect the sky on the water surface.
+#define WATER_GLINT 0          // [0 1] Sun and moon highlight on water.
 #define REFRACTION 0           // [0 1] Bend what is behind water. Needs a scene copy.
 #define WATER_ABSORPTION 0.10  // [0.02 0.05 0.10 0.16 0.24] How fast light dies in water.
 #define WATER_SSR 0            // [0 1] Reflect the world, not just the sky, on water.
@@ -145,6 +145,10 @@ const bool shadowtex1Nearest = false;
 #define SATURATION 1.06        // [0.80 0.90 1.00 1.06 1.15 1.25]
 #define CONTRAST 1.02          // [0.95 1.00 1.02 1.06 1.10]
 #define TONEMAP 1              // [0 1 2] 0 none, 1 soft, 2 gentle.
+#define COLOR_R 100            // [50 75 90 100 110 125 150] Red channel gain, percent.
+#define COLOR_G 100            // [50 75 90 100 110 125 150] Green channel gain, percent.
+#define COLOR_B 100            // [50 75 90 100 110 125 150] Blue channel gain, percent.
+#define GAMMA 100              // [80 90 95 100 105 110 120 130] Output gamma, percent. Above 100 lifts the midtones.
 #define DITHER 1               // [0 1] Break up banding in the sky gradient.
 #define CHROMA_ABER 0          // [0 1] Chromatic aberration towards the edges.
 #define CHROMA_STRENGTH 0.35   // [0.15 0.25 0.35 0.50]
