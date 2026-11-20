@@ -138,3 +138,8 @@ option.COLOR_G=绿色增益
 option.COLOR_B=蓝色增益
 option.GAMMA=伽马
 profile.Potato=土豆
+
+
+option.VERTEX_LIGHTING=顶点光照
+value.VERTEX_LIGHTING.0=逐像素
+value.VERTEX_LIGHTING.1=逐顶点

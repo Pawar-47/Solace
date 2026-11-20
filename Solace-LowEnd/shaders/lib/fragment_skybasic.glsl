@@ -55,7 +55,10 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
                                 + vec2(frameTimeCounter * 0.0009,
                                        frameTimeCounter * 0.0006)).r;
         #else
-            float n = solFbm(drift + at.y * 0.0016);
+            /* One octave per step, not two. With four steps in the march the second
+               octave was being averaged away as noise, and it doubled the cost of
+               every sky pixel while clouds are on. */
+            float n = solNoise(drift + at.y * 0.0016);
         #endif
 
         density += smoothstep(CLOUD_COVERAGE, CLOUD_COVERAGE + 0.20, n);

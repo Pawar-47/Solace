@@ -24,6 +24,7 @@ the program sets before including the file:
 #include "/lib/math.glsl"
 #include "/lib/uniforms.glsl"
 #include "/lib/io_geometry.glsl"
+#include "/lib/sky_model.glsl"
 
 /* Minecraft's own per-vertex data. Distant Horizons draws its far terrain through the
    same stage without them, so its programs set SOLACE_DH_GEOMETRY and neither the
@@ -159,6 +160,22 @@ void main() {
         }
     #endif
     fogFactor = sat(fogAmount);
+
+    #if VERTEX_LIGHTING == 1
+        /* Ambient plus block light, per vertex. This is the experiment: the palette term
+           and the candle curve were being spent on every pixel of every lit surface,
+           and they change only as fast as the lightmap does - which is smoothed per
+           vertex in vanilla anyway. Interpolating them across a face is the same thing
+           vanilla's own smooth lighting does, and it takes a sqrt, a sixth power and
+           the whole ambient mix out of the fragment stage. */
+        float vSkyLight = sat(max(lmcoord.y - 0.065, 0.0) * 1.06951871657754);
+        float vSunUp = sunHeight();
+        float vBlockCurve = lmcoord.x * sqrt(lmcoord.x) + solPow6(lmcoord.x * 1.17);
+
+        vertexLight = ambientColour(dayFrom(vSunUp), duskFrom(vSunUp))
+                        * (AVOID_DARK_LEVEL + (1.0 - AVOID_DARK_LEVEL) * (vSkyLight * vSkyLight))
+                    + blockLightColour() * vBlockCurve * BLOCK_LIGHT;
+    #endif
 
     tint = gl_Color;
 

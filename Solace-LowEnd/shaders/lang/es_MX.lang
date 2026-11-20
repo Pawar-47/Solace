@@ -138,3 +138,8 @@ option.COLOR_G=Ganancia de verde
 option.COLOR_B=Ganancia de azul
 option.GAMMA=Gamma
 profile.Potato=Mínimo
+
+
+option.VERTEX_LIGHTING=Iluminación por vértice
+value.VERTEX_LIGHTING.0=Por píxel
+value.VERTEX_LIGHTING.1=Por vértice

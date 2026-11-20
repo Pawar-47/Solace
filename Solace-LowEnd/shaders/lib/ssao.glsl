@@ -70,12 +70,32 @@ float screenSpaceAO(vec2 uv) {
         float taps = 4.0;
     #endif
 
+    /* The taps walk around the centre at the golden angle. cos() and sin() are slow
+       on the SFU, and computing them per tap put 2 per sample - up to 24 per pixel -
+       into a pass that runs at full resolution. Two things replace them:
+
+         * the first direction is one cos/sin pair, rotated by the dither;
+         * every following tap is the previous one rotated by a fixed angle, which is
+           four multiplies and two adds with the rotation matrix computed once above
+           the loop. */
+    const float goldenAngle = 2.39996322972865332;   // pi * (3 - sqrt(5))
+    float ca = cos(goldenAngle);
+    float sa = sin(goldenAngle);
+
+    float startTurn = dither * 6.283185307179586;
+    vec2 direction = vec2(cos(startTurn), sin(startTurn));
+    // Hoist the rotation out of the loop: rotate the direction, not every tap.
+    float ring = 0.0;
+
     for (int i = 0; i < AO_TAPS; i++) {
-        float turn = fract((float(i) + dither) * 1.6180339887) * 3.141592653589793;
-        vec2 offset = vec2(cos(turn), sin(turn)) * (float(i) + 1.0) * 0.4 * scaleVec;
+        ring += 0.4;
+        vec2 offset = direction * ring * scaleVec;
 
         occlusion += occlusionAt(uv + offset, centreZ, rangeScale);
         occlusion += occlusionAt(uv - offset, centreZ, rangeScale);
+
+        direction = vec2(direction.x * ca - direction.y * sa,
+                         direction.x * sa + direction.y * ca);
     }
 
     occlusion /= (taps * 2.0);

@@ -25,9 +25,17 @@ program that touches those buffers.
 const int colortex4Format = R11F_G11F_B10F;
 const bool colortex4Clear = false;
 
-/* The scene buffers: bloom gathers from a mip level of whichever one is current. */
+/* The scene buffers: bloom gathers from a mip level of whichever one is current.
+
+   Neither needs clearing. `prepare` fills colortex0 edge to edge before anything else
+   is drawn, so its old contents can never show through, and colortex1 is only ever
+   read when the pass that writes it has run. Skipping a clear saves a full-screen
+   write per buffer per frame, which on an HD 5500 at 1600x900 is 1.4 million pixels
+   of bandwidth each. */
 const bool colortex0MipmapEnabled = true;
 const bool colortex1MipmapEnabled = true;
+const bool colortex0Clear = false;
+const bool colortex1Clear = false;
 
 /* Temporal antialiasing history. */
 const int colortex3Format = RGBA16F;

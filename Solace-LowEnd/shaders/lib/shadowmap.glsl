@@ -23,7 +23,12 @@ so both sides always agree about where a texel is.
 
 uniform mat4 shadowModelView;
 uniform mat4 shadowProjection;
-uniform sampler2D shadowtex1;
+
+/* A comparison sampler. `shadowHardwareFiltering = true` in lib/config.glsl turns on
+   linear filtering for it, which means one shadow2D() call is already a bilinear
+   comparison of four texels - the hardware does the PCF that this pack used to do by
+   hand with four fetches and four step(). */
+uniform sampler2DShadow shadowtex1;
 
 #if SHADOW_QTY_SLIDER == 1
     #define SOLACE_SHADOW_RESOLUTION 512
@@ -59,17 +64,22 @@ float shadowFactor(vec3 playerPosition, float facing) {
 
     float bias = 0.0012 + 0.0025 * (1.0 - facing);
     vec2 texel = vec2(SHADOW_BLUR / float(shadowMapResolution));
+    float reference = coord.z - bias;
 
+    /* shadow2D compares `reference` against the filtered depth in one instruction and
+       returns 1.0 where the fragment is lit. The soft path spreads four of those taps
+       over a wider footprint; the hard path takes the single hardware-filtered one,
+       which is still smoother than a nearest fetch. */
     float lit;
     #if SHADOW_SOFT == 1
         float sum = 0.0;
-        sum += step(coord.z - bias, texture2D(shadowtex1, coord.xy + texel * vec2(-0.7, -0.7)).r);
-        sum += step(coord.z - bias, texture2D(shadowtex1, coord.xy + texel * vec2( 0.7, -0.7)).r);
-        sum += step(coord.z - bias, texture2D(shadowtex1, coord.xy + texel * vec2(-0.7,  0.7)).r);
-        sum += step(coord.z - bias, texture2D(shadowtex1, coord.xy + texel * vec2( 0.7,  0.7)).r);
+        sum += shadow2D(shadowtex1, vec3(coord.xy + texel * vec2(-0.7, -0.7), reference)).r;
+        sum += shadow2D(shadowtex1, vec3(coord.xy + texel * vec2( 0.7, -0.7), reference)).r;
+        sum += shadow2D(shadowtex1, vec3(coord.xy + texel * vec2(-0.7,  0.7), reference)).r;
+        sum += shadow2D(shadowtex1, vec3(coord.xy + texel * vec2( 0.7,  0.7), reference)).r;
         lit = sum * 0.25;
     #else
-        lit = step(coord.z - bias, texture2D(shadowtex1, coord.xy).r);
+        lit = shadow2D(shadowtex1, vec3(coord.xy, reference)).r;
     #endif
 
     float dist = length(playerPosition);

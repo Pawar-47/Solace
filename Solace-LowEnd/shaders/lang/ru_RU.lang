@@ -138,3 +138,8 @@ option.COLOR_G=Усиление зелёного
 option.COLOR_B=Усиление синего
 option.GAMMA=Гамма
 profile.Potato=Картошка
+
+
+option.VERTEX_LIGHTING=Освещение по вершинам
+value.VERTEX_LIGHTING.0=По пикселям
+value.VERTEX_LIGHTING.1=По вершинам

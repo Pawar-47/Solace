@@ -15,6 +15,7 @@ mistaken for a plant, a metal or a portal.
 #ifndef SOLACE_IO_GEOMETRY
 #define SOLACE_IO_GEOMETRY
 
+#include "/lib/config.glsl"
 #include "/lib/blockids.glsl"
 
 varying vec2 texcoord;
@@ -25,5 +26,11 @@ varying vec3 viewSpacePos;
 varying vec3 worldSpacePos;
 varying float blockId;
 varying float fogFactor;
+
+#if VERTEX_LIGHTING == 1
+/* Ambient plus block light, worked out once per vertex. Declared under the same guard
+   in both stages, so it costs nothing when a player turns the option off. */
+varying vec3 vertexLight;
+#endif
 
 #endif

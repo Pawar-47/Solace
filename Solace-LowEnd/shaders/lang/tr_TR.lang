@@ -138,3 +138,8 @@ option.COLOR_G=Yeşil kazancı
 option.COLOR_B=Mavi kazancı
 option.GAMMA=Gama
 profile.Potato=Patates
+
+
+option.VERTEX_LIGHTING=Köşe başına aydınlatma
+value.VERTEX_LIGHTING.0=Piksel başına
+value.VERTEX_LIGHTING.1=Köşe başına

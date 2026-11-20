@@ -382,3 +382,9 @@ profile.LowEnd=Low end
 profile.Default=Default
 profile.Beauty=Beauty
 profile.PerformancePlus=Performance plus
+
+
+option.VERTEX_LIGHTING=Vertex lighting
+option.VERTEX_LIGHTING.comment=Work out ambient and block light once per vertex and interpolate, instead of on every pixel. Cheaper - it removes a square root, a sixth power and the whole ambient mix from the fragment stage - and it is what vanilla's smooth lighting does. The trade is slightly softer light where the lightmap changes across one face.
+value.VERTEX_LIGHTING.0=Per pixel
+value.VERTEX_LIGHTING.1=Per vertex

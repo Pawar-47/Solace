@@ -43,9 +43,13 @@ uniform sampler2D depthtex1;
 
 varying vec2 texcoord;
 
+/* pi * (3 - sqrt(5)). Taps that walk around a centre at this angle never line up
+   again, and walking is a rotation - four multiplies - instead of a cos/sin pair per
+   tap. Both loops below use it. */
+#define SOL_GOLDEN_ANGLE 2.39996322972865332
+
 /* My own tone curve. Monotonic, 1.0 in gives about 0.73 out and 2.0 gives about
-   0.93, so highlights roll off instead of clipping. */
-vec3 toneCurve(vec3 x) {
+   0.93, so highlights roll off instead of clipping. */vec3 toneCurve(vec3 x) {
     x = max(x, vec3(0.0));
     return (x * (2.0 + x)) / (x * (x + 1.5) + 1.6);
 }
@@ -265,10 +269,22 @@ void main() {
             vec3 ring = colour;
             float seed = solDitherShifted(gl_FragCoord.xy,
                                           float(frameCounter % 64) * 0.015625);
+
+            /* One cos/sin pair for the starting direction, then a rotation per tap:
+               the ring is walked, not recomputed. */
+            float startTurn = seed * 6.283185307179586;
+            vec2 direction = vec2(cos(startTurn), sin(startTurn));
+            float ca = cos(SOL_GOLDEN_ANGLE);
+            float sa = sin(SOL_GOLDEN_ANGLE);
+
+            float radius = 0.0;
             for (int i = 1; i <= DOF_SAMPLES; i++) {
-                float turn = fract((float(i) + seed) * 1.6180339887) * 6.28318530718;
-                vec2 offset = vec2(cos(turn), sin(turn)) * (circle * 0.014 * float(i) * 0.6);
+                radius += circle * 0.0084;
+                vec2 offset = direction * radius;
                 ring += texture2D(SCENE, clamp(uv + offset, vec2(0.0), vec2(1.0))).rgb;
+
+                direction = vec2(direction.x * ca - direction.y * sa,
+                                 direction.x * sa + direction.y * ca);
             }
             colour = ring / float(DOF_SAMPLES + 1);
         }
@@ -305,14 +321,26 @@ void main() {
         float bloomSeed = solDitherShifted(gl_FragCoord.yx * 0.31,
                                            float(frameCounter % 64) * 0.015625);
         vec3 glow = vec3(0.0);
+
+        /* Same walk as the depth-of-field ring: one direction, rotated per tap. */
+        float startTurn = bloomSeed * 6.283185307179586;
+        vec2 direction = vec2(cos(startTurn), sin(startTurn));
+        float ca = cos(SOL_GOLDEN_ANGLE);
+        float sa = sin(SOL_GOLDEN_ANGLE);
+        float radius = 0.0;
+
         for (int i = 0; i < 8; i++) {
-            float turn = fract((float(i) + bloomSeed) * 1.6180339887) * 6.28318530718;
-            vec2 offset = vec2(cos(turn), sin(turn))
-                        * (BLOOM_RADIUS * float(i + 1) * 0.12) * pixel;
-            vec3 tapped = texture2DLod(SCENE, clamp(uv + offset, vec2(0.0), vec2(1.0)),
+            radius += BLOOM_RADIUS * 0.12 * pixel;
+            vec3 tapped = texture2DLod(SCENE,
+                                       clamp(uv + direction * radius, vec2(0.0), vec2(1.0)),
                                        BLOOM_LOD).rgb;
             glow += max(tapped - vec3(0.62), vec3(0.0));
+
+            direction = vec2(direction.x * ca - direction.y * sa,
+                             direction.x * sa + direction.y * ca);
         }
+        /* The radius now grows through `pixel` arithmetic above, so the strength is
+           the same as before by construction: eight taps, radii 1..8 * 0.12. */
         colour += glow * (BLOOM_STRENGTH * 0.125);
     #endif
 

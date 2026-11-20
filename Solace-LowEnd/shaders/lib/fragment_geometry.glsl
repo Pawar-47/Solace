@@ -71,9 +71,11 @@ void main() {
         }
     #endif
 
-    /* 2. Candle curve. */
-    float blockCurve = rawBlock * sqrt(rawBlock) + solPow6(rawBlock * 1.17);
-    vec3 candle = blockLightColour() * blockCurve * BLOCK_LIGHT;
+    /* 2. Candle curve, unless the vertex stage already did it. */
+    #if VERTEX_LIGHTING == 0
+        float blockCurve = rawBlock * sqrt(rawBlock) + solPow6(rawBlock * 1.17);
+        vec3 candle = blockLightColour() * blockCurve * BLOCK_LIGHT;
+    #endif
 
     /* 3. Direct term: the sun by day, the moon by night. The normal is normalised
        once and reused by the gloss highlight below. */
@@ -106,13 +108,18 @@ void main() {
         facing *= (sky8 * sky2);
     #endif
 
-    /* 5. Ambient: palette colour with a floor, so caves keep some light. The floor is
-       the setting a player actually wants here - some machines and monitors turn a
-       cave at 0.045 into a black screen. */
-    float ambientFloor = AVOID_DARK_LEVEL;
-    vec3 ambient = ambientColour(day, dusk) * (ambientFloor + (1.0 - ambientFloor) * (skyLight * skyLight));
+    #if VERTEX_LIGHTING == 1
+        /* Interpolated from the vertex stage - see lib/vertex_geometry.glsl. */
+        vec3 light = vertexLight;
+    #else
+        /* 5. Ambient: palette colour with a floor, so caves keep some light. The floor
+           is the setting a player actually wants here - some machines and monitors turn
+           a cave at 0.045 into a black screen. */
+        float ambientFloor = AVOID_DARK_LEVEL;
+        vec3 ambient = ambientColour(day, dusk) * (ambientFloor + (1.0 - ambientFloor) * (skyLight * skyLight));
 
-    vec3 light = ambient + candle;
+        vec3 light = ambient + candle;
+    #endif
 
     #if SUN_SHADING == 1
         light += astroColour * directTint * facing * 0.85 * (1.0 - rainStrength * 0.75);

@@ -138,3 +138,8 @@ option.COLOR_G=초록 게인
 option.COLOR_B=파랑 게인
 option.GAMMA=감마
 profile.Potato=감자
+
+
+option.VERTEX_LIGHTING=정점 조명
+value.VERTEX_LIGHTING.0=픽셀 단위
+value.VERTEX_LIGHTING.1=정점 단위
