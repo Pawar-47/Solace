@@ -44,9 +44,10 @@ const float eyeBrightnessHalflife = 3.0;
 const float centerDepthHalflife = 0.66;
 
 /* Shadow projection snapping and filtering. The interval size keeps the shadow
-   texel grid from crawling as the player walks. */
+   texel grid from crawling as the player walks. Hardware filtering is declared
+   further down, after the option it depends on - a `const` decided here would read a
+   SHADOWS that the preprocessor has not seen yet, which it treats as 0. */
 const float shadowIntervalSize = 3.0;
-const bool shadowHardwareFiltering = true;
 const bool shadowtex1Nearest = false;
 
 // ---- Water ---------------------------------------------------------------
@@ -94,6 +95,16 @@ const bool shadowtex1Nearest = false;
 #define SHADOW_BLUR 1.0        // [0.5 1.0 1.5 2.0] How far the taps spread.
 #define COLORED_SHADOW 0       // [0 1] Tint a shadow with the colour of the glass or water above it.
 #define SHADOW_LOCK 0          // [0 16 32 64 128 256] Redraw shadows every N frames instead of every frame.
+
+/* Hardware filtering makes Iris build the shadow map as a depth-comparison texture,
+   which is a second sampler and a second allocation for a pass that may not exist.
+   Only ask for it when the pass does. Declared after SHADOWS so the guard reads the
+   value above rather than the preprocessor's 0 for an identifier it has not seen. */
+#if SHADOWS == 1
+    const bool shadowHardwareFiltering = true;
+#else
+    const bool shadowHardwareFiltering = false;
+#endif
 
 // ---- Sky ----------------------------------------------------------------
 #define SKY_SUN_GLOW 1         // [0 1] Sun halo, moon halo.

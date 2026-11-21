@@ -19,31 +19,54 @@ so both sides always agree about where a texel is.
 #include "/lib/config.glsl"
 #include "/lib/math.glsl"
 
+/* Resolution and distance are declared whether or not the pass is enabled, and they
+   are small when it is not.
+
+   This is not tidiness. Iris allocates the shadow targets from shadowMapResolution
+   even when nothing samples them, and if no value is declared anywhere it falls back
+   to 2048: a 2048x2048 depth map, a 2048x2048 comparison copy and a 2048x2048
+   shadowcolour buffer, roughly 67 MB of render targets created on every world load.
+   On an HD 5500 - which has no memory of its own and shares 8 GB with the processor -
+   that is the first thing that can fail, and it fails before one pixel is drawn, so
+   every profile behaves the same. Declaring a small map when the pass is off is what
+   the pack this one replaces does, for the same reason. */
+
 #if SHADOWS == 1
 
-uniform mat4 shadowModelView;
-uniform mat4 shadowProjection;
-uniform sampler2D shadowtex1;
+    #if SHADOW_QTY_SLIDER == 1
+        #define SOLACE_SHADOW_RESOLUTION 512
+    #elif SHADOW_QTY_SLIDER == 2
+        #define SOLACE_SHADOW_RESOLUTION 1024
+    #else
+        #define SOLACE_SHADOW_RESOLUTION 2048
+    #endif
 
-#if SHADOW_QTY_SLIDER == 1
+    #if SHADOW_DISTANCE_SLIDER == 0
+        #define SOLACE_SHADOW_COVERAGE 75.0
+    #elif SHADOW_DISTANCE_SLIDER == 1
+        #define SOLACE_SHADOW_COVERAGE 105.0
+    #else
+        #define SOLACE_SHADOW_COVERAGE 255.0
+    #endif
+
+#else
+
+    /* The cheapest real setting, so switching the option on changes nothing about
+       what has already been allocated. */
     #define SOLACE_SHADOW_RESOLUTION 512
-#elif SHADOW_QTY_SLIDER == 2
-    #define SOLACE_SHADOW_RESOLUTION 1024
-#else
-    #define SOLACE_SHADOW_RESOLUTION 2048
-#endif
-
-#if SHADOW_DISTANCE_SLIDER == 0
     #define SOLACE_SHADOW_COVERAGE 75.0
-#elif SHADOW_DISTANCE_SLIDER == 1
-    #define SOLACE_SHADOW_COVERAGE 105.0
-#else
-    #define SOLACE_SHADOW_COVERAGE 255.0
+
 #endif
 
 const int shadowMapResolution = SOLACE_SHADOW_RESOLUTION;
 const float shadowDistance = SOLACE_SHADOW_COVERAGE;
 const float shadowDistanceRenderMul = 1.0;
+
+#if SHADOWS == 1
+
+uniform mat4 shadowModelView;
+uniform mat4 shadowProjection;
+uniform sampler2D shadowtex1;
 
 /* Four taps with a bias that grows as the surface turns away from the sun, and a
    fade to lit at the edge of the map. Returns 1.0 for lit, 0.0 for shadowed.
