@@ -28,7 +28,9 @@ void main() {
     gl_Position = ftransform();
 
     #if AUTO_EXPOSURE == 1
-        float kept = texture2D(colortex6, vec2(0.5)).r;
+        /* texture2DLod, not texture2D: implicit-LOD sampling does not exist in a vertex
+           stage, and there is no mip chain here to choose from anyway. */
+        float kept = texture2DLod(colortex6, vec2(0.5), 0.0).r;
         glintExposure = kept > 0.0 ? kept : 1.0;
     #else
         glintExposure = EXPOSURE;
