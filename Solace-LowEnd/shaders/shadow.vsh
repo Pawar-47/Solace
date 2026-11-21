@@ -31,7 +31,9 @@ void main() {
     blockId = mc_Entity.x;
 
     #if SHADOW_LOCK > 0
-        if (frameCounter % SHADOW_LOCK != 0) {
+        /* mod(), not %: the integer modulus operator is GLSL 1.30 and this pack is
+           written for 1.20. The result is a whole number below SHADOW_LOCK. */
+        if (mod(float(frameCounter), float(SHADOW_LOCK)) > 0.5) {
             /* Every vertex of every triangle lands at the same point behind the
                near plane, so nothing is rasterised and the old map survives. */
             gl_Position = vec4(0.0, 0.0, -2.0, 1.0);

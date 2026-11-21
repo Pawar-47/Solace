@@ -264,7 +264,7 @@ void main() {
         if (circle > 0.004 && hereDepth < 0.99999) {
             vec3 ring = colour;
             float seed = solDitherShifted(gl_FragCoord.xy,
-                                          float(frameCounter % 64) * 0.015625);
+                                          mod(float(frameCounter), 64.0) * 0.015625);
             for (int i = 1; i <= DOF_SAMPLES; i++) {
                 float turn = fract((float(i) + seed) * 1.6180339887) * 6.28318530718;
                 vec2 offset = vec2(cos(turn), sin(turn)) * (circle * 0.014 * float(i) * 0.6);
@@ -303,7 +303,7 @@ void main() {
            fetch at mip BLOOM_LOD already averages a block of pixels, so eight rotated
            taps give a wide, smooth glow. */
         float bloomSeed = solDitherShifted(gl_FragCoord.yx * 0.31,
-                                           float(frameCounter % 64) * 0.015625);
+                                           mod(float(frameCounter), 64.0) * 0.015625);
         vec3 glow = vec3(0.0);
         for (int i = 0; i < 8; i++) {
             float turn = fract((float(i) + bloomSeed) * 1.6180339887) * 6.28318530718;

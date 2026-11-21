@@ -44,7 +44,7 @@ float openSkyTowardsSun(vec2 uv) {
        along the ray, which is the one thing that makes a cheap shaft effect look
        cheap. */
     float dither = solDitherShifted(gl_FragCoord.xy,
-                                    float(frameCounter % 64) * 0.015625);
+                                    mod(float(frameCounter), 64.0) * 0.015625);
 
     float open = 0.0;
     vec2 probe = uv + stepUV * dither;

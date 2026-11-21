@@ -234,7 +234,7 @@ void main() {
            the hit: far fewer fetches than a fixed step, for the same accuracy up
            close. Two blocks out to the last step's reach. */
         float dither = solDitherShifted(gl_FragCoord.xy,
-                                        float(frameCounter % 64) * 0.015625);
+                                        mod(float(frameCounter), 64.0) * 0.015625);
         float previousT = 0.0;
         float currentT = 0.0;
 

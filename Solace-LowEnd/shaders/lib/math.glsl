@@ -98,7 +98,8 @@ float solDitherBlue(vec2 pixel) {
 
 /* The same, rotated by the frame counter, for effects that gather samples over the
    screen: a still dither becomes a fixed pattern in the image, a moving one averages
-   out over a few frames. shift is frameCounter % 64 moved into [0, 1). */
+   out over a few frames. shift is the frame counter wrapped into [0, 1), and every
+   caller wraps it with mod(): the integer % operator needs GLSL 1.30. */
 float solDitherShifted(vec2 pixel, float shift) {
     return fract(solDitherBlue(pixel + vec2(shift * 7.0, shift * 23.0)) + shift);
 }

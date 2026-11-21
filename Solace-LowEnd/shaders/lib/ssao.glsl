@@ -61,7 +61,7 @@ float screenSpaceAO(vec2 uv) {
     /* A rotating dither, so the four or six paired taps do not settle into the same
        ring pattern every frame. */
     float dither = solDitherShifted(gl_FragCoord.xy * 0.37,
-                                    float(frameCounter % 64) * 0.015625);
+                                    mod(float(frameCounter), 64.0) * 0.015625);
     float occlusion = 0.0;
 
     #if AO_TAPS == 6

@@ -38,7 +38,7 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
     /* The march starts at a dithered point inside the first step, so the four or
        six samples spread out instead of all landing on the same lattice. */
     float offset = solDitherShifted(gl_FragCoord.xy,
-                                    float(frameCounter % 64) * 0.015625);
+                                    mod(float(frameCounter), 64.0) * 0.015625);
 
     float density = 0.0;
     for (int i = 0; i < CLOUD_STEPS; i++) {

@@ -94,7 +94,7 @@ void main() {
            corners of a square, walked by a low-discrepancy pair so consecutive frames
            never land next to each other. The faster the samples move, the better the
            history can absorb what a still pattern would leave as flicker. */
-        float phase = float(frameCounter % 8);
+        float phase = mod(float(frameCounter), 8.0);
         vec2 subPixel = fract(phase * vec2(0.75487766624669276, 0.569840290998) + 0.37)
                       * 2.0 - 1.0;
         gl_Position.xy += subPixel * 0.5 * vec2(2.0 / viewWidth, 2.0 / viewHeight)
