@@ -6,7 +6,12 @@ name: Release
 # Every push to main publishes a rolling release tagged `latest`, so there is always
 # something to download without anyone having to create a tag first. Pushing a
 # version tag (`v1.0.0`) publishes a release of its own with generated notes.
-# The zip is attached to the run as a workflow artifact either way.
+#
+# Two zips are built. The second one is the diagnostic build: the same source with
+# SOLACE_DIAG set to 1, which bypasses the post chain and switches the sky fill off,
+# so a frame is the geometry and a copy of it. Loading it answers whether a freeze is
+# in the post chain or in the geometry stages. ERRORS.txt travels with every release
+# and says what to send when something goes wrong and where the game keeps its log.
 
 on:
   push:
@@ -48,11 +53,30 @@ jobs:
           ls -l Solace-LowEnd.zip
           unzip -l Solace-LowEnd.zip | head -8
 
+      # Built from the same source, after the normal zip is safely on disk, so the
+      # sed below can only affect this one.
+      - name: Build the diagnostic zip
+        run: |
+          sed -i 's/^#define SOLACE_DIAG 0/#define SOLACE_DIAG 1/' Solace-LowEnd/shaders/lib/config.glsl
+          grep -n "SOLACE_DIAG" Solace-LowEnd/shaders/lib/config.glsl
+          cd Solace-LowEnd
+          zip -r ../Solace-Diagnostic.zip shaders README.md
+          cd ..
+          ls -l Solace-Diagnostic.zip
+          unzip -l Solace-Diagnostic.zip | head -8
+
       - name: Attach it to this run
         uses: actions/upload-artifact@v4
         with:
           name: Solace-LowEnd
           path: Solace-LowEnd.zip
+          if-no-files-found: error
+
+      - name: Attach the diagnostic build to this run
+        uses: actions/upload-artifact@v4
+        with:
+          name: Solace-Diagnostic
+          path: Solace-Diagnostic.zip
           if-no-files-found: error
 
       - name: Publish the rolling release (main)
@@ -65,11 +89,15 @@ jobs:
             --title "Solace - latest build" \
             --notes "Placeholder" \
             --latest
-          gh release upload latest Solace-LowEnd.zip --clobber
+          gh release upload latest Solace-LowEnd.zip Solace-Diagnostic.zip ERRORS.txt --clobber
           gh release edit latest \
             --notes "Download Solace-LowEnd.zip and unpack it into your shaderpacks folder, so the game finds shaderpacks/Solace-LowEnd/shaders/ - or copy the Solace-LowEnd folder from the repository.
 
-          Built from ${GITHUB_SHA:0:7} on ${stage}, after the pack passed its structural checks. Nobody has looked at the picture on real hardware yet; see the repository README for what to report if something breaks."
+          Solace-Diagnostic.zip is the same pack with the post chain bypassed and the sky fill switched off. Load it when something goes wrong: if it renders - flat and unlit, nothing looks right in it - the fault is in the post chain, and if it freezes the same way, the fault is in the geometry stages. One test, half the pack ruled out.
+
+          ERRORS.txt says which log to send, where the game keeps it, and how to gather it in one file with tools/collect_report.sh.
+
+          Built from ${GITHUB_SHA:0:7} on ${stage}, after the pack passed its structural checks and every stage compiled under every profile. Nobody has looked at the picture on real hardware yet."
 
       - name: Publish a versioned release (tag)
         if: startsWith(github.ref, 'refs/tags/')
@@ -80,4 +108,5 @@ jobs:
             "${GITHUB_REF_NAME}" \
             --title "Solace ${GITHUB_REF_NAME}" \
             --generate-notes
-          gh release upload "${GITHUB_REF_NAME}" Solace-LowEnd.zip --clobber
+          gh release upload "${GITHUB_REF_NAME}" \
+            Solace-LowEnd.zip Solace-Diagnostic.zip ERRORS.txt --clobber

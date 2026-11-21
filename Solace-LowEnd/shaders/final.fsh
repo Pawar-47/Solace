@@ -232,6 +232,13 @@ vec3 sceneFxaa(vec2 uv) {
 
 void main() {
     vec2 uv = texcoord;
+
+    /* Diagnostic build: hand the scene through untouched. Everything below is then
+       dead code, so a freeze that survives this is not in the post chain. */
+    #if SOLACE_DIAG == 1
+        gl_FragData[0] = texture2D(SCENE, uv);
+        return;
+    #endif
     vec2 pixel = vec2(1.0 / viewWidth, 1.0 / viewHeight);
 
     vec3 colour;

@@ -80,8 +80,8 @@ def expand(path, shader_root, overrides, stack=None):
 
 
 def read_profiles(shader_root):
-    """The option sets worth compiling: the defaults, then each profile."""
-    profiles = [("default", {})]
+    """The option sets worth compiling: the defaults, the diagnostic build, each profile."""
+    profiles = [("default", {}), ("diagnostic", {"SOLACE_DIAG": "1"})]
     path = os.path.join(shader_root, "shaders.properties")
     if not os.path.isfile(path):
         return profiles

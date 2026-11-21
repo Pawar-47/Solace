@@ -12,6 +12,17 @@ enabled, all samples at their minimum, the shadow map at 512 px over 75 blocks.
 #ifndef SOLACE_CONFIG
 #define SOLACE_CONFIG
 
+// ---- Diagnostics ---------------------------------------------------------
+// Not an option: it has no value list, so it does not appear on the options screen.
+// The release workflow builds a second zip with this set to 1, which bypasses the
+// whole post chain and switches the sky fill off, so a frame is just the geometry
+// and a copy of it. If that build renders and the normal one freezes, the fault is
+// in the post chain; if both freeze, it is in the geometry stages. See ERRORS.txt in
+// the repository root.
+#ifndef SOLACE_DIAG
+#define SOLACE_DIAG 0
+#endif
+
 // ---- Shader constants the mod reads --------------------------------------
 // Not options: values Iris and OptiFine look for in any included file and then
 // apply to the whole pipeline.

@@ -45,6 +45,11 @@ Easiest: download `Solace-LowEnd.zip` from the [Releases](../../releases) page �
 `latest` release is rebuilt and re-uploaded on every push to `main` — and unpack it
 into your `shaderpacks` folder.
 
+Every release also carries `Solace-Diagnostic.zip`: the same pack with the post chain
+bypassed, so one test says whether a problem is in the post chain or in the geometry
+stages. Nothing looks right in it; it exists for that one answer. [ERRORS.txt](ERRORS.txt)
+says which log to send, where it is, and how to collect it in one file.
+
 Or copy the `Solace-LowEnd` folder from this repository, so the game finds
 `shaderpacks/Solace-LowEnd/shaders/`. Either way, then choose it in **Options → Video
 Settings → Shader Packs**.

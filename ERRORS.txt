@@ -1,0 +1,107 @@
+SOLACE - WHEN THE PACK WILL NOT RUN
+===================================
+
+Two builds are published with every release:
+
+  Solace-LowEnd.zip     the pack.
+  Solace-Diagnostic.zip the same pack with the post chain bypassed: `final` hands the
+                        scene through untouched instead of tonemapping, grading and
+                        dithering it. Nothing looks right in this build. It exists
+                        only to answer one question.
+
+THE QUESTION IT ANSWERS
+-----------------------
+Load Solace-Diagnostic.zip first.
+
+  It renders (flat or unlit, but the game runs)
+      -> the freeze is in `final`: the tone curve, the grading, the dither, or one
+         of the effects that share that pass (ambient occlusion, bloom, depth of
+         field, FXAA, chromatic aberration, sharpening).
+
+  It freezes exactly the same way
+      -> the freeze is in the geometry stages: the gbuffers_* programs or the vertex
+         stage, or in `prepare`, which still runs a single full-screen fill.
+
+That splits the pack in half with one test, and half the files can be ruled out on
+the spot. Whichever it is, send the log described below and I will take that half
+apart against the reference pack.
+
+WHERE THE LOG IS
+----------------
+The game writes it, not the pack. In the instance's game folder:
+
+  Vanilla launcher      ~/.minecraft/logs/latest.log
+  Prism / MultiMC       ~/.local/share/PrismLauncher/instances/<instance>/.minecraft/logs/latest.log
+                        (right-click the instance -> Folder, then logs/)
+  ATLauncher, CurseForge, Modrinth app
+                        the instance folder -> logs/latest.log
+  Flatpak or Snap       inside the sandbox, under ~/.var/app/<launcher>/ or
+                        ~/snap/<launcher>/ - same logs/latest.log
+  Windows               %APPDATA%\.minecraft\logs\latest.log
+
+Also in that folder: logs/debug.log (fuller, includes Iris setup) and
+crash-reports/crash-*.txt if it actually crashed. A hard freeze produces no crash
+report - that is information too.
+
+If the game is frozen, kill it first (`killall java`), then read the file: logs are
+written line by line, so the last lines show what it was doing when it stopped.
+
+WHAT TO SEND
+------------
+One command, run in a terminal, writes one file with everything:
+
+    bash tools/collect_report.sh
+
+It produces solace-report.txt in the current folder, holding the shader lines of
+the log, the tail of the log, the kernel's GPU messages, your renderer and your
+Minecraft/Iris versions. Paste that file into the chat, or attach it.
+
+If you would rather do it by hand, these are the four useful pieces:
+
+    grep -n -i -E "iris|shader|program|error|glsl|framebuffer" ~/.minecraft/logs/latest.log | tail -n 80
+    tail -n 200 ~/.minecraft/logs/latest.log
+    journalctl -k -b | grep -i -E "gpu hang|i915|drm|reset" | tail -n 30
+    glxinfo -B | head -20
+
+The third line is the decisive one for a freeze: if the kernel reports a GPU hang
+or a reset, the driver faulted and the fix is in what the shader asks the GPU to do.
+If it reports nothing, the GPU never faulted and the stall is on the compile or
+Java side - a different hunt entirely.
+
+ERRORS ALREADY FIXED
+--------------------
+So a new report can be told from an old one. Every line below was a real error this
+pack shipped with, and none of them can come back without failing CI now:
+
+  composite.fsh: error: 'R11F_G11F_B10F' undeclared
+      The buffer formats were written as GLSL. They are directives the mod reads,
+      so they belong in a comment. Fixed.
+
+  textured: error: no matching function for call to 'sat (vec2)'
+      sat() existed for float and vec3 only; the lightmap is a vec2. Fixed.
+
+  composite.fsh: error: '%' : not supported for this version
+      Integer modulus is GLSL 1.30; the pack is 1.20. Replaced with mod(). Fixed.
+
+  final.fsh: error: 'depthtex0' : redefinition
+      Ambient occlusion and depth of field both declared it. Fixed.
+
+  gbuffers_armor_glint.vsh: error: 'texture2DLod' : required extension not requested
+      Implicit-LOD sampling does not exist in a vertex stage; the glint reads its
+      exposure in the fragment stage now. Fixed.
+
+  The screen freezing with no error at all
+      Every gbuffer program bound eight colour attachments because it declared no
+      DRAWBUFFERS, and Intel supports seven. Each program declares one target now.
+      This is the most likely cause of the freeze and it is in the build after
+      2026-11-21 12:20 UTC.
+
+Checks that run on every push, so none of the five errors above can ship again:
+
+  tools/validate_pack.py    includes, preprocessor balance, program pairs, DRAWBUFFERS
+  tools/check_lang.py       every option has a name in every language
+  tools/check_textures.py   the texture generator still produces its three files
+  tools/compile_check.py    glslang compiles every stage under every profile
+
+The last one is a real compiler. It is the reason to trust that what you are given
+loads; it cannot tell whether the picture is right, and it cannot catch a freeze.
