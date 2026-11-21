@@ -14,8 +14,16 @@ float sat(float x) {
     return clamp(x, 0.0, 1.0);
 }
 
+vec2 sat(vec2 x) {
+    return clamp(x, vec2(0.0), vec2(1.0));
+}
+
 vec3 sat(vec3 x) {
     return clamp(x, vec3(0.0), vec3(1.0));
+}
+
+vec4 sat(vec4 x) {
+    return clamp(x, vec4(0.0), vec4(1.0));
 }
 
 float luma(vec3 c) {
