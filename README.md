@@ -41,18 +41,15 @@ not upwards.
 
 ## Install
 
-Easiest: download `Solace-LowEnd.zip` from the [Releases](../../releases) page — the
-`latest` release is rebuilt and re-uploaded on every push to `main` — and unpack it
-into your `shaderpacks` folder.
+Download `Solace-LowEnd.zip` from the [Releases](../../releases) page — the `latest`
+release is rebuilt and re-uploaded on every push to `main` — and **copy the zip
+itself** into your `shaderpacks` folder, then choose it in **Options → Video Settings →
+Shader Packs**. Do not unpack it: the zip already has `shaders/` at its top level,
+which is the shape Iris reads.
 
-Every release also carries `Solace-Diagnostic.zip`: the same pack with the post chain
-bypassed, so one test says whether a problem is in the post chain or in the geometry
-stages. Nothing looks right in it; it exists for that one answer. [ERRORS.txt](ERRORS.txt)
-says which log to send, where it is, and how to collect it in one file.
-
-Or copy the `Solace-LowEnd` folder from this repository, so the game finds
-`shaderpacks/Solace-LowEnd/shaders/`. Either way, then choose it in **Options → Video
-Settings → Shader Packs**.
+If you would rather have a folder, unpack it and rename the result to `Solace-LowEnd`,
+so the game finds `shaderpacks/Solace-LowEnd/shaders/`. Copying the `Solace-LowEnd`
+folder out of this repository works the same way.
 
 Typical locations:
 
@@ -61,6 +58,29 @@ Linux     ~/.minecraft/shaderpacks/
 Windows   %APPDATA%\.minecraft\shaderpacks\
 Prism     <instance>/.minecraft/shaderpacks/
 ```
+
+### If it freezes
+
+Every release carries four probe zips besides the pack. Each is the real pack with a
+family of files removed, so Iris falls back to its own equivalent for those programs
+and the zip still loads and still draws. Each one either runs or freezes, and the four
+answers together name the file family — no log and no guessing:
+
+- `Solace-Probe-Bare` — two files, a pass-through `final`, and no configuration at
+  all. If this freezes, none of the pack's GLSL is involved.
+- `Solace-Probe-BareConfig` — those two files plus `shaders.properties`, the languages
+  and the block/item/entity/dimension lists. If Bare runs and this freezes, the
+  configuration is at fault rather than the shaders.
+- `Solace-Probe-PostOnly` — no `gbuffers_*` anywhere: vanilla draws, the pack only
+  post-processes.
+- `Solace-Probe-Geometry` — no `prepare`, `composite`, `composite2`, `deferred`,
+  `final` or `shadow`: the raw geometry buffer goes straight to the screen.
+
+`Solace-Diagnostic.zip` is the whole pack with only the last pass bypassed. It looks
+flat and wrong on purpose; it exists for that one answer. [ERRORS.txt](ERRORS.txt) says
+which log to send, where it is, and how to collect it in one file. On Linux the
+decisive line for a freeze is in the kernel log, not the game log:
+`journalctl -k -b | grep -iE "gpu hang|i915|reset"`.
 
 ## Settings that matter more than the pack
 

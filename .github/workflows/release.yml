@@ -103,6 +103,54 @@ jobs:
           ( cd probe-geom && zip -r ../Solace-Probe-Geometry.zip shaders README.md )
           unzip -l Solace-Probe-Geometry.zip | tail -3
 
+      # Two bare probes. Both previous probes froze, so the fault is in what they
+      # still share: the shared libraries and the property files. These two separate
+      # those, because they are the smallest a pack can be.
+
+      #   Solace-Probe-Bare        two files, a pass-through final and nothing else -
+      #                            no properties, no lang, no config, no block lists.
+      #                            Freezes -> none of our GLSL is involved and the
+      #                            problem is the pack shape or the driver on this
+      #                            machine, and the next step is comparing against a
+      #                            pack that works there.
+      #                            Runs    -> our files are the difference, go on.
+      #   Solace-Probe-BareConfig  the same two files plus shaders.properties, lang/
+      #                            and the four .properties lists.
+      #                            Bare runs and this freezes -> the configuration
+      #                            files are at fault, not the GLSL.
+      #                            Both run -> the fault is in the shared libs.
+      - name: Build the bare probes
+        run: |
+          rm -rf bare && mkdir -p bare/shaders
+          cat > bare/shaders/final.vsh <<'EOF'
+          #version 120
+          varying vec2 texcoord;
+          void main() {
+              gl_Position = ftransform();
+              texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
+          }
+          EOF
+          cat > bare/shaders/final.fsh <<'EOF'
+          #version 120
+          uniform sampler2D colortex0;
+          varying vec2 texcoord;
+          void main() {
+              gl_FragData[0] = texture2D(colortex0, texcoord);
+          }
+          EOF
+          ( cd bare && zip -r ../Solace-Probe-Bare.zip shaders )
+          unzip -l Solace-Probe-Bare.zip | tail -6
+
+          rm -rf bareconfig && cp -r bare bareconfig
+          cp Solace-LowEnd/shaders/shaders.properties bareconfig/shaders/
+          cp -r Solace-LowEnd/shaders/lang bareconfig/shaders/lang
+          cp Solace-LowEnd/shaders/block.properties bareconfig/shaders/
+          cp Solace-LowEnd/shaders/item.properties bareconfig/shaders/
+          cp Solace-LowEnd/shaders/entity.properties bareconfig/shaders/
+          cp Solace-LowEnd/shaders/dimension.properties bareconfig/shaders/
+          ( cd bareconfig && zip -r ../Solace-Probe-BareConfig.zip shaders )
+          unzip -l Solace-Probe-BareConfig.zip | tail -6
+
       - name: Attach it to this run
         uses: actions/upload-artifact@v4
         with:
@@ -128,19 +176,22 @@ jobs:
             --notes "Placeholder" \
             --latest
           gh release upload latest Solace-LowEnd.zip Solace-Diagnostic.zip \
-            Solace-Probe-PostOnly.zip Solace-Probe-Geometry.zip ERRORS.txt --clobber
+            Solace-Probe-PostOnly.zip Solace-Probe-Geometry.zip \
+            Solace-Probe-Bare.zip Solace-Probe-BareConfig.zip ERRORS.txt --clobber
           gh release edit latest \
-            --notes "Download Solace-LowEnd.zip and unpack it into your shaderpacks folder, so the game finds shaderpacks/Solace-LowEnd/shaders/ - or copy the Solace-LowEnd folder from the repository.
+            --notes "Download Solace-LowEnd.zip and copy the zip itself into your shaderpacks folder, then pick it in Options - Video Settings - Shader Packs. Do not unpack it: the zip already has shaders/ at its top level, which is what Iris expects. If you would rather have a folder, unpack it and rename the result to Solace-LowEnd so the game finds shaderpacks/Solace-LowEnd/shaders/.
 
-          If the pack freezes the game, two of the other three zips will say where. Unpack one, load it, and note only whether the game runs or freezes.
+          If the pack freezes the game, four probe zips say where. Each one either runs or freezes; nothing else to read.
 
-          Solace-Probe-PostOnly has no gbuffers programs: vanilla draws the world and the pack only post-processes it. Runs means a gbuffers stage is at fault; freezes means the fault is in prepare, final or the pipeline itself.
+          Bare: two files, a pass-through final and no configuration at all. If this freezes, none of the pack's GLSL is involved and the next step is comparing against a pack that does work on your machine. If it runs, the pack's own files are the difference.
 
-          Solace-Probe-Geometry has no prepare, composite, composite2, deferred, final or shadow pass: the raw geometry buffer goes straight to the screen, which looks flat and wrong on purpose. Runs means one of those six is at fault; freezes means a gbuffers stage or final is at fault.
+          BareConfig: the same two files plus the properties file, the languages and the four block/item/entity/dimension lists. If Bare runs and this freezes, the configuration is at fault and not the shaders. If both run, the fault is in the shared libraries.
 
-          Solace-Diagnostic.zip keeps the whole pack but bypasses the last pass, so it splits the post chain from the geometry stages the same way for a pack that will not load at all.
+          PostOnly: no gbuffers programs, so vanilla draws and the pack only post-processes. Geometry: no prepare, composite, composite2, deferred, final or shadow, so the raw geometry buffer goes to the screen. Used together they name which half of the pipeline stalls, which is how the two bare probes above were chosen.
 
-          ERRORS.txt says which log to send, where the game keeps it, and how to gather it in one file with tools/collect_report.sh. On Linux the decisive line for a freeze is in the kernel log, not the game log: after the freeze run 'journalctl -k -b | grep -iE \"gpu hang|i915|reset\"'. A GPU hang or reset there means the driver died on a shader; silence means it is the game or the pipeline stalling, not the GPU.
+          Kernel log: the decisive line for a freeze is not in the game log. After the freeze run 'journalctl -k -b | grep -iE \"gpu hang|i915|reset\"'. A hang or reset there means the driver died on a shader; silence means the stall is in the game, not the GPU.
+
+          ERRORS.txt says which log to send and where the game keeps it.
 
           Built from ${GITHUB_SHA:0:7} on ${stage}, after the pack passed its structural checks and every stage compiled under every profile. Nobody has looked at the picture on real hardware yet."
 
@@ -155,4 +206,5 @@ jobs:
             --generate-notes
           gh release upload "${GITHUB_REF_NAME}" \
             Solace-LowEnd.zip Solace-Diagnostic.zip \
-            Solace-Probe-PostOnly.zip Solace-Probe-Geometry.zip ERRORS.txt --clobber
+            Solace-Probe-PostOnly.zip Solace-Probe-Geometry.zip \
+            Solace-Probe-Bare.zip Solace-Probe-BareConfig.zip ERRORS.txt --clobber
