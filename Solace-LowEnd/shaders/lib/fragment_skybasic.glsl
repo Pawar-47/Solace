@@ -48,9 +48,9 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
         vec2 drift = at.xz * 0.011 + vec2(frameTimeCounter * 0.0035, frameTimeCounter * 0.0022);
 
         #if PACK_TEXTURES == 1
-            /* One fetch from textures/clouds.png instead of two noise octaves, and the
+            /* One fetch from textures/noise.png instead of two noise octaves, and the
                field is the one the generator made from the same kind of noise. */
-            float n = texture2D(clouds,
+            float n = texture2D(noisetex,
                                 at.xz * 0.0004
                                 + vec2(frameTimeCounter * 0.0009,
                                        frameTimeCounter * 0.0006)).r;

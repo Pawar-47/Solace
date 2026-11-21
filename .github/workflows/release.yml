@@ -65,6 +65,44 @@ jobs:
           ls -l Solace-Diagnostic.zip
           unzip -l Solace-Diagnostic.zip | head -8
 
+      # Two probe zips, built from the same source.
+
+      # Iris substitutes its own vanilla-equivalent program for any program whose files
+      # are missing, so a pack built by deleting a whole family of programs still loads
+      # and still draws - it just draws that family the way vanilla does. That makes
+      # each probe a single yes/no answer about half the pack, which is the only thing
+      # available for a stall that leaves nothing in the log.
+      #
+      #   Solace-Probe-PostOnly   no gbuffers_* anywhere: the post chain runs against
+      #                           vanilla geometry. Loads  -> a gbuffers stage is at
+      #                           fault.  Freezes -> prepare/final/pipeline is at fault.
+      #   Solace-Probe-Geometry   no prepare, composite, composite2, deferred, final or
+      #                           shadow: the raw geometry buffer goes to the screen.
+      #                           Loads -> one of those six is at fault.  Freezes -> a
+      #                           gbuffers stage or final is at fault.
+      #
+      # Read together, the two answers name a file family without a single log line.
+      - name: Build the probe zips
+        run: |
+          rm -rf probe-post && cp -r Solace-LowEnd probe-post
+          find probe-post/shaders -name 'gbuffers_*.fsh' -delete
+          find probe-post/shaders -name 'gbuffers_*.vsh' -delete
+          find probe-post/shaders -name 'dh_*.fsh' -delete
+          find probe-post/shaders -name 'dh_*.vsh' -delete
+          find probe-post/shaders -name 'voxy_*' -delete
+          ( cd probe-post && zip -r ../Solace-Probe-PostOnly.zip shaders README.md )
+          unzip -l Solace-Probe-PostOnly.zip | tail -3
+
+          rm -rf probe-geom && cp -r Solace-LowEnd probe-geom
+          find probe-geom/shaders -name 'prepare.*' -delete
+          find probe-geom/shaders -name 'composite.*' -delete
+          find probe-geom/shaders -name 'composite2.*' -delete
+          find probe-geom/shaders -name 'deferred.*' -delete
+          find probe-geom/shaders -name 'final.*' -delete
+          find probe-geom/shaders -name 'shadow.*' -delete
+          ( cd probe-geom && zip -r ../Solace-Probe-Geometry.zip shaders README.md )
+          unzip -l Solace-Probe-Geometry.zip | tail -3
+
       - name: Attach it to this run
         uses: actions/upload-artifact@v4
         with:
@@ -89,13 +127,20 @@ jobs:
             --title "Solace - latest build" \
             --notes "Placeholder" \
             --latest
-          gh release upload latest Solace-LowEnd.zip Solace-Diagnostic.zip ERRORS.txt --clobber
+          gh release upload latest Solace-LowEnd.zip Solace-Diagnostic.zip \
+            Solace-Probe-PostOnly.zip Solace-Probe-Geometry.zip ERRORS.txt --clobber
           gh release edit latest \
             --notes "Download Solace-LowEnd.zip and unpack it into your shaderpacks folder, so the game finds shaderpacks/Solace-LowEnd/shaders/ - or copy the Solace-LowEnd folder from the repository.
 
-          Solace-Diagnostic.zip is the same pack with the post chain bypassed: the last pass hands the scene through instead of tonemapping and grading it. Load it when something goes wrong: if it renders - flat and untoned, nothing looks right in it - the fault is in that last pass, and if it freezes the same way, the fault is in the geometry stages. One test, half the pack ruled out.
+          If the pack freezes the game, two of the other three zips will say where. Unpack one, load it, and note only whether the game runs or freezes.
 
-          ERRORS.txt says which log to send, where the game keeps it, and how to gather it in one file with tools/collect_report.sh.
+          Solace-Probe-PostOnly has no gbuffers programs: vanilla draws the world and the pack only post-processes it. Runs means a gbuffers stage is at fault; freezes means the fault is in prepare, final or the pipeline itself.
+
+          Solace-Probe-Geometry has no prepare, composite, composite2, deferred, final or shadow pass: the raw geometry buffer goes straight to the screen, which looks flat and wrong on purpose. Runs means one of those six is at fault; freezes means a gbuffers stage or final is at fault.
+
+          Solace-Diagnostic.zip keeps the whole pack but bypasses the last pass, so it splits the post chain from the geometry stages the same way for a pack that will not load at all.
+
+          ERRORS.txt says which log to send, where the game keeps it, and how to gather it in one file with tools/collect_report.sh. On Linux the decisive line for a freeze is in the kernel log, not the game log: after the freeze run 'journalctl -k -b | grep -iE \"gpu hang|i915|reset\"'. A GPU hang or reset there means the driver died on a shader; silence means it is the game or the pipeline stalling, not the GPU.
 
           Built from ${GITHUB_SHA:0:7} on ${stage}, after the pack passed its structural checks and every stage compiled under every profile. Nobody has looked at the picture on real hardware yet."
 
@@ -109,4 +154,5 @@ jobs:
             --title "Solace ${GITHUB_REF_NAME}" \
             --generate-notes
           gh release upload "${GITHUB_REF_NAME}" \
-            Solace-LowEnd.zip Solace-Diagnostic.zip ERRORS.txt --clobber
+            Solace-LowEnd.zip Solace-Diagnostic.zip \
+            Solace-Probe-PostOnly.zip Solace-Probe-Geometry.zip ERRORS.txt --clobber

@@ -74,8 +74,8 @@ void main() {
                evaluations below, which is the whole reason the file exists. */
             float t = frameTimeCounter * WAVE_SPEED;
             vec2 base = worldSpacePos.xz * (0.05 * WAVE_SCALE);
-            vec2 waveA = texture2D(noise, base + vec2(t * 0.040, t * 0.030)).rg - 0.5;
-            vec2 waveB = texture2D(noise, base * 2.0 - vec2(t * 0.050, t * 0.020)).rg - 0.5;
+            vec2 waveA = texture2D(noisetex, base + vec2(t * 0.040, t * 0.030)).rg - 0.5;
+            vec2 waveB = texture2D(noisetex, base * 2.0 - vec2(t * 0.050, t * 0.020)).rg - 0.5;
             vec2 slope = (waveA + waveB * 0.66) * (1.0 - rainStrength * 0.35);
 
             vec3 worldNormal = mat3(gbufferModelViewInverse) * normal;
