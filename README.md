@@ -92,10 +92,12 @@ and they run on every push:
 python3 tools/validate_pack.py    # includes, preprocessor balance, program pairs, DRAWBUFFERS
 python3 tools/check_lang.py       # options against the language files
 python3 tools/check_textures.py   # runs the texture generator and verifies its output
+python3 tools/compile_check.py    # glslang on every stage, under every profile
 ```
 
-All three need nothing but Python 3. A red run means a file the game would refuse to
-load, or a setting that would show up in the options screen as a raw identifier.
+The first three need nothing but Python 3; the fourth needs `glslang-tools`, because
+it compiles the pack for real. A red run means a file the game would refuse to load,
+or a setting that would show up in the options screen as a raw identifier.
 
 Packaging runs on the same trigger. Every push to `main` rebuilds `Solace-LowEnd.zip`
 and replaces it on the rolling **latest** release, so the download is always the

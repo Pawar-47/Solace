@@ -35,13 +35,12 @@ jobs:
       - name: Texture generator
         run: python3 tools/check_textures.py
 
-      # A real GLSL front end, on the expanded source. Advisory while it is new: the
-      # validator is not Iris and may be stricter about the compatibility profile.
+      # A real GLSL front end, on the expanded source, under every profile. This is the
+      # check that would have caught the two releases that could not load.
       - name: Install glslang
         run: sudo apt-get update -qq && sudo apt-get install -y -qq glslang-tools
 
       - name: Every stage compiles
-        continue-on-error: true
         run: python3 tools/compile_check.py
 
       - name: Summary

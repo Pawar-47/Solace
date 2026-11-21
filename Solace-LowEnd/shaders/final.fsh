@@ -38,7 +38,11 @@ temporal pass, which has already put its result back in colortex0.
 
 uniform sampler2D SCENE;
 uniform sampler2D colortex6;
-uniform sampler2D depthtex0;
+/* lib/ssao.glsl declares depthtex0 itself when ambient occlusion is on, and a uniform
+   declared twice is a redefinition, so this one is only for depth of field. */
+#if AO == 0
+    uniform sampler2D depthtex0;
+#endif
 uniform sampler2D depthtex1;
 
 varying vec2 texcoord;
