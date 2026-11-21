@@ -93,7 +93,7 @@ jobs:
           gh release edit latest \
             --notes "Download Solace-LowEnd.zip and unpack it into your shaderpacks folder, so the game finds shaderpacks/Solace-LowEnd/shaders/ - or copy the Solace-LowEnd folder from the repository.
 
-          Solace-Diagnostic.zip is the same pack with the post chain bypassed and the sky fill switched off. Load it when something goes wrong: if it renders - flat and unlit, nothing looks right in it - the fault is in the post chain, and if it freezes the same way, the fault is in the geometry stages. One test, half the pack ruled out.
+          Solace-Diagnostic.zip is the same pack with the post chain bypassed: the last pass hands the scene through instead of tonemapping and grading it. Load it when something goes wrong: if it renders - flat and untoned, nothing looks right in it - the fault is in that last pass, and if it freezes the same way, the fault is in the geometry stages. One test, half the pack ruled out.
 
           ERRORS.txt says which log to send, where the game keeps it, and how to gather it in one file with tools/collect_report.sh.
 
