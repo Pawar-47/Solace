@@ -416,3 +416,6 @@ void main() {
 
     gl_FragData[0] = vec4(clamp(colour, vec3(0.0), vec3(50.0)), alpha);
 }
+
+
+/* DRAWBUFFERS:0 */

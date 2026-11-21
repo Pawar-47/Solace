@@ -272,3 +272,6 @@ void main() {
        out of the bloom and the AA history. */
     gl_FragData[0] = vec4(clamp(colour, vec3(0.0), vec3(50.0)), albedo.a);
 }
+
+
+/* DRAWBUFFERS:0 */

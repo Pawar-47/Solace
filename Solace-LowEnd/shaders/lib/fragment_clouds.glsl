@@ -41,3 +41,6 @@ void main() {
 }
 
 #endif
+
+
+/* DRAWBUFFERS:0 */

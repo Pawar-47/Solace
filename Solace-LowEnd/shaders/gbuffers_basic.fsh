@@ -15,3 +15,6 @@ varying vec3 basicLight;
 void main() {
     gl_FragData[0] = vec4(tint.rgb * basicLight, tint.a);
 }
+
+
+/* DRAWBUFFERS:0 */

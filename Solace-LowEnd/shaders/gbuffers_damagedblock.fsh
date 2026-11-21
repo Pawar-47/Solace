@@ -17,3 +17,6 @@ void main() {
 
     gl_FragData[0] = vec4(crack.rgb, crack.a);
 }
+
+
+/* DRAWBUFFERS:0 */

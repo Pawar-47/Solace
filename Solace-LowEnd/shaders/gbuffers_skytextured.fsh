@@ -23,3 +23,6 @@ void main() {
 
     gl_FragData[0] = vec4(colour, disc.a * tint.a);
 }
+
+
+/* DRAWBUFFERS:0 */

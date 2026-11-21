@@ -11,3 +11,6 @@ varying vec4 tint;
 void main() {
     gl_FragData[0] = tint;
 }
+
+
+/* DRAWBUFFERS:0 */

@@ -16,3 +16,6 @@ void main() {
 
     gl_FragData[0] = vec4(albedo.rgb * 1.60, albedo.a);
 }
+
+
+/* DRAWBUFFERS:0 */

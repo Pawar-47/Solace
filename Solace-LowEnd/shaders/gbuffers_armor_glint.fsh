@@ -37,3 +37,6 @@ void main() {
     gl_FragData[0] = vec4(glint.rgb * (1.50 / max(exposure, 0.05)),
                           glint.a * 0.85);
 }
+
+
+/* DRAWBUFFERS:0 */

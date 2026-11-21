@@ -22,3 +22,6 @@ void main() {
     vec3 background = fogColour(day, dusk);
     gl_FragData[0] = vec4(background, 1.0);
 }
+
+
+/* DRAWBUFFERS:0 */
