@@ -10,6 +10,6 @@ Debug lines and the fishing line. Same treatment as untextured geometry. */
 varying vec4 tint;
 
 void main() {
-    gl_Position = ftransform();
+    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
     tint = gl_Color;
 }

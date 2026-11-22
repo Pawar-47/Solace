@@ -43,6 +43,7 @@ with the commit), **by design** (deliberately different, with the reason), **que
 | `lib/vertex_geometry.glsl` | `common/solid_blocks_vertex.glsl` (215) + `src/light_vertex.glsl`, `src/position_vertex.glsl`, `src/fog_vertex.glsl` | per-vertex light, fog distance, waving, sub-pixel jitter, `DRAWBUFFERS` in the vertex stage | **queued** |
 | `lib/fragment_geometry.glsl` | `common/solid_blocks_fragment.glsl` (302) | lightmap de-bias, candle curve, gloss, emissive, portal, fog mix | **queued** (the lighting model was compared during the original port; the buffer/write contract has not) |
 | `gbuffers_*` wrappers | same wrappers | `#version`, `#extension`, defines, includes | **same** |
+| every `.vsh` that positions a quad or a block | `common/*_vertex.glsl`, `lib/mu_ftransform.glsl` | how `gl_Position` is produced | **fixed** — all 16 of ours called `ftransform()`; the reference never does, it writes `gl_ModelViewProjectionMatrix * gl_Vertex`, and reserves its own `muFtransform()` for line width only |
 | `gbuffers_armor_glint.*` | `common/glint_blocks_*` | exposure read in the fragment stage, implicit-LOD sampling not used in a vertex stage | **fixed** `031c857`, `d529536` |
 
 ### Sky, clouds, water
@@ -83,6 +84,12 @@ found and fixed:
 5. `texture2DLod` in a vertex stage without the extension (`031c857`);
 6. **colortex3 and colortex6 read and written inside one draw, every frame, in every
    profile** — the freeze (`070bdf1`).
+7. **`ftransform()` in all sixteen vertex stages.** The reference never calls it: its
+   vertex stages write `gl_ModelViewProjectionMatrix * gl_Vertex`, and its own
+   `muFtransform()` exists only to fake a two-pixel line width, which is why it still
+   reads `gl_Normal`. `ftransform()` is a legacy built-in that a core-profile driver
+   does not have and that the mod has to rewrite; with the matrix product written out
+   there is nothing to rewrite.
 
 Five of those were compile failures with a clear message. The sixth was silent, which is
 why it took a bisection with probe packs to find: the game freezes with nothing in the
