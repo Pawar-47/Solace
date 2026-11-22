@@ -19,6 +19,11 @@ name: Release
 on:
   push:
     tags: ["v*"]
+    # A version can also be published by committing its number to this file. That is how
+    # a release is cut from here, where nothing can type in a workflow box or create a
+    # tag by hand: the commit is the trigger, and the file says which version.
+    branches: [main]
+    paths: [".github/release-version"]
   workflow_dispatch:
     inputs:
       version:
@@ -51,6 +56,11 @@ jobs:
           REF: ${{ github.ref }}
           INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
+          file_version=""
+          if [ -f .github/release-version ]; then
+            file_version="$(tr -d ' \t\r\n' < .github/release-version)"
+          fi
+
           if [ "$EVENT" = "push" ] && [ "${REF#refs/tags/}" != "$REF" ]; then
             tag="${REF#refs/tags/}"
             kind=version
@@ -58,6 +68,14 @@ jobs:
             raw="${INPUT_VERSION#v}"
             if ! printf '%s' "$raw" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
               echo "::error::A version has to look like 1.2.3, and '$INPUT_VERSION' does not."
+              exit 1
+            fi
+            tag="v$raw"
+            kind=version
+          elif [ "$EVENT" = "push" ] && [ -n "$file_version" ]; then
+            raw="${file_version#v}"
+            if ! printf '%s' "$raw" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "::error::.github/release-version has to hold a version like 1.2.3, and it holds '$file_version'."
               exit 1
             fi
             tag="v$raw"

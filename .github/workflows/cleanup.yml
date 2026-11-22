@@ -26,6 +26,12 @@ on:
         description: 'Tag to keep, if any. Leave empty to delete every tag'
         required: false
         default: ""
+  # Or by committing this file, which is how a run is started from somewhere that cannot
+  # click a workflow box. Touching it again would run the clean-up again, so the trigger
+  # is removed once it has done its job.
+  push:
+    branches: [main]
+    paths: [".github/run-cleanup"]
 
 permissions:
   contents: write
@@ -42,6 +48,10 @@ jobs:
     steps:
       - name: Confirm
         run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "Started by a commit to .github/run-cleanup."
+            exit 0
+          fi
           if [ "${{ github.event.inputs.confirm }}" != "delete-all-releases" ]; then
             echo "::error::Type delete-all-releases in the confirmation box. Nothing was deleted."
             exit 1
