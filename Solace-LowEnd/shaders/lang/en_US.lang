@@ -67,6 +67,65 @@ option.SKY_STARS.comment=Stars at night.
 value.SKY_STARS.0=Off
 value.SKY_STARS.1=On
 
+option.SUN_PATH=Sun path
+option.SUN_PATH.comment=How far the sun's arc tilts across the sky. This is what makes sunrises and sunsets swing round through the year instead of every day crossing overhead.
+value.SUN_PATH.-40=-40 degrees
+value.SUN_PATH.-30=-30 degrees
+value.SUN_PATH.-25=-25 degrees
+value.SUN_PATH.-20=-20 degrees
+value.SUN_PATH.-10=-10 degrees
+value.SUN_PATH.0=Overhead
+value.SUN_PATH.10=10 degrees
+value.SUN_PATH.20=20 degrees
+value.SUN_PATH.25=25 degrees
+value.SUN_PATH.30=30 degrees
+value.SUN_PATH.40=40 degrees
+
+option.SUN_SIZE=Sun size
+option.SUN_SIZE.comment=How large the sun, the moon and their haloes read. Larger values widen the glow as well as the disc.
+value.SUN_SIZE.0.7=Small
+value.SUN_SIZE.1.0=Normal
+value.SUN_SIZE.1.3=Large
+value.SUN_SIZE.1.8=Huge
+
+option.SUN_HALO_SHAPE=Sun shape
+option.SUN_HALO_SHAPE.comment=The shape of the light around the sun: a hard point, a soft glow, or a wide haze across the sky.
+value.SUN_HALO_SHAPE.0=Hard point
+value.SUN_HALO_SHAPE.1=Soft glow
+value.SUN_HALO_SHAPE.2=Wide haze
+
+option.SUN_R=Sunlight red
+option.SUN_R.comment=Red gain of direct sunlight, in percent. The three sun channels are separate from the three output channels so the sky can be corrected without touching the whole picture.
+option.SUN_G=Sunlight green
+option.SUN_G.comment=Green gain of direct sunlight, in percent. Lower it if the sun reads too green.
+option.SUN_B=Sunlight blue
+option.SUN_B.comment=Blue gain of direct sunlight, in percent. Raise it for a cooler, whiter sun.
+
+option.V_CLOUDS=Volumetric clouds
+option.V_CLOUDS.comment=A slab of procedural cloud marched in the sky pass. No texture, but several noise samples per sky pixel.
+value.V_CLOUDS.0=Off
+value.V_CLOUDS.1=On
+
+option.CLOUD_STYLE=Cloud style
+option.CLOUD_STYLE.comment=What the cloud deck is made of. Natural is soft noise, blocky quantises it into plates, pack texture reads textures/noise.png instead of computing it, and vanilla leaves the clouds to the game.
+value.CLOUD_STYLE.0=Natural
+value.CLOUD_STYLE.1=Blocky
+value.CLOUD_STYLE.2=Pack texture
+value.CLOUD_STYLE.3=Vanilla
+
+option.CLOUD_SPEED=Cloud speed
+option.CLOUD_SPEED.comment=How fast the deck drifts, as a multiple of the pack's normal speed. Zero freezes it into a still landscape.
+value.CLOUD_SPEED.0.0=Still
+value.CLOUD_SPEED.0.5=Slow
+value.CLOUD_SPEED.1.0=Normal
+value.CLOUD_SPEED.2.0=Fast
+
+option.CLOUD_STEPS=Cloud samples
+option.CLOUD_STEPS.comment=Samples taken through the cloud slab. The main cost of the effect.
+
+option.CLOUD_COVERAGE=Cloud coverage
+option.CLOUD_COVERAGE.comment=How much of the sky the clouds fill.
+
 option.EXPOSURE=Exposure
 option.EXPOSURE.comment=Overall brightness before the tone curve.
 
@@ -88,14 +147,9 @@ value.DITHER.0=Off
 value.DITHER.1=On
 
 option.SHADOWS=Cast shadows
-option.SHADOWS.comment=Adds a 1024 shadow map over 96 blocks. A whole second scene render, so it is off: measure it before keeping it on.
+option.SHADOWS.comment=A second scene render into a shadow map, sized by the shadow quality and distance sliders below. The most expensive thing this pack can do, so it is off: measure it before keeping it on.
 value.SHADOWS.0=Off
 value.SHADOWS.1=On
-
-profile.LowEnd=LowEnd
-profile.Default=Default
-profile.Beauty=Beauty
-
 
 option.WAVING=Plant waving
 option.WAVING.comment=Sways grass, ferns, flowers, crops, saplings and leaves. Uses the ids in block.properties.
@@ -132,7 +186,7 @@ option.AO_RADIUS=AO radius
 option.AO_RADIUS.comment=How far the occlusion reaches. Larger values are softer and cheaper to look at.
 
 option.BLOOM=Bloom
-option.BLOOM.comment=Bright-pass glow gathered in the final pass. Eight taps per pixel.
+option.BLOOM.comment=Bright-pass glow in the final pass. Eight taps per pixel.
 value.BLOOM.0=Off
 value.BLOOM.1=On
 
@@ -277,16 +331,16 @@ option.SHADOW_DISTANCE_SLIDER.comment=How far shadows reach. Only used when cast
 option.SHADOW_BLUR=Shadow softness
 option.SHADOW_BLUR.comment=How far the shadow taps spread.
 
-option.COLOR_SCHEME=Colour scheme
-option.COLOR_SCHEME.comment=The sky and light palette. Custom uses the six values below.
-value.COLOR_SCHEME.0=Ethereal
-value.COLOR_SCHEME.1=Shoka
-value.COLOR_SCHEME.2=Classic
-value.COLOR_SCHEME.3=Legacy
-value.COLOR_SCHEME.4=Captain
-value.COLOR_SCHEME.5=Psychedelic
-value.COLOR_SCHEME.6=Cocoa
-value.COLOR_SCHEME.7=Testigo
+option.COLOR_SCHEME=Colour preset
+option.COLOR_SCHEME.comment=The sky and light palette. The presets are named for what they look like; Custom uses the channels on the palette screen.
+value.COLOR_SCHEME.0=Natural
+value.COLOR_SCHEME.1=Vivid
+value.COLOR_SCHEME.2=Game
+value.COLOR_SCHEME.3=Soft
+value.COLOR_SCHEME.4=Cinematic
+value.COLOR_SCHEME.5=Neon
+value.COLOR_SCHEME.6=Warm
+value.COLOR_SCHEME.7=Bright
 value.COLOR_SCHEME.99=Custom
 
 option.CUSTOM_ZENITH_R=Custom zenith red
@@ -323,6 +377,11 @@ option.EMISSIVE_GLOW.comment=Glowstone, lava, lanterns and the rest are never di
 value.EMISSIVE_GLOW.0=Off
 value.EMISSIVE_GLOW.1=On
 
+option.BLACK_ENTITY_FIX=Black entity fix
+option.BLACK_ENTITY_FIX.comment=Some old drivers draw entities pure black. This lifts black geometry to a floor so they are visible again. It is a workaround, not an effect: leave it off unless you have the bug.
+value.BLACK_ENTITY_FIX.0=Off
+value.BLACK_ENTITY_FIX.1=On (workaround)
+
 option.AO_TAPS=Occlusion samples
 option.AO_TAPS.comment=Ring samples for the ambient occlusion. Four is the cheap setting that keeps the effect on.
 value.AO_TAPS.4=Four
@@ -331,14 +390,18 @@ value.AO_TAPS.6=Six
 option.DOF_SAMPLES=Focus samples
 option.DOF_SAMPLES.comment=Samples in the depth-of-field blur ring.
 
-profile.PerformancePlus=Performance Plus
+profile.Potato=Potato - highest frame rate
+profile.Smooth=Smooth - high frame rate
+profile.HD=HD - medium frame rate
+profile.HDR=HDR - low frame rate
+profile.Everything=Everything - every effect
 
 
 # Pack textures and the two shadow options.
-option.PACK_TEXTURES=Pack textures
-option.PACK_TEXTURES.comment=Read the ripple and cloud textures from textures/ instead of computing them in the shader. Run textures/generate_textures.py once to create those files.
+option.PACK_TEXTURES=Water ripple texture
+option.PACK_TEXTURES.comment=Read the ripple field from textures/noise.png instead of computing it in the shader. Run textures/generate_textures.py once to create that file. The cloud texture is chosen by the cloud style instead.
 value.PACK_TEXTURES.0=Computed
-value.PACK_TEXTURES.1=From files
+value.PACK_TEXTURES.1=From file
 
 option.COLORED_SHADOW=Coloured shadows
 option.COLORED_SHADOW.comment=Tint a shadow with the colour of the glass or water the light passed through. Only does anything with cast shadows on.
@@ -357,7 +420,7 @@ option.CLOUD_THICKNESS=Cloud thickness
 option.CLOUD_THICKNESS.comment=Thickness of the cloud slab. A thicker slab reads darker from below.
 
 option.BLOOM_LOD=Bloom spread
-option.BLOOM_LOD.comment=Mip level the glow is gathered from. Higher is wider and cheaper, lower is tighter.
+option.BLOOM_LOD.comment=How wide the glow spreads. Higher values reach further and read softer.
 
 option.AO_FADE=Occlusion distance
 option.AO_FADE.comment=Distance at which the ambient occlusion fades out.
@@ -377,8 +440,5 @@ option.COLOR_B.comment=Blue channel gain, in percent. Raise it a little if the p
 option.GAMMA=Gamma
 option.GAMMA.comment=Output gamma, in percent. Above 100 lifts the midtones without moving black or white - the control to raise on a dim laptop panel.
 
-profile.Potato=Potato
-profile.LowEnd=Low end
-profile.Default=Default
-profile.Beauty=Beauty
-profile.PerformancePlus=Performance plus
+
+# The profiles themselves are named further up this file.

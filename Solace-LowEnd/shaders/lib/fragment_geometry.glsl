@@ -268,6 +268,15 @@ void main() {
 
     colour = mix(colour, fogTint, isEyeInWater > 0 ? sat(fogFactor * 1.6) : fogFactor);
 
+    #if BLACK_ENTITY_FIX == 1
+        /* A workaround, not an effect. Some old drivers hand entity programs a black
+           albedo, and a black albedo times any light is still black. Lifting the
+           result off zero makes the mob visible again, at the price of lifting every
+           other surface off zero too - which is why it ships off and is described as
+           a compatibility switch rather than a setting. */
+        colour = max(colour, albedo.rgb * 0.10 + vec3(0.005));
+    #endif
+
     /* Every geometry write is clamped to 50, which is what keeps a stray highlight
        out of the bloom and the AA history. */
     gl_FragData[0] = vec4(clamp(colour, vec3(0.0), vec3(50.0)), albedo.a);

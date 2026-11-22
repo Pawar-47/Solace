@@ -5,8 +5,8 @@ bracket comment so Iris and OptiFine can build the options screen from it.
 
 Nothing is left out for being expensive: every effect the pack has belongs to a cheap
 setting as well as an expensive one, so none of them has to be switched off.
-The `PerformancePlus` profile in shaders.properties is exactly that - everything
-enabled, all samples at their minimum, the shadow map at 512 px over 75 blocks.
+The `Everything` profile in shaders.properties is exactly that - everything enabled,
+all samples at their minimum, the shadow map at 512 px over 75 blocks.
 */
 
 #ifndef SOLACE_CONFIG
@@ -27,14 +27,12 @@ enabled, all samples at their minimum, the shadow map at 512 px over 75 blocks.
 // Not options: values Iris and OptiFine look for in any included file and then
 // apply to the whole pipeline.
 
-/* Tilt of the sun's path. Without it the sun crosses straight overhead and every
-   sunset looks the same; -25 degrees is what makes the shadows swing round during
-   the day. */
-const float sunPathRotation = -25.0;
-
-/* Vanilla's own smooth-lighting ambient occlusion is declared at the end of this
-   file, where the AO option exists - a `const` decided here would read an AO that
-   has not been defined yet and always take the else branch. */
+/* Two things that used to be declared here are declared at the end of the file
+   instead: sunPathRotation, because it is now the SUN_PATH option and a const cannot
+   be read before the option exists, and ambientOcclusionLevel, because it depends on
+   AO. A const written above the option it reads takes the wrong branch every time and
+   does it silently, because the preprocessor treats an identifier it has not met yet
+   as 0. */
 
 /* How quickly the two smoothed values the terrain shader reads catch up with the
    real ones: sky exposure (which drives the fog) and the depth under the crosshair
@@ -86,6 +84,7 @@ const bool shadowtex1Nearest = false;
 #define MATERIAL_GLOSS 1       // [0 1] Highlight on metal, polished and fabric blocks.
 #define GLOSS_STRENGTH 0.60    // [0.30 0.45 0.60 0.80 1.0]
 #define EMISSIVE_GLOW 1        // [0 1] Glowstone, lava, lanterns and the rest never look dimmed.
+#define BLACK_ENTITY_FIX 0     // [0 1] Lift pure-black geometry to a floor. A workaround for old drivers that draw some entities black, not an effect.
 
 // ---- Shadows (opt in) ---------------------------------------------------
 #define SHADOWS 0              // [0 1] Cast shadows: a second scene render.
@@ -109,7 +108,19 @@ const bool shadowtex1Nearest = false;
 // ---- Sky ----------------------------------------------------------------
 #define SKY_SUN_GLOW 1         // [0 1] Sun halo, moon halo.
 #define SKY_STARS 1            // [0 1] Stars at night.
+
+// ---- Sun ----------------------------------------------------------------
+#define SUN_PATH -25           // [-40 -30 -25 -20 -10 0 10 20 25 30 40] Tilt of the sun's path across the sky, in degrees. This is what makes sunsets swing round instead of every day crossing overhead.
+#define SUN_SIZE 1.0           // [0.7 1.0 1.3 1.8] How large the sun and its halo read.
+#define SUN_HALO_SHAPE 1       // [0 1 2] 0 tight point, 1 soft glow, 2 wide haze.
+#define SUN_R 100              // [85 92 100 108 115] Red gain of sunlight, percent.
+#define SUN_G 100              // [85 92 100 108 115] Green gain of sunlight, percent.
+#define SUN_B 100              // [85 92 100 108 115] Blue gain of sunlight, percent.
+
+// ---- Clouds -------------------------------------------------------------
 #define V_CLOUDS 0             // [0 1] Volumetric clouds: a slab march in the sky pass.
+#define CLOUD_STYLE 0          // [0 1 2 3] 0 natural, 1 blocky, 2 pack texture from textures/noise.png, 3 vanilla flat.
+#define CLOUD_SPEED 1.0        // [0.0 0.5 1.0 2.0] How fast the cloud deck drifts.
 #define CLOUD_STEPS 6          // [4 6 8 10] Samples through the cloud slab.
 #define CLOUD_HEIGHT 190.0     // [150.0 190.0 240.0] Height of the cloud slab.
 #define CLOUD_THICKNESS 26.0   // [16.0 26.0 40.0] Thickness of the slab.
@@ -123,10 +134,10 @@ const bool shadowtex1Nearest = false;
 #define AO_FADE 36.0           // [12.0 24.0 36.0 60.0] Distance at which the occlusion fades out.
 
 // ---- Bloom (opt in) -----------------------------------------------------
-#define BLOOM 0                // [0 1] Bright-pass glow gathered from a mip level, so it stays wide and cheap.
+#define BLOOM 0                // [0 1] Bright-pass glow, eight taps in the final pass.
 #define BLOOM_STRENGTH 0.14    // [0.05 0.09 0.14 0.20 0.28]
 #define BLOOM_RADIUS 1.6       // [1.0 1.6 2.4 3.4 4.6]
-#define BLOOM_LOD 3.0          // [1.0 2.0 3.0 4.0 5.0] Mip level the glow is gathered from: higher is wider.
+#define BLOOM_LOD 3.0          // [1.0 2.0 3.0 4.0 5.0] How wide the glow spreads.
 
 // ---- Depth of field (opt in) --------------------------------------------
 #define DOF 0                  // [0 1] Blurs away from the block you are looking at.
@@ -150,7 +161,7 @@ const bool shadowtex1Nearest = false;
 #define VOL_LIGHT_STRENGTH 0.55 // [0.25 0.40 0.55 0.75 1.0]
 
 // ---- Sky palette --------------------------------------------------------
-#define COLOR_SCHEME 1         // [0 1 2 3 4 5 6 7 99] 0 Ethereal, 1 Shoka, 2 Classic, 3 Legacy, 4 Captain, 5 Psychedelic, 6 Cocoa, 7 Testigo, 99 Custom.
+#define COLOR_SCHEME 0         // [0 1 2 3 4 5 6 7 99] 0 Natural, 1 Vivid, 2 Game, 3 Soft, 4 Cinematic, 5 Neon, 6 Warm, 7 Bright, 99 Custom.
 #define CUSTOM_ZENITH_R 0.11   // [0.0 0.05 0.11 0.20 0.30 0.45 0.60]
 #define CUSTOM_ZENITH_G 0.23   // [0.0 0.05 0.12 0.23 0.35 0.50 0.65]
 #define CUSTOM_ZENITH_B 0.52   // [0.0 0.10 0.25 0.40 0.52 0.70 0.90]
@@ -188,6 +199,36 @@ const bool shadowtex1Nearest = false;
     const float ambientOcclusionLevel = 0.0;
 #else
     const float ambientOcclusionLevel = 0.7;
+#endif
+
+// ---- Sun path ------------------------------------------------------------
+// The one shader constant that is a choice rather than a tuning value, so it is an
+// option. It is declared here, after SUN_PATH, for the same reason as AO above: a
+// const written before its option would see 0 and tilt the wrong way forever. Iris
+// and OptiFine read the first `sunPathRotation` they find in any included file, so
+// its position in the file does not matter, only that it comes after the option.
+#if SUN_PATH == -40
+    const float sunPathRotation = -40.0;
+#elif SUN_PATH == -30
+    const float sunPathRotation = -30.0;
+#elif SUN_PATH == -25
+    const float sunPathRotation = -25.0;
+#elif SUN_PATH == -20
+    const float sunPathRotation = -20.0;
+#elif SUN_PATH == -10
+    const float sunPathRotation = -10.0;
+#elif SUN_PATH == 0
+    const float sunPathRotation = 0.0;
+#elif SUN_PATH == 10
+    const float sunPathRotation = 10.0;
+#elif SUN_PATH == 20
+    const float sunPathRotation = 20.0;
+#elif SUN_PATH == 25
+    const float sunPathRotation = 25.0;
+#elif SUN_PATH == 30
+    const float sunPathRotation = 30.0;
+#else
+    const float sunPathRotation = 40.0;
 #endif
 
 #endif

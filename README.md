@@ -21,15 +21,18 @@ not upwards.
   a shadow map
 - Water with ripples, a sky reflection, a sun glint, and optional depth-aware
   refraction and screen-space reflections
-- Eight colour themes plus a custom one, each with its own ambient light and water
-  colour
+- Eight colour presets plus a custom one, each with its own ambient light and water
+  colour: Natural, Vivid, Game, Soft, Cinematic, Neon, Warm and Bright
+- Sun and cloud controls: the sun's arc across the sky, its size and halo shape,
+  separate red/green/blue gains for sunlight, and four cloud styles from soft noise to
+  vanilla flat, with their own drift speed
 - Optional: cast shadows (with coloured shadows and a refresh lock), volumetric
   clouds, light shafts, ambient occlusion, bloom, depth of field, temporal
   anti-aliasing, FXAA, motion blur, auto exposure, chromatic aberration, sharpening
 - Distant Horizons and Voxy support, so the far world is lit by the same model as
   the near world
-- 94 options in fourteen sub-screens, and nine languages
-- Five profiles, from `Potato` to `PerformancePlus`
+- 103 options in fifteen sub-screens, and nine languages
+- Five profiles, named for what you get: `Potato`, `Smooth`, `HD`, `HDR`, `Everything`
 
 ## Requirements
 
@@ -92,10 +95,10 @@ decisive line for a freeze is in the kernel log, not the game log:
    more — on 8 GB the desktop and the integrated GPU need the rest, and heap does not
    raise frame rate, only smooth out hitching. All of it, with copy-paste arguments,
    swap and the BIOS setting: [docs/linux-jvm.md](docs/linux-jvm.md).
-4. Profiles, in order of cost: `Potato` (holds 60 fps at 1366x768), `LowEnd` (what
-   the pack ships on, and what it was written for), `Default` (water comes alive),
-   `Beauty` (warmer grading and temporal AA), `PerformancePlus` (every effect on at
-   its cheapest samples).
+4. Profiles, named for what they cost you: `Potato` (holds 60 fps at 1366x768),
+   `Smooth` (what the pack ships on, and what it was written for), `HD` (water comes
+   alive, plus ambient occlusion and a cloud deck), `HDR` (shadows, bloom, auto
+   exposure and temporal AA), `Everything` (every effect at its cheapest samples).
 
 ## Repository layout
 
@@ -145,7 +148,7 @@ switches use the plain form the mods have always been able to evaluate.
 
 What has still not happened is anyone judging the picture: nobody has looked at the
 result on real hardware and said whether it is any good. Treat the first run as a
-test. Start on `LowEnd`.
+test. Start on `Smooth`.
 
 If something breaks, the two places I would look first are temporal anti-aliasing
 (it depends on a history buffer and a reprojection only a real frame can validate)

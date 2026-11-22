@@ -25,7 +25,7 @@ vec3 skyViewRay() {
     return ray.xyz / ray.w;
 }
 
-#if V_CLOUDS == 1
+#if V_CLOUDS == 1 && CLOUD_STYLE != 3
 vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
     vec3 d = normalize(directionWorld);
     float aboveClouds = CLOUD_HEIGHT - cameraPosition.y;
@@ -45,15 +45,25 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
         vec3 at = entry + vec3(0.0,
                                (float(i) + offset) * stepLength - CLOUD_THICKNESS * 0.35,
                                0.0);
-        vec2 drift = at.xz * 0.011 + vec2(frameTimeCounter * 0.0035, frameTimeCounter * 0.0022);
 
-        #if PACK_TEXTURES == 1
-            /* One fetch from textures/noise.png instead of two noise octaves, and the
-               field is the one the generator made from the same kind of noise. */
+        /* Drift is scaled by CLOUD_SPEED once, here, rather than inside each branch. */
+        vec2 drift = at.xz * 0.011
+                   + vec2(frameTimeCounter * 0.0035,
+                          frameTimeCounter * 0.0022) * CLOUD_SPEED;
+
+        #if CLOUD_STYLE == 2
+            /* One fetch from textures/noise.png instead of two noise octaves. The
+               texture is the sampler the mod binds by convention, so nothing has to
+               be declared in shaders.properties for it to work. */
             float n = texture2D(noisetex,
                                 at.xz * 0.0004
                                 + vec2(frameTimeCounter * 0.0009,
-                                       frameTimeCounter * 0.0006)).r;
+                                       frameTimeCounter * 0.0006) * CLOUD_SPEED).r;
+        #elif CLOUD_STYLE == 1
+            /* Blocky: the same field, quantised, so the deck reads as plates rather
+               than as smoke. Three levels is enough to look like blocks at the
+               distance clouds are actually seen from, and it costs one floor. */
+            float n = floor(solFbm(drift + at.y * 0.0016) * 3.0) * (1.0 / 3.0);
         #else
             float n = solFbm(drift + at.y * 0.0016);
         #endif
@@ -111,7 +121,7 @@ void main() {
     vec3 sunCol = sunColourAt(sat(sunUp));
     vec3 colour = skyColour(directionWorld, day, dusk, sunCol);
 
-    #if V_CLOUDS == 1
+    #if V_CLOUDS == 1 && CLOUD_STYLE != 3
         vec4 cloud = cloudLayer(directionWorld, day, dusk, sunCol);
         colour = mix(colour, cloud.rgb, cloud.a);
     #endif

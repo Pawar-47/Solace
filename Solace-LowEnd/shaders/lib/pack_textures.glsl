@@ -23,9 +23,10 @@ installation. */
 
 #include "/lib/config.glsl"
 
-#if PACK_TEXTURES == 1
+#if PACK_TEXTURES == 1 || CLOUD_STYLE == 2
 
-/* 256x256 RGB, tileable. R and G are two independent ripple fields for the water. */
+/* 256x256 RGB, tileable. R and G are two independent ripple fields for the water, and
+   R is also the cloud density when the cloud style asks for a texture. */
 uniform sampler2D noisetex;
 
 #endif

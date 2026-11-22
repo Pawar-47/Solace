@@ -54,33 +54,38 @@ float duskFactor() {
     return duskFrom(sunHeight());
 }
 
-/* The two colours a theme is built from. */
+/* The two colours a palette is built from.
+
+   The presets are named for what they look like, not for anything else: a player
+   should be able to pick one without knowing what the others are. They differ in hue
+   and in how far apart the overhead and horizon colours sit, which is what decides
+   whether a sky looks flat or deep. */
 void themePalette(out vec3 zenith, out vec3 horizon) {
-    #if COLOR_SCHEME == 0
-        zenith = vec3(0.100, 0.200, 0.460);   // Ethereal
-        horizon = vec3(0.740, 0.820, 0.940);
-    #elif COLOR_SCHEME == 1
-        zenith = vec3(0.110, 0.230, 0.520);   // Shoka
+    #if COLOR_SCHEME == 0        // Natural: what a clear sky does, no stylising.
+        zenith = vec3(0.110, 0.230, 0.520);
         horizon = vec3(0.560, 0.680, 0.880);
-    #elif COLOR_SCHEME == 2
-        zenith = vec3(0.080, 0.180, 0.440);   // Classic
-        horizon = vec3(0.620, 0.740, 0.920);
-    #elif COLOR_SCHEME == 3
-        zenith = vec3(0.060, 0.140, 0.360);   // Legacy
-        horizon = vec3(0.520, 0.640, 0.840);
-    #elif COLOR_SCHEME == 4
-        zenith = vec3(0.050, 0.120, 0.300);   // Captain
-        horizon = vec3(0.420, 0.540, 0.720);
-    #elif COLOR_SCHEME == 5
-        zenith = vec3(0.240, 0.100, 0.440);   // Psychedelic
-        horizon = vec3(0.960, 0.460, 0.780);
-    #elif COLOR_SCHEME == 6
-        zenith = vec3(0.160, 0.180, 0.340);   // Cocoa
-        horizon = vec3(0.920, 0.720, 0.560);
-    #elif COLOR_SCHEME == 7
-        zenith = vec3(0.180, 0.140, 0.400);   // Testigo
-        horizon = vec3(1.000, 0.700, 0.820);
-    #else
+    #elif COLOR_SCHEME == 1      // Vivid: same hue, pushed until it is unmistakable.
+        zenith = vec3(0.060, 0.230, 0.780);
+        horizon = vec3(0.470, 0.750, 1.000);
+    #elif COLOR_SCHEME == 2      // Game: the bright blue a block game should have.
+        zenith = vec3(0.100, 0.180, 0.670);
+        horizon = vec3(0.560, 0.750, 0.980);
+    #elif COLOR_SCHEME == 3      // Soft: low contrast, pale, easy to look at for hours.
+        zenith = vec3(0.290, 0.380, 0.610);
+        horizon = vec3(0.770, 0.810, 0.900);
+    #elif COLOR_SCHEME == 4      // Cinematic: deep blue above, amber on the horizon.
+        zenith = vec3(0.060, 0.150, 0.310);
+        horizon = vec3(0.880, 0.640, 0.440);
+    #elif COLOR_SCHEME == 5      // Neon: violet and magenta, for screenshots.
+        zenith = vec3(0.250, 0.060, 0.520);
+        horizon = vec3(0.980, 0.420, 0.770);
+    #elif COLOR_SCHEME == 6      // Warm: golden light, as at the end of an afternoon.
+        zenith = vec3(0.180, 0.200, 0.390);
+        horizon = vec3(0.960, 0.780, 0.570);
+    #elif COLOR_SCHEME == 7      // Bright: high key, almost white on the horizon.
+        zenith = vec3(0.200, 0.300, 0.570);
+        horizon = vec3(0.880, 0.900, 0.950);
+    #else                        // Custom: the six channels of the palette screen.
         zenith = vec3(CUSTOM_ZENITH_R, CUSTOM_ZENITH_G, CUSTOM_ZENITH_B);
         horizon = vec3(CUSTOM_HORIZON_R, CUSTOM_HORIZON_G, CUSTOM_HORIZON_B);
     #endif
@@ -111,7 +116,12 @@ void palette(out vec3 zenith, out vec3 horizon) {
 vec3 sunColourAt(float h) {
     vec3 low = vec3(1.00, 0.55, 0.26);
     vec3 high = vec3(1.00, 0.94, 0.84);
-    return mix(low, high, smoothstep(0.0, 0.55, h)) * (0.30 + 0.80 * h);
+    vec3 base = mix(low, high, smoothstep(0.0, 0.55, h)) * (0.30 + 0.80 * h);
+
+    /* Channel gains, in percent. Three sliders rather than one hue control: this is
+       what corrects a sun that reads too green on a cheap panel without touching the
+       rest of the picture, and the sky palette and the output gains stay separate. */
+    return base * vec3(float(SUN_R), float(SUN_G), float(SUN_B)) * 0.01;
 }
 
 vec3 sunColour() {
@@ -126,47 +136,48 @@ vec3 moonColour() {
    Shoka to a bright 0.65 for Testigo; without it the eight presets differ only in
    hue and all sit at the same brightness. */
 float themeAmbient() {
-    #if COLOR_SCHEME == 0
-        return 0.40;   // Ethereal
-    #elif COLOR_SCHEME == 1
-        return 0.25;   // Shoka
-    #elif COLOR_SCHEME == 2
-        return 0.50;   // Classic
-    #elif COLOR_SCHEME == 3
-        return 0.50;   // Legacy
-    #elif COLOR_SCHEME == 4
-        return 0.50;   // Captain
-    #elif COLOR_SCHEME == 5
-        return 0.45;   // Psychedelic
-    #elif COLOR_SCHEME == 6
-        return 0.40;   // Cocoa
-    #elif COLOR_SCHEME == 7
-        return 0.65;   // Testigo
-    #else
+    #if COLOR_SCHEME == 0        // Natural
+        return 0.45;
+    #elif COLOR_SCHEME == 1      // Vivid
+        return 0.52;
+    #elif COLOR_SCHEME == 2      // Game
+        return 0.50;
+    #elif COLOR_SCHEME == 3      // Soft
+        return 0.40;
+    #elif COLOR_SCHEME == 4      // Cinematic
+        return 0.32;
+    #elif COLOR_SCHEME == 5      // Neon
+        return 0.42;
+    #elif COLOR_SCHEME == 6      // Warm
+        return 0.46;
+    #elif COLOR_SCHEME == 7      // Bright
+        return 0.62;
+    #else                        // Custom
         return CUSTOM_AMBIENT;
     #endif
 }
 
-/* The colour water takes on from a theme, so a Cocoa ocean is not the same blue as
-   an Ethereal one. Without it the pack had one fixed colour whatever the theme. */
+/* The colour water takes on from a palette, so an ocean in Cinematic is not the same
+   blue as an ocean in Natural. Without it the pack had one fixed colour whatever the
+   palette. */
 vec3 themeWater() {
-    #if COLOR_SCHEME == 0
-        return vec3(0.050, 0.100, 0.110);
-    #elif COLOR_SCHEME == 1
-        return vec3(0.050, 0.100, 0.110);
-    #elif COLOR_SCHEME == 2
-        return vec3(0.016, 0.139, 0.165);
-    #elif COLOR_SCHEME == 3
-        return vec3(0.016, 0.139, 0.165);
-    #elif COLOR_SCHEME == 4
-        return vec3(0.050, 0.100, 0.110);
-    #elif COLOR_SCHEME == 5
-        return vec3(0.018, 0.120, 0.180);
-    #elif COLOR_SCHEME == 6
-        return vec3(0.020, 0.180, 0.322);
-    #elif COLOR_SCHEME == 7
-        return vec3(0.012, 0.110, 0.192);
-    #else
+    #if COLOR_SCHEME == 0        // Natural
+        return vec3(0.040, 0.110, 0.150);
+    #elif COLOR_SCHEME == 1      // Vivid
+        return vec3(0.010, 0.150, 0.230);
+    #elif COLOR_SCHEME == 2      // Game
+        return vec3(0.020, 0.140, 0.230);
+    #elif COLOR_SCHEME == 3      // Soft
+        return vec3(0.070, 0.140, 0.170);
+    #elif COLOR_SCHEME == 4      // Cinematic
+        return vec3(0.020, 0.090, 0.130);
+    #elif COLOR_SCHEME == 5      // Neon
+        return vec3(0.050, 0.060, 0.200);
+    #elif COLOR_SCHEME == 6      // Warm
+        return vec3(0.030, 0.130, 0.170);
+    #elif COLOR_SCHEME == 7      // Bright
+        return vec3(0.030, 0.160, 0.220);
+    #else                        // Custom
         return vec3(CUSTOM_WATER_R, CUSTOM_WATER_G, CUSTOM_WATER_B);
     #endif
 }
@@ -267,15 +278,34 @@ vec3 skyColour(vec3 directionWorld, float day, float dusk, vec3 sunCol) {
         float sun = sat(dot(d, sunDir));
         float moon = sat(dot(d, moonDir));
 
-        /* Three pow() calls are the most expensive thing on a sky pixel, and most
-           sky pixels are nowhere near the sun or the moon: skip them when the dot
-           product cannot produce a visible halo. */
+        /* Two exponents, not one: a tight core that reads as the disc and a broad
+           wash of scattered light around it. The shape option moves both, so the sun
+           can be a hard point, a soft glow or a wide haze. Three pow() calls are the
+           most expensive thing on a sky pixel, and most sky pixels are nowhere near
+           the sun or the moon, so they are skipped when the dot product cannot
+           produce a visible halo. */
+        #if SUN_HALO_SHAPE == 0
+            float coreExp = 190.0;
+            float washExp = 16.0;
+        #elif SUN_HALO_SHAPE == 1
+            float coreExp = 110.0;
+            float washExp = 9.0;
+        #else
+            float coreExp = 70.0;
+            float washExp = 4.5;
+        #endif
+
+        /* A bigger sun needs a tighter exponent, or raising the size would only make
+           the sky brighter instead of the disc larger. */
+        coreExp /= SUN_SIZE;
+        washExp /= SUN_SIZE;
+
         if (sun > 0.02) {
-            col += sunCol * pow(sun, 110.0) * 0.80;
-            col += sunCol * pow(sun, 9.0) * 0.075;
+            col += sunCol * pow(sun, coreExp) * 0.80;
+            col += sunCol * pow(sun, washExp) * 0.075 * SUN_SIZE;
         }
         if (moon > 0.02) {
-            col += moonColour() * pow(moon, 70.0) * 0.60;
+            col += moonColour() * pow(moon, coreExp * 0.64) * 0.60;
         }
     #endif
 
