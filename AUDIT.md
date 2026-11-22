@@ -34,7 +34,7 @@ with the commit), **by design** (deliberately different, with the reason), **que
 | `final.fsh` | `common/final_fragment.glsl` (168) | scene sampler declared by literal name; no `#extension`; depth samplers only when the effects that read them are on; no buffer read that the pass writes | **fixed** `00e61fc`, `070bdf1`, this commit — the depth sampler is now declared only for depth of field, where the reference declares none at all |
 | `final.vsh` | `common/final_vertex.glsl` | full-screen quad, texture coordinates | **same** |
 | `composite.vsh`, `composite2.vsh` | `common/composite_vertex.glsl`, `composite2_vertex.glsl` | full-screen quad, no texture sampling in the vertex stage | **same** |
-| `prepare.*` | `common/prepare_fragment.glsl` (57) | horizon fill | **by design, for now** — removed while chasing the freeze; reinstating it is the next item once the pack loads |
+| `prepare.*` | `common/prepare_fragment.glsl` (57) | horizon fill, `DRAWBUFFERS`, what it writes and reads | **fixed** `435662c` — removed while chasing the freeze, then restored in all four dimensions once the freeze was traced to `composite2`. It writes one target and reads nothing, which is the whole of its contract; the reference also writes its fog colour to a second buffer here, which this pack does not need because it measures fog per vertex |
 
 ### Geometry stage
 
