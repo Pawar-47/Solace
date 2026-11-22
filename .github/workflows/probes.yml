@@ -82,6 +82,23 @@ jobs:
           ( cd nofinal && zip -r ../Solace-Probe-NoFinal.zip shaders README.md )
           unzip -l Solace-Probe-NoFinal.zip | tail -3
 
+      # The narrowest post chain possible: no geometry programs and none of the four
+      # effect passes, so `final` is the only program of ours that runs. If this loads,
+      # the freeze is in one of the four passes that are switched off by their
+      # `program.*.enabled` lines; if it freezes, `final` is the file.
+      - name: Build the PostFinalOnly probe
+        run: |
+          rm -rf postfinal && cp -r Solace-LowEnd postfinal
+          find postfinal/shaders -name 'gbuffers_*' -delete
+          find postfinal/shaders -name 'dh_*' -delete
+          find postfinal/shaders -name 'voxy_*' -delete
+          find postfinal/shaders -name 'composite.*' -delete
+          find postfinal/shaders -name 'composite2.*' -delete
+          find postfinal/shaders -name 'deferred.*' -delete
+          find postfinal/shaders -name 'shadow.*' -delete
+          ( cd postfinal && zip -r ../Solace-Probe-PostFinalOnly.zip shaders README.md )
+          unzip -l Solace-Probe-PostFinalOnly.zip | tail -3
+
       - name: Attach the builds to this run
         uses: actions/upload-artifact@v4
         with:
@@ -101,6 +118,7 @@ jobs:
             echo "Solace-Diagnostic - the whole pack with the last pass bypassed. Flat and wrong on purpose."
             echo "Solace-Probe-PostOnly - no gbuffers programs: vanilla draws, the pack only post-processes."
             echo "Solace-Probe-NoFinal - the whole pack minus final.fsh and final.vsh."
+            echo "Solace-Probe-PostFinalOnly - final and nothing else that runs: no geometry, no composite, no deferred, no shadow."
             echo ""
             echo "One answer each: does it load or does it freeze. Read together they name a file."
           } >> "$GITHUB_STEP_SUMMARY"
