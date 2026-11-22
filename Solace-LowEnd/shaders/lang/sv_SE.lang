@@ -1,9 +1,10 @@
 # Solace - sv_SE.lang
 # endast namnen på inställningarna; de långa beskrivningarna finns i en_US.
 
-profile.LowEnd=Prestanda
-profile.Default=Balanserad
-profile.Beauty=Kvalitet
+profile.Smooth=Mjuk - hög bildfrekvens
+profile.HD=HD - medelhög bildfrekvens
+profile.HDR=HDR - låg bildfrekvens
+profile.Everything=Allt - alla effekter
 
 option.WATER_WAVES=Vågor på vattnet
 option.WAVE_SPEED=Våghastighet
@@ -90,14 +91,14 @@ value.COLOR_BLIND_MODE.0=Ingen
 value.COLOR_BLIND_MODE.1=Svag röd
 value.COLOR_BLIND_MODE.2=Svag grön
 value.COLOR_BLIND_MODE.3=Svag blå
-value.COLOR_SCHEME.0=Ethereal
-value.COLOR_SCHEME.1=Shoka
-value.COLOR_SCHEME.2=Klassisk
-value.COLOR_SCHEME.3=Äldre
-value.COLOR_SCHEME.4=Kapten
-value.COLOR_SCHEME.5=Psykedelisk
-value.COLOR_SCHEME.6=Kakao
-value.COLOR_SCHEME.7=Testigo
+value.COLOR_SCHEME.0=Naturlig
+value.COLOR_SCHEME.1=Livfull
+value.COLOR_SCHEME.2=Spel
+value.COLOR_SCHEME.3=Mjuk
+value.COLOR_SCHEME.4=Filmisk
+value.COLOR_SCHEME.5=Neon
+value.COLOR_SCHEME.6=Varm
+value.COLOR_SCHEME.7=Ljus
 value.COLOR_SCHEME.99=Egen
 
 
@@ -138,3 +139,21 @@ option.COLOR_G=Grönt förstärkning
 option.COLOR_B=Blått förstärkning
 option.GAMMA=Gamma
 profile.Potato=Potatis
+
+
+# Sol, moln, mörkerseendets ton och resten av inställningarna.
+option.SUN_PATH=Solens bana
+option.SUN_SIZE=Solens storlek
+option.SUN_HALO_SHAPE=Solens form
+option.SUN_R=Solljus rött
+option.SUN_G=Solljus grönt
+option.SUN_B=Solljus blått
+option.CLOUD_STYLE=Molnstil
+option.CLOUD_SPEED=Molnens hastighet
+option.NV_COLOR_R=Mörkerseende, rött
+option.NV_COLOR_G=Mörkerseende, grönt
+option.NV_COLOR_B=Mörkerseende, blått
+option.EMISSIVE_GLOW=Självlysande block
+option.BLACK_ENTITY_FIX=Fix för svarta entiteter
+option.AO_TAPS=Ocklusionsprover
+option.DOF_SAMPLES=Fokusprover

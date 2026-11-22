@@ -1,9 +1,10 @@
 # Solace - zh_CN.lang
 # 选项名称；长说明仍使用 en_US。
 
-profile.LowEnd=性能优先
-profile.Default=均衡
-profile.Beauty=画质优先
+profile.Smooth=流畅 - 高帧率
+profile.HD=高清 - 中等帧率
+profile.HDR=高动态 - 低帧率
+profile.Everything=全部 - 所有效果
 
 option.WATER_WAVES=水面波浪
 option.WAVE_SPEED=波浪速度
@@ -90,14 +91,14 @@ value.COLOR_BLIND_MODE.0=无
 value.COLOR_BLIND_MODE.1=红色弱
 value.COLOR_BLIND_MODE.2=绿色弱
 value.COLOR_BLIND_MODE.3=蓝色弱
-value.COLOR_SCHEME.0=Ethereal
-value.COLOR_SCHEME.1=Shoka
-value.COLOR_SCHEME.2=经典
-value.COLOR_SCHEME.3=复古
-value.COLOR_SCHEME.4=冷调
-value.COLOR_SCHEME.5=迷幻
-value.COLOR_SCHEME.6=可可
-value.COLOR_SCHEME.7=幻想
+value.COLOR_SCHEME.0=自然
+value.COLOR_SCHEME.1=鲜艳
+value.COLOR_SCHEME.2=游戏
+value.COLOR_SCHEME.3=柔和
+value.COLOR_SCHEME.4=电影
+value.COLOR_SCHEME.5=霓虹
+value.COLOR_SCHEME.6=暖色
+value.COLOR_SCHEME.7=明亮
 value.COLOR_SCHEME.99=自定义
 
 
@@ -138,3 +139,21 @@ option.COLOR_G=绿色增益
 option.COLOR_B=蓝色增益
 option.GAMMA=伽马
 profile.Potato=土豆
+
+
+# 太阳、云层、夜视色调以及其余设置。
+option.SUN_PATH=太阳轨迹
+option.SUN_SIZE=太阳大小
+option.SUN_HALO_SHAPE=太阳形状
+option.SUN_R=阳光红色
+option.SUN_G=阳光绿色
+option.SUN_B=阳光蓝色
+option.CLOUD_STYLE=云层风格
+option.CLOUD_SPEED=云层速度
+option.NV_COLOR_R=夜视红色
+option.NV_COLOR_G=夜视绿色
+option.NV_COLOR_B=夜视蓝色
+option.EMISSIVE_GLOW=自发光方块
+option.BLACK_ENTITY_FIX=黑色实体修复
+option.AO_TAPS=遮蔽采样
+option.DOF_SAMPLES=对焦采样

@@ -1,9 +1,10 @@
 # Solace - es_MX.lang
 # nombres de las opciones; las descripciones largas siguen en en_US.
 
-profile.LowEnd=Rendimiento
-profile.Default=Equilibrado
-profile.Beauty=Calidad
+profile.Smooth=Suave - alto rendimiento
+profile.HD=HD - rendimiento medio
+profile.HDR=HDR - bajo rendimiento
+profile.Everything=Todo - todos los efectos
 
 option.WATER_WAVES=Olas del agua
 option.WAVE_SPEED=Velocidad de las olas
@@ -90,14 +91,14 @@ value.COLOR_BLIND_MODE.0=Ninguno
 value.COLOR_BLIND_MODE.1=Rojo débil
 value.COLOR_BLIND_MODE.2=Verde débil
 value.COLOR_BLIND_MODE.3=Azul débil
-value.COLOR_SCHEME.0=Ethereal
-value.COLOR_SCHEME.1=Shoka
-value.COLOR_SCHEME.2=Clásico
-value.COLOR_SCHEME.3=Antiguo
-value.COLOR_SCHEME.4=Capitán
-value.COLOR_SCHEME.5=Psicodélico
-value.COLOR_SCHEME.6=Cacao
-value.COLOR_SCHEME.7=Testigo
+value.COLOR_SCHEME.0=Natural
+value.COLOR_SCHEME.1=Vívido
+value.COLOR_SCHEME.2=Juego
+value.COLOR_SCHEME.3=Suave
+value.COLOR_SCHEME.4=Cinemático
+value.COLOR_SCHEME.5=Neón
+value.COLOR_SCHEME.6=Cálido
+value.COLOR_SCHEME.7=Brillante
 value.COLOR_SCHEME.99=Propio
 
 
@@ -138,3 +139,21 @@ option.COLOR_G=Ganancia de verde
 option.COLOR_B=Ganancia de azul
 option.GAMMA=Gamma
 profile.Potato=Mínimo
+
+
+# Sol, nubes, tinte de visión nocturna y el resto de opciones.
+option.SUN_PATH=Trayectoria del sol
+option.SUN_SIZE=Tamaño del sol
+option.SUN_HALO_SHAPE=Forma del halo
+option.SUN_R=Rojo de la luz solar
+option.SUN_G=Verde de la luz solar
+option.SUN_B=Azul de la luz solar
+option.CLOUD_STYLE=Estilo de nubes
+option.CLOUD_SPEED=Velocidad de las nubes
+option.NV_COLOR_R=Visión nocturna, rojo
+option.NV_COLOR_G=Visión nocturna, verde
+option.NV_COLOR_B=Visión nocturna, azul
+option.EMISSIVE_GLOW=Bloques emisivos
+option.BLACK_ENTITY_FIX=Arreglo de entidades negras
+option.AO_TAPS=Muestras de oclusión
+option.DOF_SAMPLES=Muestras de enfoque

@@ -1,9 +1,10 @@
 # Solace - ru_RU.lang
 # названия параметров; длинные подсказки остаются в en_US.
 
-profile.LowEnd=Производительность
-profile.Default=Сбалансированный
-profile.Beauty=Качество
+profile.Smooth=Плавный - высокая частота кадров
+profile.HD=HD - средняя частота кадров
+profile.HDR=HDR - низкая частота кадров
+profile.Everything=Всё - все эффекты
 
 option.WATER_WAVES=Волны на воде
 option.WAVE_SPEED=Скорость волн
@@ -90,14 +91,14 @@ value.COLOR_BLIND_MODE.0=Нет
 value.COLOR_BLIND_MODE.1=Слабый красный
 value.COLOR_BLIND_MODE.2=Слабый зелёный
 value.COLOR_BLIND_MODE.3=Слабый синий
-value.COLOR_SCHEME.0=Ethereal
-value.COLOR_SCHEME.1=Shoka
-value.COLOR_SCHEME.2=Классика
-value.COLOR_SCHEME.3=Старый
-value.COLOR_SCHEME.4=Капитан
-value.COLOR_SCHEME.5=Психоделика
-value.COLOR_SCHEME.6=Какао
-value.COLOR_SCHEME.7=Тестиго
+value.COLOR_SCHEME.0=Естественная
+value.COLOR_SCHEME.1=Насыщенная
+value.COLOR_SCHEME.2=Игровая
+value.COLOR_SCHEME.3=Мягкая
+value.COLOR_SCHEME.4=Кинематографичная
+value.COLOR_SCHEME.5=Неоновая
+value.COLOR_SCHEME.6=Тёплая
+value.COLOR_SCHEME.7=Яркая
 value.COLOR_SCHEME.99=Своя
 
 
@@ -138,3 +139,21 @@ option.COLOR_G=Усиление зелёного
 option.COLOR_B=Усиление синего
 option.GAMMA=Гамма
 profile.Potato=Картошка
+
+
+# Солнце, облака, оттенок ночного зрения и остальные параметры.
+option.SUN_PATH=Путь солнца
+option.SUN_SIZE=Размер солнца
+option.SUN_HALO_SHAPE=Форма ореола
+option.SUN_R=Красный солнечного света
+option.SUN_G=Зелёный солнечного света
+option.SUN_B=Синий солнечного света
+option.CLOUD_STYLE=Стиль облаков
+option.CLOUD_SPEED=Скорость облаков
+option.NV_COLOR_R=Ночное зрение, красный
+option.NV_COLOR_G=Ночное зрение, зелёный
+option.NV_COLOR_B=Ночное зрение, синий
+option.EMISSIVE_GLOW=Светящиеся блоки
+option.BLACK_ENTITY_FIX=Исправление чёрных сущностей
+option.AO_TAPS=Выборки затенения
+option.DOF_SAMPLES=Выборки фокуса

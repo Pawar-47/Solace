@@ -1,9 +1,10 @@
 # Solace - ko_KR.lang
 # 옵션 이름만 번역했습니다. 긴 설명은 en_US에 있습니다.
 
-profile.LowEnd=성능 우선
-profile.Default=균형
-profile.Beauty=화질 우선
+profile.Smooth=부드러움 - 높은 프레임
+profile.HD=HD - 중간 프레임
+profile.HDR=HDR - 낮은 프레임
+profile.Everything=전부 - 모든 효과
 
 option.WATER_WAVES=물결
 option.WAVE_SPEED=물결 속도
@@ -90,14 +91,14 @@ value.COLOR_BLIND_MODE.0=없음
 value.COLOR_BLIND_MODE.1=적색 약함
 value.COLOR_BLIND_MODE.2=녹색 약함
 value.COLOR_BLIND_MODE.3=청색 약함
-value.COLOR_SCHEME.0=Ethereal
-value.COLOR_SCHEME.1=Shoka
-value.COLOR_SCHEME.2=클래식
-value.COLOR_SCHEME.3=레거시
-value.COLOR_SCHEME.4=캡틴
-value.COLOR_SCHEME.5=사이키델릭
-value.COLOR_SCHEME.6=코코아
-value.COLOR_SCHEME.7=테스티고
+value.COLOR_SCHEME.0=자연
+value.COLOR_SCHEME.1=선명
+value.COLOR_SCHEME.2=게임
+value.COLOR_SCHEME.3=부드러움
+value.COLOR_SCHEME.4=영화
+value.COLOR_SCHEME.5=네온
+value.COLOR_SCHEME.6=따뜻함
+value.COLOR_SCHEME.7=밝음
 value.COLOR_SCHEME.99=사용자
 
 
@@ -138,3 +139,21 @@ option.COLOR_G=초록 게인
 option.COLOR_B=파랑 게인
 option.GAMMA=감마
 profile.Potato=감자
+
+
+# 태양, 구름, 야간 투시 색조와 나머지 설정.
+option.SUN_PATH=태양 궤적
+option.SUN_SIZE=태양 크기
+option.SUN_HALO_SHAPE=태양 모양
+option.SUN_R=햇빛 빨강
+option.SUN_G=햇빛 초록
+option.SUN_B=햇빛 파랑
+option.CLOUD_STYLE=구름 스타일
+option.CLOUD_SPEED=구름 속도
+option.NV_COLOR_R=야간 투시, 빨강
+option.NV_COLOR_G=야간 투시, 초록
+option.NV_COLOR_B=야간 투시, 파랑
+option.EMISSIVE_GLOW=발광 블록
+option.BLACK_ENTITY_FIX=검은 개체 수정
+option.AO_TAPS=차폐 샘플
+option.DOF_SAMPLES=초점 샘플

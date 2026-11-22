@@ -1,9 +1,10 @@
 # Solace - tr_TR.lang
 # yalnızca seçenek adları; uzun açıklamalar en_US içinde.
 
-profile.LowEnd=Performans
-profile.Default=Dengeli
-profile.Beauty=Kalite
+profile.Smooth=Yumuşak - yüksek kare hızı
+profile.HD=HD - orta kare hızı
+profile.HDR=HDR - düşük kare hızı
+profile.Everything=Her şey - tüm efektler
 
 option.WATER_WAVES=Su dalgaları
 option.WAVE_SPEED=Dalga hızı
@@ -90,14 +91,14 @@ value.COLOR_BLIND_MODE.0=Yok
 value.COLOR_BLIND_MODE.1=Kırmızı zayıf
 value.COLOR_BLIND_MODE.2=Yeşil zayıf
 value.COLOR_BLIND_MODE.3=Mavi zayıf
-value.COLOR_SCHEME.0=Ethereal
-value.COLOR_SCHEME.1=Shoka
-value.COLOR_SCHEME.2=Klasik
-value.COLOR_SCHEME.3=Eski
-value.COLOR_SCHEME.4=Kaptan
-value.COLOR_SCHEME.5=Psikedelik
-value.COLOR_SCHEME.6=Kakao
-value.COLOR_SCHEME.7=Testigo
+value.COLOR_SCHEME.0=Doğal
+value.COLOR_SCHEME.1=Canlı
+value.COLOR_SCHEME.2=Oyun
+value.COLOR_SCHEME.3=Yumuşak
+value.COLOR_SCHEME.4=Sinematik
+value.COLOR_SCHEME.5=Neon
+value.COLOR_SCHEME.6=Sıcak
+value.COLOR_SCHEME.7=Parlak
 value.COLOR_SCHEME.99=Özel
 
 
@@ -138,3 +139,21 @@ option.COLOR_G=Yeşil kazancı
 option.COLOR_B=Mavi kazancı
 option.GAMMA=Gama
 profile.Potato=Patates
+
+
+# Güneş, bulutlar, gece görüşü tonu ve kalan ayarlar.
+option.SUN_PATH=Güneş yolu
+option.SUN_SIZE=Güneş boyutu
+option.SUN_HALO_SHAPE=Güneş biçimi
+option.SUN_R=Güneş ışığı kırmızı
+option.SUN_G=Güneş ışığı yeşil
+option.SUN_B=Güneş ışığı mavi
+option.CLOUD_STYLE=Bulut biçimi
+option.CLOUD_SPEED=Bulut hızı
+option.NV_COLOR_R=Gece görüşü, kırmızı
+option.NV_COLOR_G=Gece görüşü, yeşil
+option.NV_COLOR_B=Gece görüşü, mavi
+option.EMISSIVE_GLOW=Işık yayan bloklar
+option.BLACK_ENTITY_FIX=Siyah varlık düzeltmesi
+option.AO_TAPS=Örtme örnekleri
+option.DOF_SAMPLES=Odak örnekleri
