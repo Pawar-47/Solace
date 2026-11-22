@@ -26,12 +26,13 @@ on:
         description: 'Tag to keep, if any. Leave empty to delete every tag'
         required: false
         default: ""
-  # Or by committing this file, which is how a run is started from somewhere that cannot
-  # click a workflow box. Touching it again would run the clean-up again, so the trigger
-  # is removed once it has done its job.
-  push:
-    branches: [main]
-    paths: [".github/run-cleanup"]
+  # Started once by committing .github/run-cleanup, which is how a run is launched from
+  # somewhere that cannot click a workflow box. That trigger is removed now that it has
+  # done its job: leaving it in place would let a stray commit delete the release page
+  # again. From here the workflow is manual only.
+  # push:
+  #   branches: [main]
+  #   paths: [".github/run-cleanup"]
 
 permissions:
   contents: write
