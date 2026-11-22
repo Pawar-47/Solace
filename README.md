@@ -147,10 +147,15 @@ stopped the pack working — the last of them a buffer read and written inside o
 in every profile, which is the kind of fault that freezes a driver with nothing in the
 log.
 
-What has still not happened is anyone judging the picture. Treat the first run as a
-test and start on `Smooth`. If the game freezes, the **Diagnose** workflow builds one
-zip per post-chain program, each the whole pack minus exactly that file; the removal
-that makes it load names the culprit, and that is the fastest way back to a fix.
+The picture has been looked at once, on the machine this pack was written for. 1.0.0
+loaded and stopped freezing, and showed a set of faults in the colour and sky model that
+nothing in this repository can catch - a rectangle where the sun should be, an ambient
+term taken straight from the sky's blue, and water that was flat paint. They are listed
+and fixed in [CHANGELOG.md](CHANGELOG.md) under 1.0.1. Start on `Smooth`.
+
+If the game freezes, the **Diagnose** workflow builds one zip per post-chain program,
+each the whole pack minus exactly that file; the removal that makes it load names the
+culprit, and that is the fastest way back to a fix.
 
 
 ## Licence

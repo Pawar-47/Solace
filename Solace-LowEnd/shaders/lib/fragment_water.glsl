@@ -134,16 +134,26 @@ void main() {
     #endif
 
     vec3 waterBase;
-    #if WATER_TEXTURE == 1
-        /* The resource pack's texture decides the pattern; the theme decides how
-           blue it is, through a factor that stays near 1 so the texture is not
-           darkened by a theme whose water colour happens to be deep. */
-        waterBase = albedo.rgb * tint.rgb * (0.80 + 1.60 * themeWater());
-    #else
-        waterBase = mix(themeWater(), tint.rgb, 0.45);
-    #endif
+
+    /* The surface colour.
+
+       Vanilla's water tint is a saturated blue, and multiplying it by the resource
+       pack's texture and then by a blue ambient term squared the blue three times
+       over: the surface came out flat and electric, while the water seen from below -
+       which never goes through this path - looked right. The base is now mostly the
+       palette's water colour, with the texture carrying the pattern and only a little
+       of the biome tint, which is enough for a swamp to still read as a swamp. */
+    vec3 biomeTint = mix(vec3(luma(tint.rgb)), tint.rgb, 0.45);
+    vec3 deep = themeWater() * 2.10;
+
     #if VANILLA_WATER == 1
-        waterBase = tint.rgb;
+        waterBase = biomeTint * 0.75;
+    #else
+        #if WATER_TEXTURE == 1
+            waterBase = mix(deep, albedo.rgb * biomeTint * 1.55, 0.62);
+        #else
+            waterBase = mix(deep, biomeTint * 0.55, 0.40);
+        #endif
     #endif
 
     vec3 toEye = normalize(-viewSpacePos);
@@ -168,22 +178,27 @@ void main() {
     vec3 colour = waterBase * light;
 
     float fresnel = pow(1.0 - sat(dot(normal, toEye)), 5.0);
-    float reflection = 0.0;
-
-    bool skyReflectionOn = false;
-    vec3 skyReflection = vec3(0.0);
 
     /* Computed even with reflections off: the march and the glint both need it, and
        one matrix multiply is cheaper than the branch that would guard it. */
     vec3 reflectedWorld = mat3(gbufferModelViewInverse) * reflect(-toEye, normal);
 
+    /* The sky is reflected whatever the option says. With WATER_REFLECTION off the
+       surface used to have no reflection at all, which leaves a flat sheet of colour
+       that looks painted on - the other half of why the water read as sharp blue. The
+       option is what decides how much of the mirror is taken, from a fixed fresnel mix
+       up to the whole thing. reflectionColour() is a few mix() calls and no sin() of
+       its own, so this is not what makes the pass expensive. */
+    vec3 skyReflection = reflectionColour(reflectedWorld, day, dusk, astroColour);
+
+    float skyAmount = 0.22 + fresnel * 0.50;
     #if WATER_REFLECTION == 1
-        skyReflection = reflectionColour(reflectedWorld, day, dusk, astroColour);
-        skyReflectionOn = true;
+        skyAmount = sat(0.08 + fresnel * 0.92);
     #endif
 
     /* The mirror image, from the sky, and the world where WATER_SSR finds it. */
-    vec3 reflectionColourOut = skyReflection * 0.85;
+    vec3 reflectionColourOut = skyReflection;
+    float reflection = skyAmount;
     float reflectionBorder = 0.0;
     /* How much of the mirror direction is still open sky: the highlight below may
        only appear where nothing in the world blocks it. */
@@ -312,7 +327,7 @@ void main() {
             }
 
             vec3 sampled = texture2D(gaux1, clamp(uv, vec2(0.002), vec2(0.998))).rgb;
-            vec3 fallback = skyReflectionOn ? skyReflection : sampled;
+            vec3 fallback = skyReflection;
 
             /* The march can land on something further away than the water itself
                only by mistake; a hit that close to the eye is dropped. */
@@ -323,11 +338,6 @@ void main() {
             reflectionSky = 1.0 - reflectionBorder * trust;
         }
     #endif
-
-    if (reflection <= 0.0 && skyReflectionOn) {
-        reflection = sat(0.08 + fresnel * 0.92);
-        reflectionColourOut = skyReflection * 0.85;
-    }
 
     /* Glass blends its own colour towards the sky and then towards the mirror
        image, both by fresnel; water mixes once, by the reflection strength. */
@@ -405,7 +415,7 @@ void main() {
 
     vec3 fogTint = fogColour(day, dusk);
     if (isEyeInWater == 1) {
-        fogTint = vec3(0.050, 0.180, 0.240);
+        fogTint = underwaterFogColour(day);
     } else if (isEyeInWater == 2) {
         fogTint = vec3(0.55, 0.12, 0.02);
     } else if (isEyeInWater == 3) {

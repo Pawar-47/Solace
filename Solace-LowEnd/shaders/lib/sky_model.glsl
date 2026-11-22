@@ -132,6 +132,43 @@ vec3 moonColour() {
     return vec3(0.40, 0.50, 0.78) * 0.30;
 }
 
+/* The sun and the moon are drawn here, not by the game.
+
+   shaders.properties switches the game's own discs off (`sun = false`, `moon =
+   false`) because they are textured quads: whatever happens to the alpha - a resource
+   pack with an opaque sun texture, a driver that samples the wrong one, a blend state
+   the mod did not expect - leaves a rectangle in the sky. That is exactly what the
+   first build showed: a box where the sun should be, and no setting that could shrink
+   it, because the size was the game's quad and not this pack's. A disc built from a
+   dot product cannot become a rectangle, and SUN_SIZE scales the disc and its glow
+   together.
+
+   The angles are angular radii, so the disc stays the same size on screen whatever
+   the field of view. 1.10 degrees at SUN_SIZE 1 is a little larger than the real sun,
+   which is what reads as a sun at this resolution. */
+vec3 sunDiscColour(vec3 d, vec3 sunDir, vec3 sunCol) {
+    float cosAngle = dot(d, sunDir);
+    float radius = cos(radians(1.10 * SUN_SIZE));
+    float disc = smoothstep(radius - 0.0009, radius + 0.0009, cosAngle);
+    return sunCol * disc * 2.40;
+}
+
+vec3 moonDiscColour(vec3 d, vec3 moonDir) {
+    float cosAngle = dot(d, moonDir);
+    float radius = cos(radians(1.05 * SUN_SIZE));
+    float disc = smoothstep(radius - 0.0009, radius + 0.0009, cosAngle);
+    return moonColour() * disc * 4.20;
+}
+
+/* The colour of the water you are inside.
+
+   One definition, used by the fog on solid geometry, by the water surface and by the
+   sky seen from below it. Those three were three separate constants a few thousandths
+   apart, which is why the surface of a lake and the water under it disagreed. */
+vec3 underwaterFogColour(float day) {
+    return vec3(0.050, 0.185, 0.245) * (0.35 + 0.65 * day);
+}
+
 /* How much skylight a theme gives. Every theme has its own level, from a dim 0.25 for
    Shoka to a bright 0.65 for Testigo; without it the eight presets differ only in
    hue and all sit at the same brightness. */
@@ -227,17 +264,31 @@ vec3 horizonColour(float day, float dusk) {
     return mix(c, duskColour, dusk * 0.85);
 }
 
-/* Ambient skylight: the colour that reaches a surface facing up. */
+/* Ambient skylight: the colour that reaches a surface facing up.
+
+   This is *light*, not the sky, and the two must not be the same colour. Taking the
+   palette straight as the ambient term - which is what the first build did - painted
+   every surface in the sky's blue and made the world look lit from under water; the
+   sun then contributed less than the fill, so nothing had a sunny side. The palette is
+   desaturated towards its own luma first, and the level is normalised afterwards, so a
+   theme's brightness is what changes and not its hue.
+
+   The night floor is a separate colour: skylight at midnight is not a dark blue day. */
 vec3 ambientColour(float day, float dusk) {
     vec3 dayZenith;
     vec3 dayHorizon;
     palette(dayZenith, dayHorizon);
 
-    vec3 night = vec3(0.020, 0.026, 0.050) * (0.6 + NIGHT_AMBIENT * 8.0);
-    /* The 2.1 keeps the pack's overall brightness where it was and lets the theme
-       only spread it: the eight levels run 0.25 to 0.65, centred near 0.47. */
-    vec3 dayColour = (mix(dayZenith, dayHorizon, 0.55) * 1.35 + vec3(0.10))
-                   * (themeAmbient() * 2.1);
+    vec3 base = mix(dayZenith, dayHorizon, 0.60);
+    vec3 tint = mix(vec3(luma(base)), base, 0.30);
+
+    /* themeAmbient runs 0.32 for Cinematic to 0.62 for Bright. 1.22 puts the brightest
+       theme at the level a lit surface has in vanilla and the darkest near two thirds
+       of it, which leaves room for the sun to be the brightest thing in the picture. */
+    float level = themeAmbient() * 1.22;
+    vec3 dayColour = tint * (level / max(luma(tint), 0.02));
+
+    vec3 night = vec3(0.020, 0.026, 0.050) * (0.60 + NIGHT_AMBIENT * 7.0);
     return mix(night, dayColour, day);
 }
 
@@ -272,40 +323,40 @@ vec3 skyColour(vec3 directionWorld, float day, float dusk, vec3 sunCol) {
     float band = solPow4(1.0 - sat(d.y));
     vec3 col = mix(zenithColour(day, dusk), horizonColour(day, dusk), band);
 
+    vec3 sunDir = mat3(gbufferModelViewInverse) * normalize(sunPosition);
+    vec3 moonDir = mat3(gbufferModelViewInverse) * normalize(moonPosition);
+
+    /* The discs do not depend on the glow setting: turning the halo off should leave
+       a hard clean sun, not remove the sun. */
+    col += sunDiscColour(d, sunDir, sunCol);
+    col += moonDiscColour(d, moonDir);
+
     #if SKY_SUN_GLOW == 1
-        vec3 sunDir = mat3(gbufferModelViewInverse) * normalize(sunPosition);
-        vec3 moonDir = mat3(gbufferModelViewInverse) * normalize(moonPosition);
         float sun = sat(dot(d, sunDir));
         float moon = sat(dot(d, moonDir));
 
-        /* Two exponents, not one: a tight core that reads as the disc and a broad
-           wash of scattered light around it. The shape option moves both, so the sun
-           can be a hard point, a soft glow or a wide haze. Three pow() calls are the
-           most expensive thing on a sky pixel, and most sky pixels are nowhere near
-           the sun or the moon, so they are skipped when the dot product cannot
-           produce a visible halo. */
+        /* One exponent, because the disc is the core now and the halo is only the light
+           scattered around it. The three shapes are the spread of that scatter, and
+           dividing by SUN_SIZE widens the glow with the disc instead of brightening it:
+           the old pair of exponents (110 and 16) was so tight that neither was visible
+           a degree away from the sun, which is why the setting did nothing. */
         #if SUN_HALO_SHAPE == 0
-            float coreExp = 190.0;
-            float washExp = 16.0;
+            float haloExp = 46.0;
+            float sunHalo = 0.20;
         #elif SUN_HALO_SHAPE == 1
-            float coreExp = 110.0;
-            float washExp = 9.0;
+            float haloExp = 13.0;
+            float sunHalo = 0.28;
         #else
-            float coreExp = 70.0;
-            float washExp = 4.5;
+            float haloExp = 4.0;
+            float sunHalo = 0.38;
         #endif
+        haloExp /= SUN_SIZE;
 
-        /* A bigger sun needs a tighter exponent, or raising the size would only make
-           the sky brighter instead of the disc larger. */
-        coreExp /= SUN_SIZE;
-        washExp /= SUN_SIZE;
-
-        if (sun > 0.02) {
-            col += sunCol * pow(sun, coreExp) * 0.80;
-            col += sunCol * pow(sun, washExp) * 0.075 * SUN_SIZE;
+        if (sun > 0.01) {
+            col += sunCol * pow(sun, haloExp) * sunHalo;
         }
-        if (moon > 0.02) {
-            col += moonColour() * pow(moon, coreExp * 0.64) * 0.60;
+        if (moon > 0.01) {
+            col += moonColour() * pow(moon, haloExp * 0.55) * 1.10;
         }
     #endif
 

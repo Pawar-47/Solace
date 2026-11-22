@@ -257,7 +257,7 @@ void main() {
     vec3 fogTint = fogColour(day, dusk);
     #if UNDERWATER_FOG == 1
         if (isEyeInWater == 1) {
-            fogTint = vec3(0.050, 0.190, 0.250) * (0.35 + 0.65 * day);
+            fogTint = underwaterFogColour(day);
         }
     #endif
     if (isEyeInWater == 2) {

@@ -5,6 +5,44 @@ since the previous tag. A major version means the options a player has set might
 looking at again; a minor one adds options or effects without breaking the old values;
 a patch one fixes something and changes no setting.
 
+## 1.0.1
+
+The first build anyone actually looked at. 1.0.0 loaded, stopped freezing, and then
+showed what no check in this repository can see: the picture. These are the faults
+behind the four things that were reported - a box where the sun should be, settings
+that did nothing, light that did not come from anywhere, and water that was one flat
+blue.
+
+- **The sky was rebuilt from the wrong coordinates.** The sky pass derived its view ray
+  from `texcoord`, which for the sky is the dome's own texture coordinate, not the
+  pixel's place on the screen. Interpolated across the dome's triangles, that turned the
+  gradient, the sun and its halo into large flat patches: the rectangle where the sun
+  should have been, and a sky whose settings could not show. The ray comes from
+  `gl_FragCoord` now, so it is per pixel.
+- **The sun and the moon were the game's textured quads.** A quad whose alpha goes wrong
+  is a rectangle, and no setting in the pack could change its size or its shape.
+  `sun = false` and `moon = false` in shaders.properties; both are discs built in the
+  sky pass from a dot product, scaled by SUN_SIZE and surrounded by the halo that
+  SUN_HALO_SHAPE describes. That is also why those three settings did nothing.
+- **The halo exponents were two orders of magnitude too tight** - 110 and 190 against a
+  `cos()` that only reaches 1.0 within a few degrees - so there was no visible glow
+  anywhere and the shape setting had nothing to move.
+- **Ambient light was the sky colour itself.** Every surface took the palette's blue as
+  its fill, so the world looked lit from under water, and the sun contributed less than
+  the fill, so nothing had a sunny side. The ambient term is the palette desaturated
+  towards its own luma and normalised to the theme's brightness; the sun is now the
+  brightest thing in a lit scene, which is what gives a face facing it its own shading.
+- **Water was vanilla's blue three times over**: the biome tint multiplied by the
+  texture, by a blue-biased factor, and by that blue ambient term. With
+  WATER_REFLECTION off there was also no sky on the surface at all, which leaves flat
+  paint. The base is the palette's water colour now, with the texture carrying the
+  pattern and a little of the biome tint, and the sky is reflected at every setting -
+  the option decides how much of the mirror is taken, not whether there is one.
+- **One water colour instead of three.** The fog on solid geometry, the water surface
+  and the sky seen from below held three separate constants a few thousandths apart,
+  which is why the surface and the water below it disagreed. They share
+  `underwaterFogColour()`.
+
 ## 1.0.0
 
 First versioned release. Before this the release page carried a rolling "latest" build

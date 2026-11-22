@@ -20,8 +20,15 @@ without a second copy of any of it.
 
 varying vec2 texcoord;
 
-vec3 skyViewRay() {
-    vec4 ray = gbufferProjectionInverse * vec4(texcoord * 2.0 - 1.0, 1.0, 1.0);
+/* The view ray for a screen position.
+
+   The screen position, not the dome's texture coordinate. The sky is drawn as a box
+   around the camera, and its texture coordinates are the box's own: rebuilding the ray
+   from them interpolated the gradient, the sun and its halo across the dome's
+   triangles, which is what put a large flat rectangle where the sun should be and made
+   every sky setting look broken. gl_FragCoord is per pixel, so the ray is per pixel. */
+vec3 skyViewRay(vec2 screenUV) {
+    vec4 ray = gbufferProjectionInverse * vec4(screenUV * 2.0 - 1.0, 1.0, 1.0);
     return ray.xyz / ray.w;
 }
 
@@ -114,7 +121,8 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
 #endif
 
 void main() {
-    vec3 directionWorld = mat3(gbufferModelViewInverse) * normalize(skyViewRay());
+    vec2 screenUV = gl_FragCoord.xy / vec2(viewWidth, viewHeight);
+    vec3 directionWorld = mat3(gbufferModelViewInverse) * normalize(skyViewRay(screenUV));
     float sunUp = sunHeight();
     float day = dayFrom(sunUp);
     float dusk = duskFrom(sunUp);
@@ -128,9 +136,10 @@ void main() {
 
     /* Underwater the dome is not the sky but the water surface seen from below: it
        takes the water's colour and fades as the eye looks up, which is what makes the
-       surface overhead read as a ceiling. */
+       surface overhead read as a ceiling. Same colour the fog and the surface use, from
+       lib/sky_model.glsl, so the three cannot drift apart. */
     if (isEyeInWater == 1) {
-        vec3 belowWater = vec3(0.030, 0.150, 0.210) * (0.35 + 0.65 * day);
+        vec3 belowWater = underwaterFogColour(day);
         float up = sat(directionWorld.y - 0.10);
         colour = mix(belowWater, colour, up + rainStrength * (1.0 - up));
     }
