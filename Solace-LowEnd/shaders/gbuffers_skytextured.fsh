@@ -8,13 +8,13 @@ the moon stays readable through the fog colour. */
 #include "/lib/math.glsl"
 #include "/lib/sky_model.glsl"
 
-uniform sampler2D gcolor;
+uniform sampler2D gtexture;
 
 varying vec2 texcoord;
 varying vec4 tint;
 
 void main() {
-    vec4 disc = texture2D(gcolor, texcoord);
+    vec4 disc = texture2D(gtexture, texcoord);
     if (disc.a < 0.01) discard;
 
     float sunUp = sunHeight();

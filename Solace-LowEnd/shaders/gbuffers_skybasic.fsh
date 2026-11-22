@@ -1,7 +1,6 @@
 /* Solace - gbuffers_skybasic.fsh
-The sky, from the shared library. The dimension folders include the same library
-with SOLACE_DIM_NETHER or SOLACE_DIM_END set, which is the whole of their
-difference. */
+The sky, from the shared library. The dimension palette is chosen inside the library
+from biome_category, so this file is the same in every dimension. */
 
 #version 120
 

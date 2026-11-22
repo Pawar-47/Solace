@@ -23,7 +23,7 @@ Lighting for solid, textured geometry:
 #include "/lib/sky_model.glsl"
 #include "/lib/shadowmap.glsl"
 
-uniform sampler2D gcolor;
+uniform sampler2D gtexture;
 
 void main() {
     #if defined SOLACE_DH_GEOMETRY && defined DISTANT_HORIZONS
@@ -41,7 +41,7 @@ void main() {
         vec3 cell = floor(worldSpacePos * 6.0 + 0.01);
         albedo.rgb *= 0.95 + solHash(cell.xz + cell.y * 31.7) * 0.10;
     #else
-        vec4 albedo = texture2D(gcolor, texcoord) * tint;
+        vec4 albedo = texture2D(gtexture, texcoord) * tint;
         if (albedo.a < 0.10) discard;
     #endif
 
@@ -191,9 +191,11 @@ void main() {
     #endif
 
     /* A lightning bolt and the fire an entity wears while burning are light, not lit
-       surfaces. Both ids come from entity.properties; without that file `blockId` was
-       always 0 for entity programs and this could not fire. */
-    if (blockId == 10101.0 || blockId == 10201.0) {
+       surfaces. Both ids come from entity.properties, and entity.properties is read
+       through `entityId`: `mc_Entity` is a terrain attribute, so testing blockId here
+       could never match in an entity program. In a terrain program entityId is 0,
+       which is not one of these two ids. */
+    if (entityId == 10101 || entityId == 10201) {
         colour = max(colour, albedo.rgb);
     }
 

@@ -9,10 +9,10 @@ fogged - only its own alpha matters. */
 #include "/lib/uniforms.glsl"
 #include "/lib/io_geometry.glsl"
 
-uniform sampler2D gcolor;
+uniform sampler2D gtexture;
 
 void main() {
-    vec4 crack = texture2D(gcolor, texcoord) * tint;
+    vec4 crack = texture2D(gtexture, texcoord) * tint;
     if (crack.a < 0.02) discard;
 
     gl_FragData[0] = vec4(crack.rgb, crack.a);

@@ -14,10 +14,10 @@ its own palette.
 #include "/lib/io_geometry.glsl"
 #include "/lib/sky_model.glsl"
 
-uniform sampler2D gcolor;
+uniform sampler2D gtexture;
 
 void main() {
-    vec4 albedo = texture2D(gcolor, texcoord) * tint;
+    vec4 albedo = texture2D(gtexture, texcoord) * tint;
     if (albedo.a < 0.02) discard;
 
     float sunUp = sunHeight();

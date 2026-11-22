@@ -9,8 +9,9 @@ function means eight of them on one sky pixel. Each program computes them once a
 passes them down instead, so the pixel pays one sin() in total.
 
 The palette is picked in two steps: themePalette() reads COLOR_SCHEME (eight presets
-plus the custom slot), and palette() lets a dimension override it. The dimension
-folders set SOLACE_DIM_NETHER or SOLACE_DIM_END before including a program.
+plus the custom slot), and palette() lets the dimension override it. The dimension is
+read at run time from biome_category (see lib/uniforms.glsl), so a program is the same
+file in every dimension and there are no per-dimension copies to drift apart.
 */
 
 #ifndef SOLACE_SKY_MODEL
@@ -29,19 +30,13 @@ float sunHeight() {
 }
 
 float dayFrom(float height) {
-    #if SOLACE_DIM_NETHER == 1 || SOLACE_DIM_END == 1
-        return 1.0;
-    #else
-        return sat(height * 1.7 + 0.30);
-    #endif
+    if (solaceNoSky()) return 1.0;
+    return sat(height * 1.7 + 0.30);
 }
 
 float duskFrom(float height) {
-    #if SOLACE_DIM_NETHER == 1 || SOLACE_DIM_END == 1
-        return 0.0;
-    #else
-        return sat(1.0 - abs(height) * 3.2);
-    #endif
+    if (solaceNoSky()) return 0.0;
+    return sat(1.0 - abs(height) * 3.2);
 }
 
 /* For the places that need the mixers and nothing else. A program that also wants
@@ -99,16 +94,16 @@ void themePalette(out vec3 zenith, out vec3 horizon) {
    a violet End, as earlier versions of this pack had, make the fog in both far too
    strong. The Nether takes most of its colour from vanilla's fog now. */
 void palette(out vec3 zenith, out vec3 horizon) {
-    #if SOLACE_DIM_NETHER == 1
+    if (solaceIsNether()) {
         vec3 neutral = vec3(0.0480, 0.0434, 0.0425);
         zenith = mix(neutral, fogColor, 0.35);
         horizon = mix(neutral, fogColor, 0.85);
-    #elif SOLACE_DIM_END == 1
+    } else if (solaceIsEnd()) {
         zenith = vec3(0.0465, 0.0375, 0.0465);
         horizon = vec3(0.0465, 0.0375, 0.0465);
-    #else
+    } else {
         themePalette(zenith, horizon);
-    #endif
+    }
 }
 
 /* h is sat(sunHeight()). Kept separate so a program that already has the height does
@@ -225,20 +220,19 @@ vec3 themeWater() {
    anywhere, which stopped the pack from compiling at all. BLOCKLIGHT_TEMP moves the
    light from orange through warm white to neutral. */
 vec3 blockLightColour() {
-    #if SOLACE_DIM_NETHER == 1
+    if (solaceIsNether()) {
         return vec3(1.00, 0.46, 0.20);
+    }
+    #if BLOCKLIGHT_TEMP == 0
+        return vec3(1.00, 0.56, 0.28);
+    #elif BLOCKLIGHT_TEMP == 1
+        return vec3(1.00, 0.66, 0.40);
+    #elif BLOCKLIGHT_TEMP == 2
+        return vec3(1.00, 0.75, 0.52);
+    #elif BLOCKLIGHT_TEMP == 3
+        return vec3(1.00, 0.83, 0.68);
     #else
-        #if BLOCKLIGHT_TEMP == 0
-            return vec3(1.00, 0.56, 0.28);
-        #elif BLOCKLIGHT_TEMP == 1
-            return vec3(1.00, 0.66, 0.40);
-        #elif BLOCKLIGHT_TEMP == 2
-            return vec3(1.00, 0.75, 0.52);
-        #elif BLOCKLIGHT_TEMP == 3
-            return vec3(1.00, 0.83, 0.68);
-        #else
-            return vec3(1.00, 0.92, 0.85);
-        #endif
+        return vec3(1.00, 0.92, 0.85);
     #endif
 }
 

@@ -119,11 +119,7 @@ void main() {
 
     /* The Nether and the End get a fixed fog density of 1.0 whatever the overworld's
        setting is; in an enclosed dimension heavy fog just fills the screen. */
-    #if SOLACE_DIM_NETHER == 1 || SOLACE_DIM_END == 1
-        float fogDensity = 1.0;
-    #else
-        float fogDensity = FOG_DENSITY;
-    #endif
+    float fogDensity = solaceNoSky() ? 1.0 : FOG_DENSITY;
 
     /* Far terrain fades over the mod's own render distance, not over the vanilla one:
        it can be 500 blocks out while the near world ends at 96, and normalising by the
@@ -131,17 +127,13 @@ void main() {
        also far softer than the near one, which is what makes a horizon read as haze
        rather than as a wall. */
     #if defined SOLACE_DH_GEOMETRY && defined DISTANT_HORIZONS
-        float sight = float(dhRenderDistance);
+        float sight = dhRenderDistance;
         float fogExponent = mix(0.30, 0.50, rainStrength);
     #else
         /* The Nether has no horizon to look at: its sight is capped at half the render
            distance, up to 96 blocks, so the fog closes in instead of ending at the
            build limit. */
-        #if SOLACE_DIM_NETHER == 1
-            float sight = min(far * 0.5, 96.0);
-        #else
-            float sight = far;
-        #endif
+        float sight = solaceIsNether() ? min(far * 0.5, 96.0) : far;
 
         float fogExponent = mix(fogDensity * 2.0, 1.0, rainStrength);
     #endif
@@ -162,7 +154,10 @@ void main() {
 
     tint = gl_Color;
 
-    normalView = normalize(mat3(gl_ModelViewMatrix) * gl_Normal);
+    /* gl_NormalMatrix is the inverse transpose of the model-view matrix, which is what
+       a normal needs; mat3(gl_ModelViewMatrix) is only equivalent while the transform
+       has no scale, and entities and the hand do scale their geometry. */
+    normalView = normalize(gl_NormalMatrix * gl_Normal);
     viewSpacePos = viewPos.xyz;
     worldSpacePos = (gbufferModelViewInverse * viewPos).xyz + cameraPosition;
 }

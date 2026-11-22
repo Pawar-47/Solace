@@ -5,6 +5,52 @@ since the previous tag. A major version means the options a player has set might
 looking at again; a minor one adds options or effects without breaking the old values;
 a patch one fixes something and changes no setting.
 
+## 1.0.2
+
+An audit against the pipeline's specification instead of against another pack — the
+official Iris documentation, imported as
+[docs/Iris-Shaderpack-Tutorial.md](docs/Iris-Shaderpack-Tutorial.md) — found twelve
+faults. Six of them stop the pack working, and one kept most of the pipeline from running
+at all. The full table is at the end of [AUDIT.md](AUDIT.md).
+
+- **Every block was drawn without its own texture.** The geometry programs sampled
+  `gcolor` for albedo, which is the alias for `colortex0` — the screen buffer — instead of
+  `gtexture`, the block atlas. `gtexture` did not appear anywhere in the pack. So the
+  world was painted with whatever the horizon fill had left in the scene, and every
+  cutout passed its alpha test as opaque.
+- **The dimension folders replaced the shader root instead of extending it.** When any
+  `worldN` folder exists the loader reads *only* those folders, and all three here were
+  missing `final`, `composite2`, `deferred` and `shadow` — no tone curve, no gamma, no
+  saturation, no antialiasing, no water copy and no cast shadows, in any dimension. The
+  folders are gone; the Nether and End palettes are read from `biome_category` at run
+  time, so there is one copy of every program.
+- **The shadow profiles could not compile.** `shadowHardwareFiltering` was switched on
+  with the pass, which turns `shadowtex0/1` into comparison samplers, while
+  `lib/shadowmap.glsl` reads them as plain depth so it can apply its own bias and four
+  taps. Impossible together. It is off now and the manual kernel is the soft path.
+- **Coloured shadows wrote their tint where nothing reads it** — attachment 1
+  (`shadowcolor1`) rather than `shadowcolor0`, which is the one `shadowTintAt()` samples.
+- **The exposure attachment was never declared.** `composite.fsh` tested
+  `AUTO_EXPOSURE` above the include that defines it, so the preprocessor read it as 0 and
+  the pass wrote its value to a target it did not own.
+- **Two passes read and wrote one buffer inside a single draw** whenever their effect was
+  on: `composite2` on the antialiasing history (HDR and Everything, which ship with
+  antialiasing) and `composite` on the exposure value. Both buffers are flipped now.
+- **Settings that did nothing**: `dynamicHandLight` (not a directive Iris reads —
+  `oldHandLight` is), `program.shadow.enabled` (`shadow.enabled` is),
+  `particles.before.deferred` (`particles.ordering` is), and `PACK_TEXTURES`, which read
+  the loader's own noise because `texture.noise` was never pointed at the generated file.
+- **Distant Horizons terrain was fogged solid 32 blocks out**: `dhRenderDistance` was
+  declared `int` where the mod provides a float, and a uniform of the wrong type reads 0.
+- **Entity ids could never match.** The lightning-bolt and burning-entity checks tested
+  `mc_Entity.x`, a terrain attribute, instead of `entityId`.
+- **Normals ignored scale** — `mat3(gl_ModelViewMatrix)` where a normal needs
+  `gl_NormalMatrix`. Blocks are unscaled so nothing showed; entities and the held item
+  are not.
+
+`gbuffers_entities_glowing` stays, marked OptiFine-only: Iris does not recognise that
+program name, so on Iris the effect falls back like the rest of the entity pass.
+
 ## 1.0.1
 
 The first build anyone actually looked at. 1.0.0 loaded, stopped freezing, and then

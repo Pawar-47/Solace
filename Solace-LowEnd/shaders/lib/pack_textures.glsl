@@ -6,13 +6,17 @@ copy without these files still renders.
 
 With PACK_TEXTURES 1 the sampler below is declared and the shaders read it instead.
 
-The name matters, and it is not free. Iris binds exactly one file by convention -
-`noisetex`, to textures/noise.png - and everything else has to be bound to one of the
-fixed buffer names (gcolor, gaux1..gaux4) with a `texture.<program>.<name>` line in
-shaders.properties. This file used to declare samplers called `noise` and `clouds`,
-which Iris never binds: the first fetch from either returned an unbound texture, so
-the option quietly turned the water black. Everything reads `noisetex` now, which
-needs no properties line and cannot go stale.
+The name matters, and it is not free. `noisetex` is the one sampler the loader binds by
+itself, and by default it binds the loader's own random noise at
+`noiseTextureResolution` - not this file. Pointing it here is one properties line,
+`texture.noise = textures/noise.png` in shaders.properties (shipped commented out,
+because the png is generated rather than committed). Without it PACK_TEXTURES 1 reads
+random noise instead of the ripple field: it still draws, but it is not what the option
+says. Anything else has to be bound to one of the fixed buffer names with a
+`texture.<program>.<name>` line. This file used to declare samplers called `noise` and
+`clouds`, which nothing binds: the first fetch from either returned an unbound texture,
+so the option quietly turned the water black. Everything reads `noisetex` now, which
+needs at most that one line and cannot go stale.
 
 Generate the file once with textures/generate_textures.py - it is not shipped as a
 binary, nothing here is copied from another pack, and one run is enough for every

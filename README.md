@@ -140,12 +140,14 @@ The pack is code complete — every effect listed above is implemented, every st
 compiles under seven option sets with a real GLSL front end, and the structure is
 checked on every push.
 
-The audit against the working pack is in [AUDIT.md](AUDIT.md): every file of ours
-against its counterpart, what was compared, and whether it is the same, fixed, or
-different by design. Eight defects have come out of it, each of which alone would have
-stopped the pack working — the last of them a buffer read and written inside one draw,
-in every profile, which is the kind of fault that freezes a driver with nothing in the
-log.
+The audit is in [AUDIT.md](AUDIT.md): first against the working pack — every file of ours
+against its counterpart — and then against the specification itself, the official Iris
+documentation, kept here as
+[docs/Iris-Shaderpack-Tutorial.md](docs/Iris-Shaderpack-Tutorial.md). Eight defects came
+out of the first pass and twelve out of the second. Two of them alone were enough to make
+the pack unusable: a buffer read and written inside one draw in every profile, and a
+`worldN` folder layout that kept `final`, `composite2`, `deferred` and `shadow` from
+running in any dimension.
 
 The picture has been looked at once, on the machine this pack was written for. 1.0.0
 loaded and stopped freezing, and showed a set of faults in the colour and sky model that

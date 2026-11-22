@@ -184,3 +184,83 @@ audit exists for:
 The one row genuinely open is the eight translations missing the 15 option names added
 with the sun, cloud and preset work. That is text, not code, and it affects only how the
 options screen reads in those languages.
+
+
+## Second audit: against the specification
+
+The audit above compares this pack against another pack. That catches "we do it
+differently", but not "everybody does it wrong" — a reference that shares a mistake hides
+it. So the pack was audited again against the pipeline's specification: the official Iris
+documentation, imported here as [docs/Iris-Shaderpack-Tutorial.md](docs/Iris-Shaderpack-Tutorial.md)
+(every reference page of shaders.properties, plus the guide and the how-to pages).
+
+That found twelve defects. Six of them stop the pack working, and the largest one made
+every dimension ignore most of the pipeline.
+
+### Program names and the atlas
+
+| Ours | Rule | State |
+| --- | --- | --- |
+| `lib/fragment_geometry.glsl`, `lib/fragment_water.glsl`, `lib/fragment_clouds.glsl`, `lib/fragment_glowing.glsl`, `shadow.fsh`, `gbuffers_damagedblock.fsh`, `gbuffers_spidereyes.fsh`, `gbuffers_skytextured.fsh`, `gbuffers_beaconbeam.fsh`, `gbuffers_armor_glint.fsh` | The block atlas is `gtexture`. `gcolor` is the alias for `colortex0` — the screen buffer | **fixed** — every one of these sampled `gcolor` with atlas UVs, i.e. sampled the scene instead of the block. `gtexture` did not appear anywhere in the pack. Nothing drew as a block: albedo was whatever `prepare` had left in the scene buffer, and every alpha test passed as opaque because a screen buffer's alpha is 1. This is the fault behind "the world was flat paint" |
+| `gbuffers_entities_glowing.*` | `gbuffers_entities_glowing` is an OptiFine program; Iris does not recognise the name | **by design** — the two files are kept so an OptiFine install draws the spectral outline. On Iris the geometry falls back to `gbuffers_textured_lit`, and `shaders.properties` now says so instead of implying the program runs |
+
+### Dimension loading
+
+| Ours | Rule | State |
+| --- | --- | --- |
+| `world0/`, `world-1/`, `world1/`, `dimension.properties` | If **any** `worldN` folder exists, shaders are loaded **only** from `worldN` folders — nothing is read from `shaders/` | **fixed** — three folders existed and each held a partial copy. All three were missing `final`, `composite2`, `deferred` and `shadow`, plus seven smaller programs, so no dimension ran the tone curve, the gamma, the saturation, the antialiasing, the water copy or cast shadows. `dimension.properties` was inert beside them, because the `worldN` folders take precedence. The folders and the file are gone; the Nether and End palettes are selected at run time from `biome_category` (`lib/uniforms.glsl`), so there is one pipeline and one copy of every program. The Overworld palette is what an OptiFine install gets in every dimension, since OptiFine only exposes `biome_category` to custom uniforms — cosmetic, and noted in the header |
+
+### Shadow pass
+
+| Ours | Rule | State |
+| --- | --- | --- |
+| `lib/config.glsl` | `shadowHardwareFiltering` turns `shadowtex0/1` into `sampler2DShadow`; a comparison sampler cannot be read with `texture2D(sampler, vec2)` | **fixed** — it was `true` whenever `SHADOWS` was 1, while `lib/shadowmap.glsl` reads `shadowtex1` as a plain depth texture and does its own four-tap kernel with bias. The two are mutually exclusive, so enabling shadows put a compile error in every program that samples the map. It is `false` now, unconditionally, and the manual PCF is the soft path |
+| `shadow.fsh` | In the shadow pass the attachments are fixed: first is `shadowcolor0`, second `shadowcolor1` | **fixed** — the tint was written to `gl_FragData[1]` (shadowcolor1) while `shadowTintAt()` samples `shadowcolor0`, so `COLORED_SHADOW` tinted nothing. It writes attachment 0 now |
+| `shadow.fsh` | `DRAWBUFFERS` names `colortex` targets, which the shadow pass cannot write | **fixed** — the `/* DRAWBUFFERS:01 */` line is gone; it was inert at best and named two buffers the pass does not own |
+
+### Post chain
+
+| Ours | Rule | State |
+| --- | --- | --- |
+| `composite.fsh` | An identifier the preprocessor has not met yet reads as 0 | **fixed** — `#if AUTO_EXPOSURE == 1` sat above the `#include` of `lib/config.glsl`, so it always took the else branch: `DRAWBUFFERS:1` was declared in every build and the exposure attachment never existed. The pass computed an exposure and wrote it to a target that was not attached. The include is first now |
+| `composite2.fsh`, `lib/composite_body.glsl` | A buffer sampled and written inside one draw is a feedback loop; `flip.<program>.<buffer>` is the documented remedy | **fixed** — making the colortex3 sampler conditional removed the fault in the profiles with antialiasing off, which is where it was found, but with `AA_TYPE` 1 or 2 the pass still read and wrote the history buffer in one draw, and `composite` did the same with colortex6 whenever `AUTO_EXPOSURE` was on — both of them the shipped HDR profile. `flip.composite2.colortex3` and `flip.composite.colortex6` are now set, which is what the flag exists for. The earlier note here concluded the opposite from the reference pack; the reference is not the specification |
+
+### `shaders.properties`
+
+| Ours | Rule | State |
+| --- | --- | --- |
+| `dynamicHandLight` | Not a directive Iris reads; the same switch is `oldHandLight` | **fixed** — replaced. The old line did nothing, so `heldBlockLightValue` kept the "brighter of both hands" behaviour while the shader's per-hand ids assumed otherwise |
+| `program.shadow.enabled` | The documented switch for the whole pass is `shadow.enabled` | **fixed** — replaced. `program.<name>.enabled` is not the name the mod looks for here, so `SHADOWS=0` did not disable the pass |
+| `particles.before.deferred` | Legacy spelling; `particles.ordering` overrides it | **fixed** — replaced with `particles.ordering = before` |
+| `texture.noise` | `noisetex` is bound to the loader's own noise unless `texture.noise` names a file | **fixed** (documented) — the line is present, commented, with the reason: `PACK_TEXTURES 1` and `CLOUD_STYLE 2` otherwise read random noise and call it a ripple field. It stays commented because the png is generated, not committed |
+| `iris.features.required` | Required only for gated capabilities (compute, images, SSBO, tessellation, …) | **by design** — none is used, so there is nothing to declare |
+| options, screens, sliders, profiles, lang | Space-separated value lists; every option in a screen must exist; `sliders` matches the lists | **same** — checked against `lib/config.glsl` and the nine `.lang` files |
+
+### Uniforms, attributes and geometry
+
+| Ours | Rule | State |
+| --- | --- | --- |
+| `lib/uniforms.glsl` | `dhRenderDistance` is a float | **fixed** — declared `int`. A uniform of the wrong type reads as 0, and the far fog normalises by it, so Distant Horizons terrain was fogged solid at 32 blocks |
+| `lib/uniforms.glsl` | `sunPosition`, `moonPosition`, `shadowLightPosition` have length 100, they are not unit vectors | **fixed** (comment) — the comment said unit vector, and one function multiplied it by 0.01 as if it were |
+| `lib/vertex_geometry.glsl` | Normals transform with `gl_NormalMatrix` (inverse transpose), not `mat3(gl_ModelViewMatrix)` | **fixed** — identical on unscaled block geometry, wrong on anything that scales, which includes entities and the held item |
+| `lib/fragment_geometry.glsl` | `mc_Entity` is a terrain attribute; entity ids arrive as `entityId` | **fixed** — the lightning-bolt and burning-entity ids were tested against `blockId`, which is `mc_Entity.x` and therefore never carried them. They test `entityId` now |
+| `lib/vertex_geometry.glsl` | Lightmap UVs run about `[0.033, 0.97]` and want rescaling | **same** — the saturate-then-de-bias in the vertex and fragment stages comes out within 3% of `/(30/32) - (1/32)` across the range, so it is left alone rather than retuned blind |
+| `#version 120`, `DRAWBUFFERS`, `gl_FragData` | Legal; on the compatibility profile the alpha test is applied for you | **by design** — the pack's own `discard` at 0.10 matches `alphaTestRef`, so cutouts are correct either way |
+
+### Comments that were wrong
+
+Four files described behaviour the code did not have, which is how three of the faults
+above survived the first audit. All four are corrected: `deferred.fsh` (claimed to run
+after the translucent gbuffers — it runs before them, so the copy water reads is the
+current frame, not the last), `lib/buffers.glsl` (colortex4's reason for being un-cleared),
+`lib/pack_textures.glsl` (what `noisetex` is bound to by default) and
+`entity.properties` (which uniform it feeds).
+
+### Not verified
+
+Nothing here was compiled or run: there is no GPU and no `glslangValidator` in the
+sandbox this was done in, so the four checks in `tools/` are the only automatic check of
+the result and they run in CI. The dimension change is the one that most deserves a look
+in game — the Nether and End palettes now come from `biome_category` rather than from a
+compile-time define, and the fallback for a loader that does not fill it is the Overworld
+palette.

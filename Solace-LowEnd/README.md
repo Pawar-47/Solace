@@ -196,9 +196,6 @@ add work per frame rather than per pixel.
 ```
 shaders/
   lib/          shared code: config, maths, colour model, geometry stages, water, AO, shadows
-  world0/       the overworld's thin entry points
-  world-1/      the Nether's
-  world1/       the End's
   lang/         nine languages; English carries the full tooltips
   textures/     the generator for the three optional textures, and their mcmeta files
   block.properties   ten ids: waving, four gloss classes, emissive, portal, water,
@@ -207,6 +204,14 @@ shaders/
   entity.properties  the two entity ids the pack reacts to
   shaders.properties profiles, the options screen, pass switches, blend state
 ```
+
+There are no `world0` / `world-1` / `world1` folders, and that is deliberate. When any
+of those exists the mods load shaders *only* from them and never from `shaders/` itself,
+so every dimension folder has to repeat every program. This pack had three of them, and
+they were missing `final`, `composite2`, `deferred` and `shadow` - which meant no tone
+curve, no antialiasing, no water copy and no cast shadows in any dimension. The Nether
+and End palettes are read at run time from `biome_category` instead
+(`lib/uniforms.glsl`), so there is one copy of every program.
 
 ## Licence
 

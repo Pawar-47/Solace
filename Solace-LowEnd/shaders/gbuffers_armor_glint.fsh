@@ -14,7 +14,7 @@ fragment shader and not in a vertex one.
 #include "/lib/config.glsl"
 #include "/lib/math.glsl"
 
-uniform sampler2D gcolor;
+uniform sampler2D gtexture;
 
 /* The exposure value the exposure pass leaves in gaux3, the same for every pixel. */
 #if AUTO_EXPOSURE == 1
@@ -25,7 +25,7 @@ varying vec2 texcoord;
 varying vec4 tint;
 
 void main() {
-    vec4 glint = texture2D(gcolor, texcoord) * tint;
+    vec4 glint = texture2D(gtexture, texcoord) * tint;
     if (glint.a < 0.01) discard;
 
     float exposure = EXPOSURE;

@@ -5,8 +5,8 @@ lib/sky_model.glsl (theme, dimension override, night, dusk, stars), the underwat
 tint when the camera is submerged, and - when V_CLOUDS is 1 - a slab of procedural
 cloud marched through the sky, with no texture and no extra pass.
 
-Kept in a library so the dimension folders can compile it with their own palette
-without a second copy of any of it.
+Kept in a library so the sky pass, the fog on every surface and the water reflection
+all read one copy of the colour model instead of three that can disagree.
 */
 
 #ifndef SOLACE_SKYBASIC
@@ -85,7 +85,7 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
 
     vec3 cloudColour;
 
-    #if SOLACE_DIM_END == 1
+    if (solaceIsEnd()) {
         /* The End has no sun to light its clouds from: they are a bright violet
            haze, lighter where they are thin, which is what an End sky looks like
            from inside. */
@@ -93,7 +93,7 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
                           0.35);
         cloudColour = mix(cloudColour, cloudColour * 2.00, 1.0 - density);
         cloudColour = mix(cloudColour, vec3(1.0), 0.04);
-    #else
+    } else {
         vec3 sunDir = mat3(gbufferModelViewInverse) * normalize(sunPosition);
 
         /* Rain flattens the lighting: no sunlit tops, no shadowed bases. */
@@ -108,7 +108,7 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
         cloudColour += sunColIn * lining * (1.0 - rainStrength) * 1.60;
 
         cloudColour *= 0.62 + 0.55 * (1.0 - density);
-    #endif
+    }
 
     float fogAmount = 1.0 - exp(-travel * (1.1 * FOG_DENSITY) / max(far, 96.0));
     cloudColour = mix(cloudColour, fogColour(day, dusk), sat(fogAmount));

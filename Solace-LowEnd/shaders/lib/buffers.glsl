@@ -36,13 +36,18 @@ const int colortex6Format = R16F;
    old contents can never show through.
 
    colortex3 is the temporal-antialiasing history: clearing it would restart the history
-   from nothing every frame and it could never converge.
+   from nothing every frame and it could never converge. It is also the one buffer this
+   pack reads and writes inside one draw, so `flip.composite2.colortex3` is set in
+   shaders.properties; without the flip the pass samples the texture it is writing.
 
-   colortex4 is the copy of the scene that water refraction and reflections read. It must
-   not be cleared either: gbuffers_water runs before the pass that fills it, so at that
-   moment it holds the previous frame's copy, which is the point.
+   colortex4 is the copy of the scene that water refraction and reflections read. It does
+   not have to be cleared: deferred fills it edge to edge and runs before gbuffers_water
+   reads it. It is left un-cleared anyway, so that a frame with the pass absent reads as
+   the previous frame rather than as black.
 
-   colortex6 is the auto-exposure value carried between frames: the same argument. */
+   colortex6 is the auto-exposure value carried between frames. It is the other buffer
+   read and written in one draw (`flip.composite.colortex6`), for the same reason as
+   colortex3. */
 
 const bool colortex0Clear = false;
 const bool colortex1Clear = false;

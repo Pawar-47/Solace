@@ -99,11 +99,15 @@ const bool shadowtex1Nearest = false;
    which is a second sampler and a second allocation for a pass that may not exist.
    Only ask for it when the pass does. Declared after SHADOWS so the guard reads the
    value above rather than the preprocessor's 0 for an identifier it has not seen. */
-#if SHADOWS == 1
-    const bool shadowHardwareFiltering = true;
-#else
-    const bool shadowHardwareFiltering = false;
-#endif
+/* Hardware filtering turns shadowtex0/1 into depth-comparison samplers
+   (`sampler2DShadow`), and a comparison sampler cannot be read as an ordinary depth
+   texture: `texture2D(shadowtex1, vec2)` does not exist for one. lib/shadowmap.glsl
+   reads them as plain depth so it can apply its own bias and its four-tap kernel, so
+   asking the mod for hardware filtering is what would stop the shadow profiles
+   compiling. It stays off; the filtered lookup in lib/shadowmap.glsl is the soft path.
+   Deliberately declared without a guard on SHADOWS: the value has to be the same in
+   every program, and the pass being off must not change the sampler type. */
+const bool shadowHardwareFiltering = false;
 
 // ---- Sky ----------------------------------------------------------------
 #define SKY_SUN_GLOW 1         // [0 1] Sun halo, moon halo.

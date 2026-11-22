@@ -4,10 +4,13 @@ Copies the finished scene into gaux1 (colortex4). That copy is what the water sh
 reads when REFRACTION or WATER_SSR is on, so the surface can bend what is behind it
 and reflect the world instead of only the sky.
 
-The copy is taken after the translucent geometry, so it contains the water surface
-itself; a reflection that lands on water therefore shows water. It also means the copy
-water reads is one frame old, because this pass runs after gbuffers_water - the reason
-colortex4 is never cleared (see lib/buffers.glsl).
+This pass runs between the opaque and the translucent gbuffers, so the copy it takes is
+the finished opaque scene of the *current* frame - which is exactly what refraction
+needs: the water is drawn after this pass, and must bend what is behind it rather than
+itself. The earlier note here had the order the other way round and concluded the copy
+was a frame old; it is not, and colortex4 is filled edge to edge before any water reads
+it. It is still declared un-cleared (lib/buffers.glsl) because a cleared buffer would
+read as black rather than as the frame if this pass were ever absent.
 
 Only useful when one of those two options is 1: with both off the copy is made and
 never read. It still runs, because every pass in this pack runs and gates its own work

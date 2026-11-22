@@ -29,7 +29,7 @@ by the fresnel curve, and an alpha that closes to opaque at grazing angles.
 #include "/lib/depth_dh.glsl"
 #include "/lib/pack_textures.glsl"
 
-uniform sampler2D gcolor;
+uniform sampler2D gtexture;
 uniform sampler2D depthtex0;
 
 #if REFRACTION == 1 || WATER_SSR == 1
@@ -58,7 +58,7 @@ void main() {
                                     + vec2(frameTimeCounter * 0.05)));
         vec4 albedo = vec4(tint.rgb * (0.85 + 0.30 * synth), 0.86);
     #else
-        vec4 albedo = texture2D(gcolor, texcoord) * tint;
+        vec4 albedo = texture2D(gtexture, texcoord) * tint;
         if (albedo.a < 0.05) discard;
     #endif
 
