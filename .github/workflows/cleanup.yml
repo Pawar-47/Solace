@@ -26,13 +26,13 @@ on:
         description: 'Tag to keep, if any. Leave empty to delete every tag'
         required: false
         default: ""
-  # Started once by committing .github/run-cleanup, which is how a run is launched from
-  # somewhere that cannot click a workflow box. That trigger is removed now that it has
-  # done its job: leaving it in place would let a stray commit delete the release page
-  # again. From here the workflow is manual only.
-  # push:
-  #   branches: [main]
-  #   paths: [".github/run-cleanup"]
+  # Started by committing .github/run-cleanup, which is how a run is launched from
+  # somewhere that cannot click a workflow box. The marker has to be *present* in the
+  # pushed tree: the guard job below stops the run when it is missing, so deleting the
+  # marker - the way this trigger is switched off again - deletes no releases.
+  push:
+    branches: [main]
+    paths: [".github/run-cleanup"]
 
 permissions:
   contents: write
@@ -43,8 +43,37 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The marker, and nothing else, says whether to go. A push that *removes* the file
+  # matches the trigger above too, and that is how the trigger is turned off; without
+  # this job that same push would delete the release page.
+  asked:
+    name: Was a clean-up asked for
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.check.outputs.go }}
+    steps:
+      - name: Check out the pushed tree
+        uses: actions/checkout@v4
+
+      - name: Look for the marker
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" != "push" ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ -f .github/run-cleanup ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+            echo "The marker is here, so this is a clean-up."
+          else
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            echo "No .github/run-cleanup in the pushed tree. Nothing will be deleted."
+          fi
+
   delete:
     name: Delete releases and tags
+    needs: asked
+    if: needs.asked.outputs.go == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Confirm

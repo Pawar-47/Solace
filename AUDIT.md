@@ -1,9 +1,9 @@
 # Audit: Solace against the working pack
 
-The reference is `MakeUp - UltraFast 9.6a`. It is not in this repository — it is
-third-party code under its own licence, kept outside the project for reading, and
-`.gitignore` refuses it here. Everything below is a comparison of **our** file against
-**its** file, line by line, and what came out of it.
+The reference is the pack that was known to run on this machine. It is not in this
+repository — it is third-party code under its own licence, kept outside the project for
+reading, and `.gitignore` refuses it here. Everything below is a comparison of **our**
+file against **its** file, line by line, and what came out of it.
 
 Statuses: **same** (compared, no defect), **fixed** (a defect was found and corrected,
 with the commit), **by design** (deliberately different, with the reason), **queued**

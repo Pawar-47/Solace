@@ -127,6 +127,12 @@ jobs:
         env:
           KIND: ${{ steps.plan.outputs.kind }}
         run: |
+          # A subject that names the pack this was measured against is dropped: a release
+          # must not point at third-party code, and two early commits do. grep exits 1 when
+          # it filters everything out, which is not a failure here.
+          drop_names() {
+            grep -vi -e 'makeup' -e 'ultrafast' || true
+          }
           {
             if [ "$KIND" = "preview" ]; then
               echo "**Preview.** The current build of \`main\`, rewritten on every push. Not a version,"
@@ -155,11 +161,11 @@ jobs:
             if [ -n "$previous" ]; then
               echo "Since \`$previous\`:"
               echo ""
-              git log --no-merges --pretty='- %s' "$previous..$to"
+              git log --no-merges --pretty='- %s' "$previous..$to" | drop_names
             else
-              echo "Every commit on main. The reasons are in CHANGELOG.md."
+              echo "The work on main, oldest first. The reasons are in CHANGELOG.md."
               echo ""
-              git log --no-merges --pretty='- %s' "$to"
+              git log --no-merges --pretty='- %s' "$to" | drop_names
             fi
             echo ""
             echo "Every stage of every program compiles under all seven option sets, and"
