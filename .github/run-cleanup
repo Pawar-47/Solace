@@ -1,5 +1,0 @@
-Delete every release, tag and workflow artifact.
-
-This file is the request. A push that adds or changes it starts the clean-up; a push
-that removes it does nothing, because the guard job looks for this file in the pushed
-tree before any step is allowed to delete anything.
