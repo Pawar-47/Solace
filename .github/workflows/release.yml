@@ -151,6 +151,31 @@ jobs:
           ( cd bareconfig && zip -r ../Solace-Probe-BareConfig.zip shaders )
           unzip -l Solace-Probe-BareConfig.zip | tail -6
 
+      # Two probes on the full pack, one program each.
+      #
+      # Every probe that runs is missing the post chain, and PostOnly - the only one
+      # that keeps it - is the only one that freezes. With the shipped profile the
+      # composite, composite2, deferred and shadow passes are all switched off, so the
+      # only code of ours actually running in PostOnly is prepare and final. These two
+      # name which:
+      #
+      #   Solace-Probe-NoFinal    the whole pack minus final.fsh/final.vsh. Runs means
+      #                           final is at fault; freezes means prepare is.
+      #   Solace-Probe-NoPrepare  the whole pack minus prepare.fsh/prepare.vsh.
+      #
+      # Iris substitutes its own pass-through for a missing one, so both still load.
+      - name: Build the per-program probes
+        run: |
+          rm -rf nofinal && cp -r Solace-LowEnd nofinal
+          find nofinal/shaders -name 'final.*' -delete
+          ( cd nofinal && zip -r ../Solace-Probe-NoFinal.zip shaders README.md )
+          unzip -l Solace-Probe-NoFinal.zip | tail -3
+
+          rm -rf noprepare && cp -r Solace-LowEnd noprepare
+          find noprepare/shaders -name 'prepare.*' -delete
+          ( cd noprepare && zip -r ../Solace-Probe-NoPrepare.zip shaders README.md )
+          unzip -l Solace-Probe-NoPrepare.zip | tail -3
+
       - name: Attach it to this run
         uses: actions/upload-artifact@v4
         with:
@@ -177,7 +202,8 @@ jobs:
             --latest
           gh release upload latest Solace-LowEnd.zip Solace-Diagnostic.zip \
             Solace-Probe-PostOnly.zip Solace-Probe-Geometry.zip \
-            Solace-Probe-Bare.zip Solace-Probe-BareConfig.zip ERRORS.txt --clobber
+            Solace-Probe-Bare.zip Solace-Probe-BareConfig.zip \
+            Solace-Probe-NoFinal.zip Solace-Probe-NoPrepare.zip ERRORS.txt --clobber
           gh release edit latest \
             --notes "Download Solace-LowEnd.zip and copy the zip itself into your shaderpacks folder, then pick it in Options - Video Settings - Shader Packs. Do not unpack it: the zip already has shaders/ at its top level, which is what Iris expects. If you would rather have a folder, unpack it and rename the result to Solace-LowEnd so the game finds shaderpacks/Solace-LowEnd/shaders/.
 
@@ -185,7 +211,7 @@ jobs:
 
           For the record, the four probe results this build rests on: Bare, BareConfig and Geometry ran; PostOnly froze. PostOnly was the only one of the four that contained both composite2.fsh and shaders.properties, which is exactly the pair above.
 
-          If it still freezes, the same four probes are attached and the same test applies.
+          If it still freezes, these are the two that will name the file: Solace-Probe-NoFinal is the whole pack minus final.fsh, and Solace-Probe-NoPrepare is the whole pack minus prepare.fsh. With the shipped profile those are the only two programs of the pack that actually run - the composite, composite2, deferred and shadow passes are all switched off - and every probe that has run so far was missing both of them.
 
           If the pack freezes the game, four probe zips say where. Each one either runs or freezes; nothing else to read.
 
@@ -213,4 +239,5 @@ jobs:
           gh release upload "${GITHUB_REF_NAME}" \
             Solace-LowEnd.zip Solace-Diagnostic.zip \
             Solace-Probe-PostOnly.zip Solace-Probe-Geometry.zip \
-            Solace-Probe-Bare.zip Solace-Probe-BareConfig.zip ERRORS.txt --clobber
+            Solace-Probe-Bare.zip Solace-Probe-BareConfig.zip \
+            Solace-Probe-NoFinal.zip Solace-Probe-NoPrepare.zip ERRORS.txt --clobber

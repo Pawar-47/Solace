@@ -32,16 +32,24 @@ temporal pass, which has already put its result back in colortex0.
 
 /* Whichever buffer holds the finished frame. These conditions are written to match the
    `program.*.enabled` lines in shaders.properties exactly, so the two cannot drift
-   apart: a pass that runs and a pass this file thinks ran have to be the same set. */
+   apart: a pass that runs and a pass this file thinks ran have to be the same set.
+
+   The buffer is declared under its own name here and only the *uses* go through SCENE.
+   That matters: Iris decides which buffers a program samples by scanning its source for
+   `uniform sampler2D colortexN`, and a macro name is not a name it can see. Declared as
+   `uniform sampler2D SCENE;` alone, this pass looked to the mod like a program that
+   read no scene buffer at all - so it was never bound, and the pass that fills it had
+   no consumer the pipeline could account for. */
 #if AA_TYPE || MOTION_BLUR
+    uniform sampler2D colortex0;
     #define SCENE colortex0
 #elif VOL_LIGHT == 1 || AUTO_EXPOSURE == 1
+    uniform sampler2D colortex1;
     #define SCENE colortex1
 #else
+    uniform sampler2D colortex0;
     #define SCENE colortex0
 #endif
-
-uniform sampler2D SCENE;
 
 /* Only what is used, and only when it is used. A sampler a program declares is a
    sampler the mod has to bind, and depthtex1 in particular is a full-screen copy of
