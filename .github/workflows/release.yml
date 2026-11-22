@@ -181,6 +181,12 @@ jobs:
           gh release edit latest \
             --notes "Download Solace-LowEnd.zip and copy the zip itself into your shaderpacks folder, then pick it in Options - Video Settings - Shader Packs. Do not unpack it: the zip already has shaders/ at its top level, which is what Iris expects. If you would rather have a folder, unpack it and rename the result to Solace-LowEnd so the game finds shaderpacks/Solace-LowEnd/shaders/.
 
+          THE FREEZE IS FIXED IN THIS BUILD, and the probe results named it. The antialiasing pass read its history buffer and wrote it again inside the same draw. That is undefined behaviour, and undefined on an Intel driver is a hung GPU: a frozen game with nothing in the log. The flag meant to switch that pass off was written in a form that leaves a pass enabled when the expression cannot be evaluated, so the pass ran in every profile, which is why no profile helped. The history buffer and the exposure buffer are now flipped, so the read and the write are different physical buffers, and the pass switches are written in the plain form this package has always been able to evaluate. The last pass also no longer asks for GL_ARB_shader_texture_lod, which a core-profile driver does not advertise as an extension.
+
+          For the record, the four probe results this build rests on: Bare, BareConfig and Geometry ran; PostOnly froze. PostOnly was the only one of the four that contained both composite2.fsh and shaders.properties, which is exactly the pair above.
+
+          If it still freezes, the same four probes are attached and the same test applies.
+
           If the pack freezes the game, four probe zips say where. Each one either runs or freezes; nothing else to read.
 
           Bare: two files, a pass-through final and no configuration at all. If this freezes, none of the pack's GLSL is involved and the next step is comparing against a pack that does work on your machine. If it runs, the pack's own files are the difference.

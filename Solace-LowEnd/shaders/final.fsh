@@ -18,9 +18,11 @@ temporal pass, which has already put its result back in colortex0.
 
 #version 120
 
-/* Needed for texture2DLod in a fragment shader, which is how the bloom gathers from
-   a mip level instead of taking forty taps at full resolution. */
-#extension GL_ARB_shader_texture_lod : enable
+/* No #extension here. This file used to ask for GL_ARB_shader_texture_lod so that the
+   bloom could gather from a mip level. Once the game runs a core profile, that
+   extension is not advertised - its contents became core - and asking for it is a
+   warning that a source patcher can turn into a failure. The bloom spreads its taps
+   at full resolution instead; see the block below. */
 
 #include "/lib/config.glsl"
 #include "/lib/math.glsl"
@@ -28,7 +30,10 @@ temporal pass, which has already put its result back in colortex0.
 #include "/lib/ssao.glsl"
 #include "/lib/buffers.glsl"
 
-#if (AA_TYPE == 1 || AA_TYPE == 2) || MOTION_BLUR == 1
+/* Whichever buffer holds the finished frame. These conditions are written to match the
+   `program.*.enabled` lines in shaders.properties exactly, so the two cannot drift
+   apart: a pass that runs and a pass this file thinks ran have to be the same set. */
+#if AA_TYPE || MOTION_BLUR
     #define SCENE colortex0
 #elif VOL_LIGHT == 1 || AUTO_EXPOSURE == 1
     #define SCENE colortex1
@@ -37,13 +42,23 @@ temporal pass, which has already put its result back in colortex0.
 #endif
 
 uniform sampler2D SCENE;
-uniform sampler2D colortex6;
+
+/* Only what is used, and only when it is used. A sampler a program declares is a
+   sampler the mod has to bind, and depthtex1 in particular is a full-screen copy of
+   the depth buffer that Iris has to make before this pass can run. */
+#if AUTO_EXPOSURE == 1
+    uniform sampler2D colortex6;
+#endif
+
 /* lib/ssao.glsl declares depthtex0 itself when ambient occlusion is on, and a uniform
    declared twice is a redefinition, so this one is only for depth of field. */
 #if AO == 0
     uniform sampler2D depthtex0;
 #endif
-uniform sampler2D depthtex1;
+
+#if AO == 1
+    uniform sampler2D depthtex1;
+#endif
 
 varying vec2 texcoord;
 
@@ -310,18 +325,20 @@ void main() {
     #endif
 
     #if BLOOM == 1
-        /* Gather from a mip level instead of a wide ring of full-resolution taps: one
-           fetch at mip BLOOM_LOD already averages a block of pixels, so eight rotated
-           taps give a wide, smooth glow. */
+        /* Eight rotated taps at full resolution, spread wider than they used to be so
+           the glow still tastes wide without a mip level: BLOOM_LOD scales the radius
+           instead of selecting a mip. A mip fetch was the cheaper option on paper, but
+           it needed texture2DLod, and that needs GL_ARB_shader_texture_lod, which a
+           core-profile driver does not advertise as an extension. One fetch per tap is
+           the price of loading at all. */
         float bloomSeed = solDitherShifted(gl_FragCoord.yx * 0.31,
                                            mod(float(frameCounter), 64.0) * 0.015625);
         vec3 glow = vec3(0.0);
         for (int i = 0; i < 8; i++) {
             float turn = fract((float(i) + bloomSeed) * 1.6180339887) * 6.28318530718;
             vec2 offset = vec2(cos(turn), sin(turn))
-                        * (BLOOM_RADIUS * float(i + 1) * 0.12) * pixel;
-            vec3 tapped = texture2DLod(SCENE, clamp(uv + offset, vec2(0.0), vec2(1.0)),
-                                       BLOOM_LOD).rgb;
+                        * (BLOOM_RADIUS * BLOOM_LOD * float(i + 1) * 0.12) * pixel;
+            vec3 tapped = texture2D(SCENE, clamp(uv + offset, vec2(0.0), vec2(1.0))).rgb;
             glow += max(tapped - vec3(0.62), vec3(0.0));
         }
         colour += glow * (BLOOM_STRENGTH * 0.125);

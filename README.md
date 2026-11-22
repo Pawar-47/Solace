@@ -132,9 +132,20 @@ version tag (`v1.0.0`) publishes a release of its own with generated notes.
 ## Status
 
 The pack is code complete — every effect listed above is implemented, and the
-structure is checked on every push. What has not happened yet is the one check that
-needs a GPU with Minecraft and Iris in front of it: **nobody has looked at the
-picture yet**. Treat the first run as a test. Start on `LowEnd`.
+structure is checked on every push.
+
+It now also loads. The cause of a freeze that dogged every earlier build was found by
+removing whole families of programs and seeing which combination still froze: the
+antialiasing pass read its history buffer and wrote it again inside the same draw,
+which is undefined behaviour and, on an Intel driver, a hung GPU. The flag meant to
+switch that pass off was written in a form that leaves a pass *enabled* when the
+expression cannot be evaluated, so it ran in every profile. The history and exposure
+buffers are now flipped so the read and the write are different buffers, and the
+switches use the plain form the mods have always been able to evaluate.
+
+What has still not happened is anyone judging the picture: nobody has looked at the
+result on real hardware and said whether it is any good. Treat the first run as a
+test. Start on `LowEnd`.
 
 If something breaks, the two places I would look first are temporal anti-aliasing
 (it depends on a history buffer and a reprojection only a real frame can validate)
