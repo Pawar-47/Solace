@@ -49,10 +49,11 @@ page, and **copy the zip itself** into your `shaderpacks` folder, then choose it
 **Options → Video Settings → Shader Packs**. Do not unpack it: the zip already has
 `shaders/` at its top level, which is the shape Iris reads.
 
-Releases are versioned — `1.0.0`, `1.1.0` — and each one is a build that passed every
-check before it was published. There is no rolling "latest" that changes under you, and
-no diagnostic builds in the release list. [CHANGELOG.md](CHANGELOG.md) says what changed
-and when.
+There are two kinds of release. **Versions** (`1.0.0`, `1.1.0`) are builds that passed
+every check and are never rewritten — recommend these. **Preview** is the current build
+of `main`, rewritten on every push, so there is always something to test while a version
+is not yet worth cutting. It is labelled a pre-release and says which commit it was
+built from. [CHANGELOG.md](CHANGELOG.md) says what changed and when.
 
 If you would rather have a folder, unpack it and rename the result to `Solace-LowEnd`,
 so the game finds `shaderpacks/Solace-LowEnd/shaders/`. Copying the `Solace-LowEnd`
@@ -121,11 +122,11 @@ The first three need nothing but Python 3; the fourth needs `glslang-tools`, bec
 it compiles the pack for real. A red run means a file the game would refuse to load,
 or a setting that would show up in the options screen as a raw identifier.
 
-Publishing is separate from that. The **Release** workflow runs on a `v*` tag, or by
-hand with a version number, and it gates on all four checks including the compiler
-before it publishes anything. Each release carries one `Solace-LowEnd.zip` and
-`ERRORS.txt`, refuses to republish a version that already exists, and writes notes from
-the commits since the previous tag.
+Publishing is separate from that. The **Release** workflow runs on every push to `main`,
+which rewrites the **preview** release, and on a `v*` tag or a manual run with a version
+number, which publishes a **version**. Both gate on all four checks, including the
+compiler, before anything is published, and a version refuses to republish an existing
+tag.
 
 The **Diagnose** workflow builds the diagnostic and probe packs on demand and attaches
 them to the run as artifacts, and the **Delete every release** workflow is the one-time
@@ -138,7 +139,7 @@ The pack is code complete — every effect listed above is implemented, and the
 structure is checked on every push.
 
 Loading is still being chased, so this is not yet something to install without
-expecting trouble. The freeze was narrowed by building packs that are missing whole
+expecting trouble. The current build is always the **preview** release. The freeze was narrowed by building packs that are missing whole
 families of programs and seeing which combination still froze. Three of them load on the
 target machine — a two-file pack, that pack plus the full configuration, and the pack
 with the post chain removed — and the one that freezes is the pack with only the post

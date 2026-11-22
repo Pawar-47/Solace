@@ -1,28 +1,33 @@
 name: Release
 
-# A versioned release, and nothing else.
+# Two kinds of release, kept apart.
 #
-# There is no rolling "latest" any more. A shader pack is downloaded once and kept, so
-# the release page is either a version history or it is noise, and this one had become
-# a folder of diagnostic builds. Pushing a `v*` tag publishes that version; running
-# this workflow by hand with a version number creates the tag and the release together,
-# which is how a version is cut from the GitHub interface without a local git.
+#   Versions  - `1.0.0` and so on. Cut from a `v*` tag, or by hand with a version number.
+#               Each is a build that passed every check, is never rewritten, and is the
+#               one to point a player at.
 #
-# One artefact is published per release: Solace-LowEnd.zip, with `shaders/` at its top
-# level. The diagnostic and probe builds still exist - they are what found the freeze -
-# but they live in the Diagnose workflow and are attached to a run, never to a release.
+#   Preview   - one release named `preview`, rewritten on every push to main. It exists
+#               because a version is a deliberate act, and while the pack is still being
+#               found out, somebody testing it needs the current build without one. It is
+#               labelled a pre-release and says what commit it was built from. It is
+#               never the one to recommend.
+#
+# Both gate on every check, including the compiler, before anything is published. A
+# preview that fails the checks is not published, so the preview is never a build that
+# cannot load.
 
 on:
   push:
+    branches: [main]
     tags: ["v*"]
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to publish, without the v. For example 1.0.0"
-        required: true
+        description: "Version to publish, without the v. For example 1.0.0. Leave empty to refresh the preview."
+        required: false
         default: ""
       prerelease:
-        description: "Publish it as a pre-release"
+        description: "Publish a version as a pre-release"
         type: boolean
         default: false
 
@@ -40,27 +45,36 @@ jobs:
     name: Check, package and publish
     runs-on: ubuntu-latest
     steps:
-      - name: Read the version
-        id: version
+      - name: Decide what to publish
+        id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            raw="${{ github.event.inputs.version }}"
-            raw="${raw#v}"
+          if [ "$EVENT" = "push" ] && [ "${REF#refs/tags/}" != "$REF" ]; then
+            tag="${REF#refs/tags/}"
+            kind=version
+          elif [ "$EVENT" = "workflow_dispatch" ] && [ -n "$INPUT_VERSION" ]; then
+            raw="${INPUT_VERSION#v}"
             if ! printf '%s' "$raw" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-              echo "::error::A version has to look like 1.2.3, and '${{ github.event.inputs.version }}' does not."
+              echo "::error::A version has to look like 1.2.3, and '$INPUT_VERSION' does not."
               exit 1
             fi
-            echo "tag=v$raw" >> "$GITHUB_OUTPUT"
-            echo "name=$raw" >> "$GITHUB_OUTPUT"
+            tag="v$raw"
+            kind=version
           else
-            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-            echo "name=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            tag=preview
+            kind=preview
           fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "kind=$kind" >> "$GITHUB_OUTPUT"
+          echo "Publishing $kind as $tag"
 
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # The notes list the commits since the previous tag, so the tags have to be here.
+          # The notes list the commits since the previous version, so the tags have to be here.
           fetch-depth: 0
 
       - name: Set up Python
@@ -71,9 +85,8 @@ jobs:
       - name: Install glslang
         run: sudo apt-get update -qq && sudo apt-get install -y -qq glslang-tools
 
-      # A release is a promise, so it is gated on every check rather than on the branch
-      # having been pushed: three earlier builds could not load at all, and the compiler
-      # is the check that would have caught two of them.
+      # Gated on every check, so a release is never a build that cannot load: three
+      # earlier builds could not, and the compiler is the check that would have caught two.
       - name: Every check
         run: |
           python3 tools/validate_pack.py
@@ -90,8 +103,17 @@ jobs:
           unzip -l Solace-LowEnd.zip | head -8
 
       - name: Write the notes
+        env:
+          KIND: ${{ steps.plan.outputs.kind }}
         run: |
           {
+            if [ "$KIND" = "preview" ]; then
+              echo "**Preview.** The current build of \`main\`, rewritten on every push. Not a version,"
+              echo "and it can change under you. For a version, use the release list above."
+              echo ""
+              echo "Built from \`${GITHUB_SHA:0:7}\` on $(date -u +%Y-%m-%d) at $(date -u +%H:%M) UTC."
+              echo ""
+            fi
             echo "Install: copy \`Solace-LowEnd.zip\` itself into your \`shaderpacks\` folder"
             echo "and pick it in Options - Video Settings - Shader Packs. Do not unpack it;"
             echo "the zip already has \`shaders/\` at its top level, which is what Iris reads."
@@ -102,15 +124,21 @@ jobs:
             echo ""
             echo "## Changes"
             echo ""
-            previous="$(git describe --tags --abbrev=0 --match 'v*' "${GITHUB_SHA}^" 2>/dev/null || true)"
+            if [ "$KIND" = "preview" ]; then
+              previous="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
+              to="HEAD"
+            else
+              previous="$(git describe --tags --abbrev=0 --match 'v*' "${GITHUB_SHA}^" 2>/dev/null || true)"
+              to="${GITHUB_SHA}"
+            fi
             if [ -n "$previous" ]; then
               echo "Since \`$previous\`:"
               echo ""
-              git log --no-merges --pretty='- %s' "$previous..${GITHUB_SHA}"
+              git log --no-merges --pretty='- %s' "$previous..$to"
             else
-              echo "First release. The full history is in CHANGELOG.md."
+              echo "Every commit on main. The reasons are in CHANGELOG.md."
               echo ""
-              git log --no-merges --pretty='- %s' "${GITHUB_SHA}"
+              git log --no-merges --pretty='- %s' "$to"
             fi
             echo ""
             echo "Every stage of every program compiles under all seven option sets, and"
@@ -118,12 +146,34 @@ jobs:
           } > NOTES.md
           head -40 NOTES.md
 
-      - name: Publish
+      - name: Publish a preview
+        if: steps.plan.outputs.kind == 'preview'
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          # The preview is one release that is replaced, not one that accumulates.
+          # Deleting it and creating it again keeps the notes and the zip in step.
+          gh release delete preview --yes --cleanup-tag >/dev/null 2>&1 || true
+          gh release create preview \
+            --title "Solace preview (latest main)" \
+            --notes-file NOTES.md \
+            --prerelease \
+            --target "${GITHUB_SHA}" \
+            --latest=false
+          gh release upload preview Solace-LowEnd.zip ERRORS.txt --clobber
+          {
+            echo "Published the preview from ${GITHUB_SHA:0:7}."
+            echo ""
+            echo "https://github.com/${GITHUB_REPOSITORY}/releases/tag/preview"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish a version
+        if: steps.plan.outputs.kind == 'version'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.plan.outputs.tag }}
           PRERELEASE: ${{ github.event.inputs.prerelease }}
-          TRIGGER: ${{ github.event_name }}
+          EVENT: ${{ github.event_name }}
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "::error::$TAG is already published. Bump the version instead of republishing it."
@@ -134,9 +184,8 @@ jobs:
           if [ "$PRERELEASE" = "true" ]; then
             args+=(--prerelease)
           fi
-          # Only when no tag was pushed. Creating the tag from this commit is what makes
-          # a version cuttable from the GitHub interface, with no local git involved.
-          if [ "$TRIGGER" = "workflow_dispatch" ]; then
+          # Only when the tag is being created here. A pushed tag already points at its commit.
+          if [ "$EVENT" = "workflow_dispatch" ]; then
             args+=(--target "${GITHUB_SHA}")
           fi
 
