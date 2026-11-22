@@ -24,10 +24,19 @@ buffer it reads (colortex0) is never written in the same pass.
 #include "/lib/shadowmap.glsl"
 #include "/lib/buffers.glsl"
 
-/* DRAWBUFFERS:16 */
+/* One colour attachment, not two, unless the exposure average is on. colortex6 holds
+   the exposure carried between frames, and this pass reads it to smooth the value: a
+   buffer read and written inside one draw is undefined behaviour, so the second
+   attachment and its sampler appear together, under the option that uses them. The
+   pack this one replaces switches its DRAWBUFFERS on the same conditions. */
+#if AUTO_EXPOSURE == 1
+    /* DRAWBUFFERS:16 */
+    uniform sampler2D colortex6;
+#else
+    /* DRAWBUFFERS:1 */
+#endif
 
 uniform sampler2D colortex0;
-uniform sampler2D colortex6;
 uniform sampler2D depthtex0;
 
 varying vec2 texcoord;
@@ -111,7 +120,9 @@ void main() {
     #endif
 
     gl_FragData[0] = vec4(clamp(colour, vec3(0.0), vec3(50.0)), 1.0);
-    gl_FragData[1] = vec4(exposure, 0.0, 0.0, 1.0);
+    #if AUTO_EXPOSURE == 1
+        gl_FragData[1] = vec4(exposure, 0.0, 0.0, 1.0);
+    #endif
 }
 
 #endif

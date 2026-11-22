@@ -5,18 +5,25 @@ picture and the previous frame's camera.
 
   reprojection - each pixel's view position is rebuilt from depthtex1 (the depth
                  that includes translucent geometry, so water reprojects correctly),
-                 moved back to where it was last frame
-                 with the previous camera matrix, and projected with the previous
-                 projection. History is sampled there and clamped to the
-                 neighbourhood of the current pixel, so a moving object cannot smear
-                 its colour across the screen.
+                 moved back to where it was last frame with the previous camera matrix,
+                 and projected with the previous projection. History is sampled there
+                 and clamped to the neighbourhood of the current pixel, so a moving
+                 object cannot smear its colour across the screen.
   motion blur  - the same previous position, walked in MOTION_BLUR_SAMPLES steps.
 
 FXAA-only mode is not here: it needs no history and costs no extra pass, so it runs
 in `final` instead, which needs no history.
 
-Reads the shaded scene from colortex1, writes the result to colortex0 and the new
-history to colortex3, so nothing is read from the buffer being written.
+THE GUARDS HERE ARE NOT OPTIMISATION. With both effects off this pass must declare one
+colour attachment, sample one texture and write one buffer. It used to do all of that
+unconditionally: it attached colortex3, sampled it for the previous frame's history and
+wrote it again - the same buffer read and written inside one draw - on every frame, in
+every profile, whether antialiasing was on or not. That is undefined behaviour.
+
+The pack this one replaces never does it: its composite2 puts its DRAWBUFFERS line, its
+samplers and its writes all inside the same conditions, so with AA off it touches one
+buffer and nothing else. This file now does the same, and with the effects off the whole
+pass is a copy of the frame.
 */
 
 #version 120
@@ -26,13 +33,19 @@ history to colortex3, so nothing is read from the buffer being written.
 #include "/lib/uniforms.glsl"
 #include "/lib/buffers.glsl"
 
-/* DRAWBUFFERS:03 */
+#if (AA_TYPE == 1 || AA_TYPE == 2) || MOTION_BLUR == 1
+    /* DRAWBUFFERS:03 */
+    uniform sampler2D colortex3;
+    uniform sampler2D depthtex1;
+#else
+    /* DRAWBUFFERS:0 */
+#endif
 
 uniform sampler2D colortex1;
-uniform sampler2D colortex3;
-uniform sampler2D depthtex1;
 
 varying vec2 texcoord;
+
+#if (AA_TYPE == 1 || AA_TYPE == 2) || MOTION_BLUR == 1
 
 vec4 viewPosition(vec2 uv, float depth) {
     vec4 clip = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
@@ -56,12 +69,12 @@ vec2 previousUV(vec2 uv, float depth) {
 /* The history is clipped into the box the current 3x3 neighbourhood occupies when
    measured by its own mean and standard deviation. It is tighter than a plain min/max
    box: a thin edge through a flat area gets a narrow box, so an old ghost cannot
-   survive beside it. The fourth component is the
-   size of that box, which sets how much of the history is trusted. */
-vec4 solHistoryBox(vec3 history, vec2 uv) {
+   survive beside it. The fourth component is the size of that box, which sets how much
+   of the history is trusted. `centre` is the pixel already fetched, so the centre is
+   not fetched twice. */
+vec4 solHistoryBox(vec3 history, vec3 centre, vec2 uv) {
     vec2 texel = vec2(1.0 / viewWidth, 1.0 / viewHeight);
 
-    vec3 c = texture2D(colortex1, uv).rgb;
     vec3 l = texture2D(colortex1, uv - vec2(texel.x, 0.0)).rgb;
     vec3 r = texture2D(colortex1, uv + vec2(texel.x, 0.0)).rgb;
     vec3 d = texture2D(colortex1, uv - vec2(0.0, texel.y)).rgb;
@@ -71,8 +84,8 @@ vec4 solHistoryBox(vec3 history, vec2 uv) {
     vec3 ul = texture2D(colortex1, uv + vec2(-texel.x, texel.y)).rgb;
     vec3 ur = texture2D(colortex1, uv + vec2(texel.x, texel.y)).rgb;
 
-    vec3 sum = c + l + r + d + u + dl + dr + ul + ur;
-    vec3 sumSquares = c * c + l * l + r * r + d * d + u * u
+    vec3 sum = centre + l + r + d + u + dl + dr + ul + ur;
+    vec3 sumSquares = centre * centre + l * l + r * r + d * d + u * u
                     + dl * dl + dr * dr + ul * ul + ur * ur;
 
     vec3 mean = sum * (1.0 / 9.0);
@@ -84,44 +97,54 @@ vec4 solHistoryBox(vec3 history, vec2 uv) {
     return vec4(clamp(history, low, high), length(high - low));
 }
 
+#endif
+
 void main() {
     vec2 uv = texcoord;
-    float depth = texture2D(depthtex1, uv).r;
     vec3 current = texture2D(colortex1, uv).rgb;
-    vec2 previous = previousUV(uv, depth);
-
     vec3 result = current;
 
-    #if MOTION_BLUR == 1
-        if (previous.x >= 0.0 && previous.y >= 0.0 && depth < 1.0) {
-            vec2 path = (previous - uv) * MOTION_BLUR_STRENGTH;
-            vec3 blurred = current;
-            for (int i = 1; i <= MOTION_BLUR_SAMPLES; i++) {
-                vec2 probe = uv + path * (float(i) / float(MOTION_BLUR_SAMPLES));
-                blurred += texture2D(colortex1, clamp(probe, vec2(0.0), vec2(1.0))).rgb;
+    #if (AA_TYPE == 1 || AA_TYPE == 2) || MOTION_BLUR == 1
+        float depth = texture2D(depthtex1, uv).r;
+        vec2 previous = previousUV(uv, depth);
+
+        #if MOTION_BLUR == 1
+            if (previous.x >= 0.0 && previous.y >= 0.0 && depth < 1.0) {
+                vec2 path = (previous - uv) * MOTION_BLUR_STRENGTH;
+                vec3 blurred = current;
+                for (int i = 1; i <= MOTION_BLUR_SAMPLES; i++) {
+                    vec2 probe = uv + path * (float(i) / float(MOTION_BLUR_SAMPLES));
+                    blurred += texture2D(colortex1, clamp(probe, vec2(0.0), vec2(1.0))).rgb;
+                }
+                result = blurred / float(MOTION_BLUR_SAMPLES + 1);
             }
-            result = blurred / float(MOTION_BLUR_SAMPLES + 1);
-        }
-    #endif
+        #endif
 
-    #if AA_TYPE == 1 || AA_TYPE == 2
-        if (previous.x >= 0.0 && previous.y >= 0.0) {
-            vec4 box = solHistoryBox(texture2D(colortex3, previous).rgb, uv);
+        #if AA_TYPE == 1 || AA_TYPE == 2
+            /* The history buffer is not cleared, so on the first frames after the pack
+               is loaded it holds nothing meaningful; blending it in would flash. */
+            if (frameCounter > 1 && previous.x >= 0.0 && previous.y >= 0.0) {
+                vec4 box = solHistoryBox(texture2D(colortex3, previous).rgb, current, uv);
 
-            /* How far the history had to be moved to fit, against the size of the
-               box: the busier the neighbourhood, the less of the old frame survives,
-               which is what stops a fast edge from leaving a trail. */
-            float moved = length(current - box.rgb);
-            float ponderation = sat(moved / max(box.a, 0.0001));
-            float weight = TAA_WEIGHT
-                         * (1.0 - 0.34 * smoothstep(0.0, 1.0, ponderation));
+                /* How far the history had to be moved to fit, against the size of the
+                   box: the busier the neighbourhood, the less of the old frame
+                   survives, which is what stops a fast edge from leaving a trail. */
+                float moved = length(current - box.rgb);
+                float ponderation = sat(moved / max(box.a, 0.0001));
+                float weight = TAA_WEIGHT
+                             * (1.0 - 0.34 * smoothstep(0.0, 1.0, ponderation));
 
-            result = mix(result, box.rgb, weight);
-        }
+                result = mix(result, box.rgb, weight);
+            }
+        #endif
     #endif
 
     result = clamp(result, vec3(0.0), vec3(50.0));
 
     gl_FragData[0] = vec4(result, 1.0);
-    gl_FragData[1] = vec4(result, 1.0);
+
+    /* Only when something above actually touched the history buffer. */
+    #if (AA_TYPE == 1 || AA_TYPE == 2) || MOTION_BLUR == 1
+        gl_FragData[1] = vec4(result, 1.0);
+    #endif
 }
