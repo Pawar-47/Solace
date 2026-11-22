@@ -5,7 +5,12 @@ since the previous tag. A major version means the options a player has set might
 looking at again; a minor one adds options or effects without breaking the old values;
 a patch one fixes something and changes no setting.
 
-## 1.0.2
+## 2.0.0
+
+A major version, by the rule at the top of this file. No option value changed and nothing
+in `shaders.properties` was renamed, so a saved configuration still applies — but the
+pipeline changed shape, and what 1.0.1 showed was not this pack's lighting model at all.
+Anything tuned by eye against 1.0.x is worth another look.
 
 An audit against the pipeline's specification instead of against another pack — the
 official Iris documentation, imported as
