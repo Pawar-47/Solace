@@ -105,3 +105,17 @@ in the source is invalid.
    `solid_blocks_vertex/fragment` and the four `src/` chunks they include.
 4. Water, then sky and clouds, then `shadow`, then Distant Horizons and Voxy.
 5. The eight missing translations.
+
+
+## Next measurement
+
+The freeze survives every fix above, including the one that looked certain
+(`composite2`'s history buffer), so reading alone has not found it. The **Diagnose**
+workflow now builds five zips, each the whole pack minus exactly one post-chain
+program — `prepare`, `deferred`, `composite`, `composite2`, `final` — with everything
+else identical between them. Whichever removal makes the game load names the file, and
+the audit resumes there, comparing that file line by line against its counterpart in
+the reference before anything else is touched.
+
+This is the same method that produced the first real answers, and it is the only one
+that has: six defects were found by reading, and none of them was the freeze.
