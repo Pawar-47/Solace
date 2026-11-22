@@ -64,6 +64,20 @@ const float shadowDistanceRenderMul = 1.0;
 
 #if SHADOWS == 1
 
+/* The shadow buffers, declared only where the pass exists - the reference pack does the
+   same. The colour target is RGBA8 rather than half float: it carries a tint, not a
+   light level, and at 512 px over 75 blocks the difference is invisible while the memory
+   is not. Neither map is cleared: the lock has to be able to skip a frame without
+   losing the previous map, and a stale colour is no worse than the stale depth that
+   comes with it. */
+
+/*
+const int shadowcolor0Format = RGBA8;
+*/
+
+const bool shadowtex0Clear = false;
+const bool shadowcolor0Clear = false;
+
 uniform mat4 shadowModelView;
 uniform mat4 shadowProjection;
 uniform sampler2D shadowtex1;
