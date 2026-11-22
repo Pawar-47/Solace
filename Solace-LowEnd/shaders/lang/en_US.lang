@@ -120,12 +120,6 @@ value.CLOUD_SPEED.0.5=Slow
 value.CLOUD_SPEED.1.0=Normal
 value.CLOUD_SPEED.2.0=Fast
 
-option.CLOUD_STEPS=Cloud samples
-option.CLOUD_STEPS.comment=Samples taken through the cloud slab. The main cost of the effect.
-
-option.CLOUD_COVERAGE=Cloud coverage
-option.CLOUD_COVERAGE.comment=How much of the sky the clouds fill.
-
 option.EXPOSURE=Exposure
 option.EXPOSURE.comment=Overall brightness before the tone curve.
 
