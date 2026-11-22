@@ -1,0 +1,98 @@
+name: Delete every release
+
+# A one-time reset, and deliberate about it.
+#
+# A release page is what a player reads before trusting a download. This repository's
+# had a rolling "latest" that was rewritten on every push, sixteen diagnostic zips and
+# no version number anywhere - an accurate history of a debugging session, and no use
+# at all to someone who just wants the pack.
+#
+# This deletes every release and every tag and nothing else. Branches, commits and the
+# working tree are untouched, so the code is exactly where it was; only the labels on
+# top of it go. Run it once, then publish the first real version with the Release
+# workflow.
+#
+# It insists on the confirmation word, because the alternative - deleting sixteen
+# releases because a box was left empty - is not recoverable.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type delete-all-releases to confirm'
+        required: true
+        default: ""
+      keep_tag:
+        description: 'Tag to keep, if any. Leave empty to delete every tag'
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cleanup
+  cancel-in-progress: false
+
+jobs:
+  delete:
+    name: Delete releases and tags
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "delete-all-releases" ]; then
+            echo "::error::Type delete-all-releases in the confirmation box. Nothing was deleted."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Delete every release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEEP: ${{ github.event.inputs.keep_tag }}
+        run: |
+          gh release list --limit 200 --json tagName --jq '.[].tagName' > releases.txt
+          echo "Releases found: $(grep -c . releases.txt || true)"
+          while read -r tag; do
+            [ -z "$tag" ] && continue
+            if [ -n "$KEEP" ] && [ "$tag" = "$KEEP" ]; then
+              echo "keeping release $tag, as asked"
+              continue
+            fi
+            echo "deleting release $tag"
+            gh release delete "$tag" --yes --cleanup-tag
+          done < releases.txt
+
+      - name: Delete every tag left on the remote
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEEP: ${{ github.event.inputs.keep_tag }}
+        run: |
+          git ls-remote --tags origin \
+            | awk '{print $2}' \
+            | sed 's#refs/tags/##' \
+            | grep -v '\^{}$' > tags.txt || true
+          echo "Tags found: $(grep -c . tags.txt || true)"
+          while read -r tag; do
+            [ -z "$tag" ] && continue
+            if [ -n "$KEEP" ] && [ "$tag" = "$KEEP" ]; then
+              echo "keeping tag $tag, as asked"
+              continue
+            fi
+            echo "deleting tag $tag"
+            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}" || true
+          done < tags.txt
+
+      - name: Summary
+        run: |
+          {
+            echo "Every release and tag deleted. Branches and commits untouched."
+            echo ""
+            echo "Next: run the Release workflow with a version, for example 1.0.0."
+            echo "It creates the tag and the release together and publishes one zip."
+          } >> "$GITHUB_STEP_SUMMARY"

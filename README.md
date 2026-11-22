@@ -44,11 +44,15 @@ not upwards.
 
 ## Install
 
-Download `Solace-LowEnd.zip` from the [Releases](../../releases) page — the `latest`
-release is rebuilt and re-uploaded on every push to `main` — and **copy the zip
-itself** into your `shaderpacks` folder, then choose it in **Options → Video Settings →
-Shader Packs**. Do not unpack it: the zip already has `shaders/` at its top level,
-which is the shape Iris reads.
+Download `Solace-LowEnd.zip` from the newest release on the [Releases](../../releases)
+page, and **copy the zip itself** into your `shaderpacks` folder, then choose it in
+**Options → Video Settings → Shader Packs**. Do not unpack it: the zip already has
+`shaders/` at its top level, which is the shape Iris reads.
+
+Releases are versioned — `1.0.0`, `1.1.0` — and each one is a build that passed every
+check before it was published. There is no rolling "latest" that changes under you, and
+no diagnostic builds in the release list. [CHANGELOG.md](CHANGELOG.md) says what changed
+and when.
 
 If you would rather have a folder, unpack it and rename the result to `Solace-LowEnd`,
 so the game finds `shaderpacks/Solace-LowEnd/shaders/`. Copying the `Solace-LowEnd`
@@ -64,26 +68,16 @@ Prism     <instance>/.minecraft/shaderpacks/
 
 ### If it freezes
 
-Every release carries four probe zips besides the pack. Each is the real pack with a
-family of files removed, so Iris falls back to its own equivalent for those programs
-and the zip still loads and still draws. Each one either runs or freezes, and the four
-answers together name the file family — no log and no guessing:
+[ERRORS.txt](ERRORS.txt) says which log to send, where the game keeps it, and how to
+collect it in one file. On Linux the decisive line for a freeze is in the kernel log,
+not the game log: `journalctl -k -b | grep -iE "gpu hang|i915|reset"`.
 
-- `Solace-Probe-Bare` — two files, a pass-through `final`, and no configuration at
-  all. If this freezes, none of the pack's GLSL is involved.
-- `Solace-Probe-BareConfig` — those two files plus `shaders.properties`, the languages
-  and the block/item/entity/dimension lists. If Bare runs and this freezes, the
-  configuration is at fault rather than the shaders.
-- `Solace-Probe-PostOnly` — no `gbuffers_*` anywhere: vanilla draws, the pack only
-  post-processes.
-- `Solace-Probe-Geometry` — no `prepare`, `composite`, `composite2`, `deferred`,
-  `final` or `shadow`: the raw geometry buffer goes straight to the screen.
-
-`Solace-Diagnostic.zip` is the whole pack with only the last pass bypassed. It looks
-flat and wrong on purpose; it exists for that one answer. [ERRORS.txt](ERRORS.txt) says
-which log to send, where it is, and how to collect it in one file. On Linux the
-decisive line for a freeze is in the kernel log, not the game log:
-`journalctl -k -b | grep -iE "gpu hang|i915|reset"`.
+If you want to narrow it down without a log — which is how the freeze in this pack was
+eventually found — the **Diagnose** workflow builds a set of probe packs on demand.
+Each is the real pack with a family of programs removed; Iris substitutes its own
+program for anything missing, so each still loads and still draws, and each one either
+runs or freezes. Read together the answers name a file. They are attached to the
+workflow run as artifacts and are never published as releases.
 
 ## Settings that matter more than the pack
 
@@ -127,24 +121,33 @@ The first three need nothing but Python 3; the fourth needs `glslang-tools`, bec
 it compiles the pack for real. A red run means a file the game would refuse to load,
 or a setting that would show up in the options screen as a raw identifier.
 
-Packaging runs on the same trigger. Every push to `main` rebuilds `Solace-LowEnd.zip`
-and replaces it on the rolling **latest** release, so the download is always the
-current code; the zip is also attached to each run as a workflow artifact. Pushing a
-version tag (`v1.0.0`) publishes a release of its own with generated notes.
+Publishing is separate from that. The **Release** workflow runs on a `v*` tag, or by
+hand with a version number, and it gates on all four checks including the compiler
+before it publishes anything. Each release carries one `Solace-LowEnd.zip` and
+`ERRORS.txt`, refuses to republish a version that already exists, and writes notes from
+the commits since the previous tag.
+
+The **Diagnose** workflow builds the diagnostic and probe packs on demand and attaches
+them to the run as artifacts, and the **Delete every release** workflow is the one-time
+reset that removed the old rolling `latest` and the diagnostic zips from before the
+pack had a version number.
 
 ## Status
 
 The pack is code complete — every effect listed above is implemented, and the
 structure is checked on every push.
 
-It now also loads. The cause of a freeze that dogged every earlier build was found by
-removing whole families of programs and seeing which combination still froze: the
-antialiasing pass read its history buffer and wrote it again inside the same draw,
-which is undefined behaviour and, on an Intel driver, a hung GPU. The flag meant to
+It now also loads. A freeze that dogged every earlier build was narrowed by removing
+whole families of programs and seeing which combination still froze, until only two
+files were left that could be responsible. Two defects came out of it. The antialiasing
+pass read its history buffer and wrote it again inside the same draw — undefined
+behaviour, and on an Intel driver a hung GPU with a clean log — and the flag meant to
 switch that pass off was written in a form that leaves a pass *enabled* when the
-expression cannot be evaluated, so it ran in every profile. The history and exposure
-buffers are now flipped so the read and the write are different buffers, and the
-switches use the plain form the mods have always been able to evaluate.
+expression cannot be evaluated, so it ran in every profile. Then the last pass declared
+its scene buffer through a macro, which the mod cannot see when it scans the source for
+sampler names, so that buffer was never bound to it. Both are fixed: the history and
+exposure buffers are flipped, the switches use the plain form, and the scene buffer is
+declared by name.
 
 What has still not happened is anyone judging the picture: nobody has looked at the
 result on real hardware and said whether it is any good. Treat the first run as a

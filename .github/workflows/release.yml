@@ -1,49 +1,85 @@
 name: Release
 
-# Packaging. A player needs exactly one thing from this repository: a zip with
-# `shaders/` at its top level, ready to drop into `shaderpacks/`.
+# A versioned release, and nothing else.
 #
-# Every push to main publishes a rolling release tagged `latest`, so there is always
-# something to download without anyone having to create a tag first. Pushing a
-# version tag (`v1.0.0`) publishes a release of its own with generated notes.
+# There is no rolling "latest" any more. A shader pack is downloaded once and kept, so
+# the release page is either a version history or it is noise, and this one had become
+# a folder of diagnostic builds. Pushing a `v*` tag publishes that version; running
+# this workflow by hand with a version number creates the tag and the release together,
+# which is how a version is cut from the GitHub interface without a local git.
 #
-# Two zips are built. The second one is the diagnostic build: the same source with
-# SOLACE_DIAG set to 1, which bypasses the post chain and switches the sky fill off,
-# so a frame is the geometry and a copy of it. Loading it answers whether a freeze is
-# in the post chain or in the geometry stages. ERRORS.txt travels with every release
-# and says what to send when something goes wrong and where the game keeps its log.
+# One artefact is published per release: Solace-LowEnd.zip, with `shaders/` at its top
+# level. The diagnostic and probe builds still exist - they are what found the freeze -
+# but they live in the Diagnose workflow and are attached to a run, never to a release.
 
 on:
   push:
-    branches: [main]
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, without the v. For example 1.0.0"
+        required: true
+        default: ""
+      prerelease:
+        description: "Publish it as a pre-release"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
+# One release at a time, and never cancel one halfway through: a half-published release
+# is worse than a slow one.
 concurrency:
   group: release
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  package:
-    name: Check and package
+  release:
+    name: Check, package and publish
     runs-on: ubuntu-latest
     steps:
+      - name: Read the version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            raw="${{ github.event.inputs.version }}"
+            raw="${raw#v}"
+            if ! printf '%s' "$raw" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "::error::A version has to look like 1.2.3, and '${{ github.event.inputs.version }}' does not."
+              exit 1
+            fi
+            echo "tag=v$raw" >> "$GITHUB_OUTPUT"
+            echo "name=$raw" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+            echo "name=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # The notes list the commits since the previous tag, so the tags have to be here.
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Check before packaging
+      - name: Install glslang
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq glslang-tools
+
+      # A release is a promise, so it is gated on every check rather than on the branch
+      # having been pushed: three earlier builds could not load at all, and the compiler
+      # is the check that would have caught two of them.
+      - name: Every check
         run: |
           python3 tools/validate_pack.py
           python3 tools/check_lang.py
           python3 tools/check_textures.py
+          python3 tools/compile_check.py
 
       - name: Build the zip
         run: |
@@ -53,191 +89,62 @@ jobs:
           ls -l Solace-LowEnd.zip
           unzip -l Solace-LowEnd.zip | head -8
 
-      # Built from the same source, after the normal zip is safely on disk, so the
-      # sed below can only affect this one.
-      - name: Build the diagnostic zip
+      - name: Write the notes
         run: |
-          sed -i 's/^#define SOLACE_DIAG 0/#define SOLACE_DIAG 1/' Solace-LowEnd/shaders/lib/config.glsl
-          grep -n "SOLACE_DIAG" Solace-LowEnd/shaders/lib/config.glsl
-          cd Solace-LowEnd
-          zip -r ../Solace-Diagnostic.zip shaders README.md
-          cd ..
-          ls -l Solace-Diagnostic.zip
-          unzip -l Solace-Diagnostic.zip | head -8
+          {
+            echo "Install: copy \`Solace-LowEnd.zip\` itself into your \`shaderpacks\` folder"
+            echo "and pick it in Options - Video Settings - Shader Packs. Do not unpack it;"
+            echo "the zip already has \`shaders/\` at its top level, which is what Iris reads."
+            echo "If you would rather have a folder, unpack it and rename the result to"
+            echo "Solace-LowEnd, so the game finds \`shaderpacks/Solace-LowEnd/shaders/\`."
+            echo ""
+            echo "Pack name in the list: **Solace LowEnd**. Start on the \`Smooth\` profile."
+            echo ""
+            echo "## Changes"
+            echo ""
+            previous="$(git describe --tags --abbrev=0 --match 'v*' "${GITHUB_SHA}^" 2>/dev/null || true)"
+            if [ -n "$previous" ]; then
+              echo "Since \`$previous\`:"
+              echo ""
+              git log --no-merges --pretty='- %s' "$previous..${GITHUB_SHA}"
+            else
+              echo "First release. The full history is in CHANGELOG.md."
+              echo ""
+              git log --no-merges --pretty='- %s' "${GITHUB_SHA}"
+            fi
+            echo ""
+            echo "Every stage of every program compiles under all seven option sets, and"
+            echo "the pack passed its structural checks, before this was published."
+          } > NOTES.md
+          head -40 NOTES.md
 
-      # Two probe zips, built from the same source.
-
-      # Iris substitutes its own vanilla-equivalent program for any program whose files
-      # are missing, so a pack built by deleting a whole family of programs still loads
-      # and still draws - it just draws that family the way vanilla does. That makes
-      # each probe a single yes/no answer about half the pack, which is the only thing
-      # available for a stall that leaves nothing in the log.
-      #
-      #   Solace-Probe-PostOnly   no gbuffers_* anywhere: the post chain runs against
-      #                           vanilla geometry. Loads  -> a gbuffers stage is at
-      #                           fault.  Freezes -> prepare/final/pipeline is at fault.
-      #   Solace-Probe-Geometry   no prepare, composite, composite2, deferred, final or
-      #                           shadow: the raw geometry buffer goes to the screen.
-      #                           Loads -> one of those six is at fault.  Freezes -> a
-      #                           gbuffers stage or final is at fault.
-      #
-      # Read together, the two answers name a file family without a single log line.
-      - name: Build the probe zips
-        run: |
-          rm -rf probe-post && cp -r Solace-LowEnd probe-post
-          find probe-post/shaders -name 'gbuffers_*.fsh' -delete
-          find probe-post/shaders -name 'gbuffers_*.vsh' -delete
-          find probe-post/shaders -name 'dh_*.fsh' -delete
-          find probe-post/shaders -name 'dh_*.vsh' -delete
-          find probe-post/shaders -name 'voxy_*' -delete
-          ( cd probe-post && zip -r ../Solace-Probe-PostOnly.zip shaders README.md )
-          unzip -l Solace-Probe-PostOnly.zip | tail -3
-
-          rm -rf probe-geom && cp -r Solace-LowEnd probe-geom
-          find probe-geom/shaders -name 'prepare.*' -delete
-          find probe-geom/shaders -name 'composite.*' -delete
-          find probe-geom/shaders -name 'composite2.*' -delete
-          find probe-geom/shaders -name 'deferred.*' -delete
-          find probe-geom/shaders -name 'final.*' -delete
-          find probe-geom/shaders -name 'shadow.*' -delete
-          ( cd probe-geom && zip -r ../Solace-Probe-Geometry.zip shaders README.md )
-          unzip -l Solace-Probe-Geometry.zip | tail -3
-
-      # Two bare probes. Both previous probes froze, so the fault is in what they
-      # still share: the shared libraries and the property files. These two separate
-      # those, because they are the smallest a pack can be.
-
-      #   Solace-Probe-Bare        two files, a pass-through final and nothing else -
-      #                            no properties, no lang, no config, no block lists.
-      #                            Freezes -> none of our GLSL is involved and the
-      #                            problem is the pack shape or the driver on this
-      #                            machine, and the next step is comparing against a
-      #                            pack that works there.
-      #                            Runs    -> our files are the difference, go on.
-      #   Solace-Probe-BareConfig  the same two files plus shaders.properties, lang/
-      #                            and the four .properties lists.
-      #                            Bare runs and this freezes -> the configuration
-      #                            files are at fault, not the GLSL.
-      #                            Both run -> the fault is in the shared libs.
-      - name: Build the bare probes
-        run: |
-          rm -rf bare && mkdir -p bare/shaders
-          cat > bare/shaders/final.vsh <<'EOF'
-          #version 120
-          varying vec2 texcoord;
-          void main() {
-              gl_Position = ftransform();
-              texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
-          }
-          EOF
-          cat > bare/shaders/final.fsh <<'EOF'
-          #version 120
-          uniform sampler2D colortex0;
-          varying vec2 texcoord;
-          void main() {
-              gl_FragData[0] = texture2D(colortex0, texcoord);
-          }
-          EOF
-          ( cd bare && zip -r ../Solace-Probe-Bare.zip shaders )
-          unzip -l Solace-Probe-Bare.zip | tail -6
-
-          rm -rf bareconfig && cp -r bare bareconfig
-          cp Solace-LowEnd/shaders/shaders.properties bareconfig/shaders/
-          cp -r Solace-LowEnd/shaders/lang bareconfig/shaders/lang
-          cp Solace-LowEnd/shaders/block.properties bareconfig/shaders/
-          cp Solace-LowEnd/shaders/item.properties bareconfig/shaders/
-          cp Solace-LowEnd/shaders/entity.properties bareconfig/shaders/
-          cp Solace-LowEnd/shaders/dimension.properties bareconfig/shaders/
-          ( cd bareconfig && zip -r ../Solace-Probe-BareConfig.zip shaders )
-          unzip -l Solace-Probe-BareConfig.zip | tail -6
-
-      # Two probes on the full pack, one program each.
-      #
-      # Every probe that runs is missing the post chain, and PostOnly - the only one
-      # that keeps it - is the only one that freezes. With the shipped profile the
-      # composite, composite2, deferred and shadow passes are all switched off, so the
-      # only code of ours actually running in PostOnly is prepare and final. These two
-      # name which:
-      #
-      #   Solace-Probe-NoFinal    the whole pack minus final.fsh/final.vsh. Runs means
-      #                           final is at fault; freezes means prepare is.
-      #   Solace-Probe-NoPrepare  the whole pack minus prepare.fsh/prepare.vsh.
-      #
-      # Iris substitutes its own pass-through for a missing one, so both still load.
-      - name: Build the per-program probes
-        run: |
-          rm -rf nofinal && cp -r Solace-LowEnd nofinal
-          find nofinal/shaders -name 'final.*' -delete
-          ( cd nofinal && zip -r ../Solace-Probe-NoFinal.zip shaders README.md )
-          unzip -l Solace-Probe-NoFinal.zip | tail -3
-
-          rm -rf noprepare && cp -r Solace-LowEnd noprepare
-          find noprepare/shaders -name 'prepare.*' -delete
-          ( cd noprepare && zip -r ../Solace-Probe-NoPrepare.zip shaders README.md )
-          unzip -l Solace-Probe-NoPrepare.zip | tail -3
-
-      - name: Attach it to this run
-        uses: actions/upload-artifact@v4
-        with:
-          name: Solace-LowEnd
-          path: Solace-LowEnd.zip
-          if-no-files-found: error
-
-      - name: Attach the diagnostic build to this run
-        uses: actions/upload-artifact@v4
-        with:
-          name: Solace-Diagnostic
-          path: Solace-Diagnostic.zip
-          if-no-files-found: error
-
-      - name: Publish the rolling release (main)
-        if: github.ref == 'refs/heads/main'
+      - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          PRERELEASE: ${{ github.event.inputs.prerelease }}
+          TRIGGER: ${{ github.event_name }}
         run: |
-          stage="$(date -u +%Y-%m-%d) at $(date -u +%H:%M) UTC"
-          gh release view latest >/dev/null 2>&1 || gh release create latest \
-            --title "Solace - latest build" \
-            --notes "Placeholder" \
-            --latest
-          gh release upload latest Solace-LowEnd.zip Solace-Diagnostic.zip \
-            Solace-Probe-PostOnly.zip Solace-Probe-Geometry.zip \
-            Solace-Probe-Bare.zip Solace-Probe-BareConfig.zip \
-            Solace-Probe-NoFinal.zip Solace-Probe-NoPrepare.zip ERRORS.txt --clobber
-          gh release edit latest \
-            --notes "Download Solace-LowEnd.zip and copy the zip itself into your shaderpacks folder, then pick it in Options - Video Settings - Shader Packs. Do not unpack it: the zip already has shaders/ at its top level, which is what Iris expects. If you would rather have a folder, unpack it and rename the result to Solace-LowEnd so the game finds shaderpacks/Solace-LowEnd/shaders/.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::$TAG is already published. Bump the version instead of republishing it."
+            exit 1
+          fi
 
-          THE FREEZE IS FIXED IN THIS BUILD, and the probe results named it. The antialiasing pass read its history buffer and wrote it again inside the same draw. That is undefined behaviour, and undefined on an Intel driver is a hung GPU: a frozen game with nothing in the log. The flag meant to switch that pass off was written in a form that leaves a pass enabled when the expression cannot be evaluated, so the pass ran in every profile, which is why no profile helped. The history buffer and the exposure buffer are now flipped, so the read and the write are different physical buffers, and the pass switches are written in the plain form this package has always been able to evaluate. The last pass also no longer asks for GL_ARB_shader_texture_lod, which a core-profile driver does not advertise as an extension.
+          args=(--title "Solace ${TAG#v}" --notes-file NOTES.md)
+          if [ "$PRERELEASE" = "true" ]; then
+            args+=(--prerelease)
+          fi
+          # Only when no tag was pushed. Creating the tag from this commit is what makes
+          # a version cuttable from the GitHub interface, with no local git involved.
+          if [ "$TRIGGER" = "workflow_dispatch" ]; then
+            args+=(--target "${GITHUB_SHA}")
+          fi
 
-          For the record, the four probe results this build rests on: Bare, BareConfig and Geometry ran; PostOnly froze. PostOnly was the only one of the four that contained both composite2.fsh and shaders.properties, which is exactly the pair above.
+          gh release create "$TAG" "${args[@]}"
+          gh release upload "$TAG" Solace-LowEnd.zip ERRORS.txt
 
-          If it still freezes, these are the two that will name the file: Solace-Probe-NoFinal is the whole pack minus final.fsh, and Solace-Probe-NoPrepare is the whole pack minus prepare.fsh. With the shipped profile those are the only two programs of the pack that actually run - the composite, composite2, deferred and shadow passes are all switched off - and every probe that has run so far was missing both of them.
-
-          If the pack freezes the game, four probe zips say where. Each one either runs or freezes; nothing else to read.
-
-          Bare: two files, a pass-through final and no configuration at all. If this freezes, none of the pack's GLSL is involved and the next step is comparing against a pack that does work on your machine. If it runs, the pack's own files are the difference.
-
-          BareConfig: the same two files plus the properties file, the languages and the four block/item/entity/dimension lists. If Bare runs and this freezes, the configuration is at fault and not the shaders. If both run, the fault is in the shared libraries.
-
-          PostOnly: no gbuffers programs, so vanilla draws and the pack only post-processes. Geometry: no prepare, composite, composite2, deferred, final or shadow, so the raw geometry buffer goes to the screen. Used together they name which half of the pipeline stalls, which is how the two bare probes above were chosen.
-
-          Kernel log: the decisive line for a freeze is not in the game log. After the freeze run 'journalctl -k -b | grep -iE \"gpu hang|i915|reset\"'. A hang or reset there means the driver died on a shader; silence means the stall is in the game, not the GPU.
-
-          ERRORS.txt says which log to send and where the game keeps it.
-
-          Built from ${GITHUB_SHA:0:7} on ${stage}, after the pack passed its structural checks and every stage compiled under every profile. Nobody has looked at the picture on real hardware yet."
-
-      - name: Publish a versioned release (tag)
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || gh release create \
-            "${GITHUB_REF_NAME}" \
-            --title "Solace ${GITHUB_REF_NAME}" \
-            --generate-notes
-          gh release upload "${GITHUB_REF_NAME}" \
-            Solace-LowEnd.zip Solace-Diagnostic.zip \
-            Solace-Probe-PostOnly.zip Solace-Probe-Geometry.zip \
-            Solace-Probe-Bare.zip Solace-Probe-BareConfig.zip \
-            Solace-Probe-NoFinal.zip Solace-Probe-NoPrepare.zip ERRORS.txt --clobber
+          {
+            echo "Published $TAG."
+            echo ""
+            echo "https://github.com/${GITHUB_REPOSITORY}/releases/tag/$TAG"
+          } >> "$GITHUB_STEP_SUMMARY"

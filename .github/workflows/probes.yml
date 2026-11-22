@@ -1,0 +1,95 @@
+name: Diagnose
+
+# The builds that found the freeze, kept and kept out of the releases.
+#
+# When a pack freezes the game on loading and leaves nothing in the log, the only way in
+# is to build a pack that is missing a family of programs and see whether it still
+# freezes: Iris substitutes its own vanilla-equivalent program for anything absent, so
+# each build still loads and still draws. Seven answers narrowed a six-month stall to
+# one file. That is worth keeping - but a player downloading a shader pack should not
+# have to read a release page full of them, so they are attached to a run instead.
+#
+# Everything this workflow makes is downloaded from the run's own page under Artifacts.
+# It publishes no release and touches no tag.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probes:
+    name: Build the diagnostic and probe zips
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check before packaging
+        run: |
+          python3 tools/validate_pack.py
+          python3 tools/check_lang.py
+          python3 tools/check_textures.py
+
+      - name: Build the diagnostic zip
+        run: |
+          sed -i 's/^#define SOLACE_DIAG 0/#define SOLACE_DIAG 1/' Solace-LowEnd/shaders/lib/config.glsl
+          grep -n "SOLACE_DIAG" Solace-LowEnd/shaders/lib/config.glsl
+          cd Solace-LowEnd
+          zip -r ../Solace-Diagnostic.zip shaders README.md
+          cd ..
+          unzip -l Solace-Diagnostic.zip | head -8
+
+      # Each probe is a single yes/no answer, and the answers are only meaningful
+      # together. PostOnly keeps the post chain and drops the geometry; NoFinal and
+      # NoPrepare drop exactly one program from the whole pack.
+      - name: Build the PostOnly probe
+        run: |
+          rm -rf probe-post && cp -r Solace-LowEnd probe-post
+          find probe-post/shaders -name 'gbuffers_*.fsh' -delete
+          find probe-post/shaders -name 'gbuffers_*.vsh' -delete
+          find probe-post/shaders -name 'dh_*.fsh' -delete
+          find probe-post/shaders -name 'dh_*.vsh' -delete
+          find probe-post/shaders -name 'voxy_*' -delete
+          ( cd probe-post && zip -r ../Solace-Probe-PostOnly.zip shaders README.md )
+          unzip -l Solace-Probe-PostOnly.zip | tail -3
+
+      - name: Build the per-program probes, NoFinal and NoPrepare
+        run: |
+          rm -rf nofinal && cp -r Solace-LowEnd nofinal
+          find nofinal/shaders -name 'final.*' -delete
+          ( cd nofinal && zip -r ../Solace-Probe-NoFinal.zip shaders README.md )
+          unzip -l Solace-Probe-NoFinal.zip | tail -3
+
+          rm -rf noprepare && cp -r Solace-LowEnd noprepare
+          find noprepare/shaders -name 'prepare.*' -delete
+          ( cd noprepare && zip -r ../Solace-Probe-NoPrepare.zip shaders README.md )
+          unzip -l Solace-Probe-NoPrepare.zip | tail -3
+
+      - name: Attach the builds to this run
+        uses: actions/upload-artifact@v4
+        with:
+          name: Solace-diagnostic-and-probes
+          path: |
+            Solace-Diagnostic.zip
+            Solace-Probe-*.zip
+          if-no-files-found: error
+
+      - name: Summary
+        run: |
+          {
+            echo "Diagnostic and probe builds attached to this run."
+            echo ""
+            echo "Solace-Diagnostic - the whole pack with the last pass bypassed. Flat and wrong on purpose."
+            echo "Solace-Probe-PostOnly - no gbuffers programs: vanilla draws, the pack only post-processes."
+            echo "Solace-Probe-NoFinal - the whole pack minus final.fsh and final.vsh."
+            echo "Solace-Probe-NoPrepare - the whole pack minus prepare.fsh and prepare.vsh."
+            echo ""
+            echo "One answer each: does it load or does it freeze. Read together they name a file."
+          } >> "$GITHUB_STEP_SUMMARY"
