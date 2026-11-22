@@ -71,6 +71,22 @@ jobs:
             unzip -l "Solace-Probe-No-$prog.zip" | tail -2
           done
 
+      # The frame with no effect passes at all: prepare, the geometry, and final. Every
+      # effect that lives in composite/composite2/deferred is absent from this build -
+      # light shafts, exposure smoothing, temporal AA, motion blur, the scene copy for
+      # refraction - and `final` reads the scene straight out of colortex0. If this
+      # loads, the freeze is in one of those three passes and the frame can be rebuilt
+      # around them; if it freezes, nothing in the post chain is responsible and the
+      # remaining suspects are `final`, `prepare` and the geometry stage.
+      - name: Build the NoEffectPasses probe
+        run: |
+          rm -rf noeffects && cp -r Solace-LowEnd noeffects
+          find noeffects/shaders -name 'composite.*' -delete
+          find noeffects/shaders -name 'composite2.*' -delete
+          find noeffects/shaders -name 'deferred.*' -delete
+          ( cd noeffects && zip -r ../Solace-Probe-NoEffectPasses.zip shaders README.md )
+          unzip -l Solace-Probe-NoEffectPasses.zip | tail -3
+
       - name: Attach the builds to this run
         uses: actions/upload-artifact@v4
         with:
@@ -94,6 +110,7 @@ jobs:
             echo "Solace-Probe-No-composite   - the pack minus composite.fsh/.vsh"
             echo "Solace-Probe-No-composite2  - the pack minus composite2.fsh/.vsh"
             echo "Solace-Probe-No-final       - the pack minus final.fsh/.vsh"
+            echo "Solace-Probe-NoEffectPasses - the pack minus composite, composite2 and deferred: prepare, geometry, final only."
             echo ""
             echo "Load them in that order until one runs. The one that runs names the file."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -98,9 +98,12 @@ in the source is invalid.
 
 ## Order of work from here
 
-1. `prepare` back in, and its pass compared line by line with `common/prepare_fragment.glsl`.
-2. `final` in full: tone chain, grading, dither, FXAA — compared against
-   `common/final_fragment.glsl` function by function.
+1. The five one-file probes (**No-prepare**, **No-deferred**, **No-composite**,
+   **No-composite2**, **No-final**) and the no-effect-passes probe, from the Diagnose
+   workflow. Each is the whole pack minus exactly one program, so the removal that makes
+   the game load names the file. This is the controlled version of the bisection that
+   has been running by hand.
+2. `final` in full, function by function against `common/final_fragment.glsl`.
 3. The geometry stage: `vertex_geometry` and `fragment_geometry` against
    `solid_blocks_vertex/fragment` and the four `src/` chunks they include.
 4. Water, then sky and clouds, then `shadow`, then Distant Horizons and Voxy.
