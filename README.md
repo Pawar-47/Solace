@@ -135,28 +135,22 @@ pack had a version number.
 
 ## Status
 
-The pack is code complete — every effect listed above is implemented, and the
-structure is checked on every push.
+The pack is code complete — every effect listed above is implemented, every stage
+compiles under seven option sets with a real GLSL front end, and the structure is
+checked on every push.
 
-Loading is still being chased, so this is not yet something to install without
-expecting trouble. The current build is always the **preview** release. The freeze was narrowed by building packs that are missing whole
-families of programs and seeing which combination still froze. Three of them load on the
-target machine — a two-file pack, that pack plus the full configuration, and the pack
-with the post chain removed — and the one that freezes is the pack with only the post
-chain. That leaves the last pass, and it turned up two real defects on the way: the
-antialiasing pass read its history buffer and wrote it again inside the same draw
-(undefined behaviour, and on an Intel driver a hung GPU with a clean log), and the last
-pass declared its scene buffer through a macro that the mod cannot see when it scans the
-source for sampler names, so that buffer was never bound to it.
-
-The sky-fill pass has since been removed as well. It was the one program present in every
-configuration that froze and absent from every one that ran, and all it did was paint
-the horizon colour behind the world — empty pixels now keep the clear colour instead. A
-pack without it is shaped exactly like the configurations that load.
+The audit against the working pack is in [AUDIT.md](AUDIT.md): every file of ours
+against its counterpart, what was compared, and whether it is the same, fixed, or
+different by design. Eight defects have come out of it, each of which alone would have
+stopped the pack working — the last of them a buffer read and written inside one draw,
+in every profile, which is the kind of fault that freezes a driver with nothing in the
+log.
 
 What has still not happened is anyone judging the picture. Treat the first run as a
-test, start on `Smooth`, and if it freezes, `Solace-Probe-NoFinal` from the **Diagnose**
-workflow is the next thing to try.
+test and start on `Smooth`. If the game freezes, the **Diagnose** workflow builds one
+zip per post-chain program, each the whole pack minus exactly that file; the removal
+that makes it load names the culprit, and that is the fastest way back to a fix.
+
 
 ## Licence
 

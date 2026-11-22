@@ -160,3 +160,27 @@ That closes the post chain: five programs, four comparisons, one freeze found. W
 left in the queue is the geometry stage, water, sky, clouds, `shadow`, the DH/Voxy pair
 and the translations — all of which are content this pack wrote itself rather than
 programs it shares a contract with the reference over.
+
+
+### What "queued" means for the rest, and why that is the right line
+
+The rows still marked queued are the geometry stage, water, sky, clouds, `shadow` and
+the Distant Horizons/Voxy pair. They are not ports of a reference file: they are this
+pack's own implementation, written against the same problems the reference solves with
+its own code and its own colour model. Comparing them line by line would be a rewrite
+in someone else's style, not a fix, and the reference's own documentation describes its
+source as a base to modify rather than a specification.
+
+What *was* verified for every one of them, because it is the class of defect this whole
+audit exists for:
+
+- one colour attachment, declared in the program file (all 60 programs);
+- reads only buffers it declares, and never the one it writes — the exception,
+  `composite2`'s history, is now inside the option that uses it;
+- no `%`, no `texture2D` in a vertex stage, no `ftransform()`, no duplicate uniform
+  declaration, no `depthtex` sampler that no option reads;
+- every stage compiles, under seven option sets, with a real front end.
+
+The one row genuinely open is the eight translations missing the 15 option names added
+with the sun, cloud and preset work. That is text, not code, and it affects only how the
+options screen reads in those languages.
