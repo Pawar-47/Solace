@@ -121,7 +121,9 @@ void main() {
 
     gl_FragData[0] = vec4(clamp(colour, vec3(0.0), vec3(50.0)), 1.0);
     #if AUTO_EXPOSURE == 1
-        gl_FragData[1] = vec4(exposure, 0.0, 0.0, 1.0);
+        /* Alpha 0.0, and the target is single-channel R16F, so it does not matter - but
+           it is what the reference writes and there is no reason to differ. */
+        gl_FragData[1] = vec4(exposure, 0.0, 0.0, 0.0);
     #endif
 }
 

@@ -122,3 +122,41 @@ the reference before anything else is touched.
 
 This is the same method that produced the first real answers, and it is the only one
 that has: six defects were found by reading, and none of them was the freeze.
+
+
+## The post chain, finished
+
+Read to the end and compared against `common/composite_fragment.glsl` (242),
+`common/composite2_fragment.glsl` (156), `common/final_fragment.glsl` (168) and
+`common/prepare_fragment.glsl` (57). What that established:
+
+- **`composite` is the same contract as ours.** The reference reads its scene with
+  `texture2DLod(colortex1, texcoord, 0)`, copies it forward, and writes two targets:
+  `/* DRAWBUFFERS:16 */` — scene and exposure — or `:016` when bloom is on, where the
+  third target is the bloom source it computes from the same pixel. Ours writes the
+  scene copy and, only when the exposure average is on, the exposure value; the
+  reference always writes both because it has no `program.*.enabled` to switch the pass
+  off with, and that is why our second target is conditional.
+- **Its exposure crosses the pass as a `varying`,** read once per vertex from
+  `gaux3` with `texture2D(gaux3, vec2(0.5))`. Ours reads the same buffer in the
+  fragment stage. The buffer is read and written in the same draw either way — the
+  reference does it too, so that is not what froze anything.
+- **Its exposure target is written with alpha 0.0**; ours wrote 1.0. Aligned, though the
+  target is single-channel and it makes no difference.
+- **It enables mipmaps on its scene buffer** (`const bool colortex1MipmapEnabled =
+  true;`) and samples it with a fixed LOD of 0. This pack collects bloom at full
+  resolution instead, so it declares no mipmap flags and samples with plain
+  `texture2D`. Different mechanism, same result, and one less full-frame mip chain.
+- **`composite2`** — compared in full two commits ago, and the reason this audit exists.
+- **`final`** — the reference is one scene fetch, the exposure multiply, its tone curve,
+  colour blindness and a write. At the shipped profile ours is the same shape: one fetch,
+  the exposure multiply, our tone curve, grading, dither and a write. Everything else in
+  it (FXAA, chromatic aberration, depth of field, sharpening, ambient occlusion, bloom)
+  is behind the option that turns it on, and every one of those options is off in
+  `Smooth`.
+- **`prepare`** — compared and reinstated in all four dimensions.
+
+That closes the post chain: five programs, four comparisons, one freeze found. What is
+left in the queue is the geometry stage, water, sky, clouds, `shadow`, the DH/Voxy pair
+and the translations — all of which are content this pack wrote itself rather than
+programs it shares a contract with the reference over.
