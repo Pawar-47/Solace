@@ -38,28 +38,49 @@ it on at its cheapest cost, and five profiles name what each one costs.
 
 ### Fixed before this release
 
-- The pack could not compile: the buffer-format contract had been written as GLSL
-  instead of as a directive comment, and `sat()` was missing the overload that clamps a
-  lightmap coordinate.
-- Every draw was going through a frame buffer with eight colour attachments bound,
-  while the GPU supports seven, because no program declared its outputs.
-- Iris was asked for a 2048 shadow map even with the shadow pass switched off - about
-  67 MB of render targets on every world load, on a GPU with no memory of its own.
-- The antialiasing pass read its history buffer and wrote it again in the same draw.
-  That is undefined behaviour and, on an Intel driver, a hung GPU: a frozen game with a
-  clean log. It should not have run at all, but the flag meant to switch it off was
-  written in a form that leaves a pass enabled when the expression cannot be evaluated.
-  It is now flipped, and the switches use the plain form.
-- The sky-fill pass — `prepare` — is gone. It was the only program present in every
-  configuration of the pack that froze and absent from every one that ran, and all it
-  did was paint the horizon colour behind the world, so emptying it costs the colour
-  behind the gaps between chunks and nothing else. Whatever is at fault, a pack without
-  it is a pack shaped like the configurations that load.
-- The last pass declared its scene buffer through a macro, which the mod cannot see
-  when it scans for sampler names, so the buffer was never bound to it.
+Nine defects, every one of which on its own stopped the pack from working. They are
+listed because the audit that found them is the most useful thing this release has to
+say about itself: none of them was visible to the structural checks that were in place
+before it, and only the last was silent.
+
+- **Buffer formats written as GLSL.** `const int colortex4Format = R11F_G11F_B10F;`
+  reached the compiler as an undeclared identifier, so no program compiled. They are
+  directives the mod reads out of the source, and they belong in a block comment.
+- **`sat()` missing its `vec2` overload.** The lightmap coordinate is a `vec2`, and three
+  places clamp it, so every vertex stage that touches the lightmap failed to link. The
+  error the game printed was `no matching function for call to 'sat (vec2)'`.
+- **The integer `%` operator**, which is GLSL 1.30, in the composite and shadow passes.
+  The pack targets 1.20; `mod()` does the same job everywhere.
+- **`depthtex0` declared twice** in `final` whenever ambient occlusion was on, once by
+  the pass and once by the ambient-occlusion library it includes.
+- **`texture2DLod` in a vertex stage** without the extension, in the armour-glint
+  program. Implicit-LOD sampling does not exist in a vertex shader at all; the exposure
+  is read in the fragment stage now.
+- **`ftransform()` in all sixteen vertex stages.** The reference pack never calls it —
+  it writes `gl_ModelViewProjectionMatrix * gl_Vertex` — and on a core-profile driver the
+  built-in does not exist until the mod rewrites it. Written out, there is nothing to
+  rewrite.
+- **Eight colour attachments bound for every draw.** No program declared its outputs, so
+  the mod bound the first eight, and the GPU this pack targets supports seven. Every
+  program now names its single target in its own file. The directives had also been put
+  inside shared libraries, which only works if the mod inlines includes before it looks
+  for them.
+- **A 2048 shadow map with the shadow pass switched off.** The shadow constants were
+  declared only when shadows were on, so the mod fell back to its default and allocated
+  roughly 67 MB of render targets on every world load, on a GPU with no memory of its
+  own. They are declared always, small, as the reference does.
+- **The antialiasing pass read its history buffer and wrote it again inside one draw**,
+  every frame, in every profile, whether antialiasing was on or not. That is undefined
+  behaviour, and on an Intel driver it is a hung GPU: a frozen game with nothing in the
+  log. The sampler, the attachment and the write are now inside the option that uses
+  them, which is what the reference does — with the effects off the pass is a copy.
 
 ### Known limits
 
 Nobody has judged the picture on real hardware yet. Every stage of every program
-compiles under all seven option sets, and the structural checks pass, but those say the
-pack loads, not that it looks right. Start on `Smooth`.
+compiles under all seven option sets with a real GLSL front end, and the structural
+checks pass, but those say the pack loads, not that it looks right. Start on `Smooth`.
+
+If the game freezes, [ERRORS.txt](ERRORS.txt) says which log to send and where it is,
+and the **Diagnose** workflow builds one zip per post-chain program — the whole pack
+minus exactly that file — so a single run names the file responsible.

@@ -7,10 +7,10 @@ name: Delete every release
 # no version number anywhere - an accurate history of a debugging session, and no use
 # at all to someone who just wants the pack.
 #
-# This deletes every release and every tag and nothing else. Branches, commits and the
-# working tree are untouched, so the code is exactly where it was; only the labels on
-# top of it go. Run it once, then publish the first real version with the Release
-# workflow.
+# This deletes every release, every tag and every workflow artifact, and nothing else.
+# Branches, commits and the working tree are untouched, so the code is exactly where it
+# was; only the labels and the per-run files on top of it go. Run it once, then publish
+# the first real version with the Release workflow.
 #
 # It insists on the confirmation word, because the alternative - deleting sixteen
 # releases because a box was left empty - is not recoverable.
@@ -29,6 +29,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: cleanup
@@ -88,11 +89,28 @@ jobs:
             gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}" || true
           done < tags.txt
 
+      # Artifacts are the per-run zips and logs under the Actions tab: not part of a
+      # release, but still files anyone can download, and they are what accumulates into
+      # hundreds of megabytes over a debugging session. Every one of them goes.
+      - name: Delete every artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[].id' > artifacts.txt || true
+          echo "Artifacts found: $(grep -c . artifacts.txt || true)"
+          while read -r id; do
+            [ -z "$id" ] && continue
+            echo "deleting artifact $id"
+            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}" || true
+          done < artifacts.txt
+
       - name: Summary
         run: |
           {
-            echo "Every release and tag deleted. Branches and commits untouched."
+            echo "Every release, tag and workflow artifact deleted. Branches, commits and"
+            echo "workflow run logs untouched."
             echo ""
-            echo "Next: run the Release workflow with a version, for example 1.0.0."
+            echo "Next: run the Release workflow with the version input set to 1.0.0."
             echo "It creates the tag and the release together and publishes one zip."
           } >> "$GITHUB_STEP_SUMMARY"

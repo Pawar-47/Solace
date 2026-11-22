@@ -129,9 +129,9 @@ compiler, before anything is published, and a version refuses to republish an ex
 tag.
 
 The **Diagnose** workflow builds the diagnostic and probe packs on demand and attaches
-them to the run as artifacts, and the **Delete every release** workflow is the one-time
-reset that removed the old rolling `latest` and the diagnostic zips from before the
-pack had a version number.
+them to the run as artifacts, and the **Delete every release** workflow is the reset that
+removes every release, every tag and every workflow artifact — the code is untouched, so
+a clean release page can be built on the same commits.
 
 ## Status
 
