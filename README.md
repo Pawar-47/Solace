@@ -137,26 +137,25 @@ pack had a version number.
 The pack is code complete — every effect listed above is implemented, and the
 structure is checked on every push.
 
-It now also loads. A freeze that dogged every earlier build was narrowed by removing
-whole families of programs and seeing which combination still froze, until only two
-files were left that could be responsible. Two defects came out of it. The antialiasing
-pass read its history buffer and wrote it again inside the same draw — undefined
-behaviour, and on an Intel driver a hung GPU with a clean log — and the flag meant to
-switch that pass off was written in a form that leaves a pass *enabled* when the
-expression cannot be evaluated, so it ran in every profile. Then the last pass declared
-its scene buffer through a macro, which the mod cannot see when it scans the source for
-sampler names, so that buffer was never bound to it. Both are fixed: the history and
-exposure buffers are flipped, the switches use the plain form, and the scene buffer is
-declared by name.
+Loading is still being chased, so this is not yet something to install without
+expecting trouble. The freeze was narrowed by building packs that are missing whole
+families of programs and seeing which combination still froze. Three of them load on the
+target machine — a two-file pack, that pack plus the full configuration, and the pack
+with the post chain removed — and the one that freezes is the pack with only the post
+chain. That leaves the last pass, and it turned up two real defects on the way: the
+antialiasing pass read its history buffer and wrote it again inside the same draw
+(undefined behaviour, and on an Intel driver a hung GPU with a clean log), and the last
+pass declared its scene buffer through a macro that the mod cannot see when it scans the
+source for sampler names, so that buffer was never bound to it.
 
-What has still not happened is anyone judging the picture: nobody has looked at the
-result on real hardware and said whether it is any good. Treat the first run as a
-test. Start on `Smooth`.
+The sky-fill pass has since been removed as well. It was the one program present in every
+configuration that froze and absent from every one that ran, and all it did was paint
+the horizon colour behind the world — empty pixels now keep the clear colour instead. A
+pack without it is shaped exactly like the configurations that load.
 
-If something breaks, the two places I would look first are temporal anti-aliasing
-(it depends on a history buffer and a reprojection only a real frame can validate)
-and the water reflections (they read a copy of the scene that is one frame old by
-design).
+What has still not happened is anyone judging the picture. Treat the first run as a
+test, start on `Smooth`, and if it freezes, `Solace-Probe-NoFinal` from the **Diagnose**
+workflow is the next thing to try.
 
 ## Licence
 

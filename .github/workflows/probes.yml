@@ -1,6 +1,6 @@
 name: Diagnose
 
-# The builds that found the freeze, kept and kept out of the releases.
+# The builds that found the freeze, plus the current pack, all attached to a run.
 #
 # When a pack freezes the game on loading and leaves nothing in the log, the only way in
 # is to build a pack that is missing a family of programs and see whether it still
@@ -37,6 +37,17 @@ jobs:
           python3 tools/check_lang.py
           python3 tools/check_textures.py
 
+      # The pack itself, so this workflow is also how the current build is downloaded
+      # while it is not yet worth a version number. Built before the diagnostic step,
+      # which edits config.glsl in place.
+      - name: Build the pack
+        run: |
+          cd Solace-LowEnd
+          zip -r ../Solace-LowEnd.zip shaders README.md
+          cd ..
+          ls -l Solace-LowEnd.zip
+          unzip -l Solace-LowEnd.zip | head -8
+
       - name: Build the diagnostic zip
         run: |
           sed -i 's/^#define SOLACE_DIAG 0/#define SOLACE_DIAG 1/' Solace-LowEnd/shaders/lib/config.glsl
@@ -60,23 +71,23 @@ jobs:
           ( cd probe-post && zip -r ../Solace-Probe-PostOnly.zip shaders README.md )
           unzip -l Solace-Probe-PostOnly.zip | tail -3
 
-      - name: Build the per-program probes, NoFinal and NoPrepare
+      # The pack has no prepare program any more: it was the only program present in
+      # every configuration that froze and absent from every one that ran, and all it
+      # did was paint the horizon colour behind the world. That leaves final as the one
+      # program still unisolated, so this probe drops exactly that file.
+      - name: Build the NoFinal probe
         run: |
           rm -rf nofinal && cp -r Solace-LowEnd nofinal
           find nofinal/shaders -name 'final.*' -delete
           ( cd nofinal && zip -r ../Solace-Probe-NoFinal.zip shaders README.md )
           unzip -l Solace-Probe-NoFinal.zip | tail -3
 
-          rm -rf noprepare && cp -r Solace-LowEnd noprepare
-          find noprepare/shaders -name 'prepare.*' -delete
-          ( cd noprepare && zip -r ../Solace-Probe-NoPrepare.zip shaders README.md )
-          unzip -l Solace-Probe-NoPrepare.zip | tail -3
-
       - name: Attach the builds to this run
         uses: actions/upload-artifact@v4
         with:
           name: Solace-diagnostic-and-probes
           path: |
+            Solace-LowEnd.zip
             Solace-Diagnostic.zip
             Solace-Probe-*.zip
           if-no-files-found: error
@@ -84,12 +95,12 @@ jobs:
       - name: Summary
         run: |
           {
-            echo "Diagnostic and probe builds attached to this run."
+            echo "Builds attached to this run."
             echo ""
+            echo "Solace-LowEnd - the current pack."
             echo "Solace-Diagnostic - the whole pack with the last pass bypassed. Flat and wrong on purpose."
             echo "Solace-Probe-PostOnly - no gbuffers programs: vanilla draws, the pack only post-processes."
             echo "Solace-Probe-NoFinal - the whole pack minus final.fsh and final.vsh."
-            echo "Solace-Probe-NoPrepare - the whole pack minus prepare.fsh and prepare.vsh."
             echo ""
             echo "One answer each: does it load or does it freeze. Read together they name a file."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -50,6 +50,11 @@ it on at its cheapest cost, and five profiles name what each one costs.
   clean log. It should not have run at all, but the flag meant to switch it off was
   written in a form that leaves a pass enabled when the expression cannot be evaluated.
   It is now flipped, and the switches use the plain form.
+- The sky-fill pass — `prepare` — is gone. It was the only program present in every
+  configuration of the pack that froze and absent from every one that ran, and all it
+  did was paint the horizon colour behind the world, so emptying it costs the colour
+  behind the gaps between chunks and nothing else. Whatever is at fault, a pack without
+  it is a pack shaped like the configurations that load.
 - The last pass declared its scene buffer through a macro, which the mod cannot see
   when it scans for sampler names, so the buffer was never bound to it.
 
