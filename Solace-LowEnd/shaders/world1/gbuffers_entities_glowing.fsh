@@ -5,4 +5,6 @@ End glowing outline. */
 
 #define SOLACE_DIM_END 1
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_glowing.glsl"

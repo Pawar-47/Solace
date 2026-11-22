@@ -10,4 +10,6 @@ where the near world is already drawing.
 
 #define SOLACE_DH_GEOMETRY 1
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_geometry.glsl"

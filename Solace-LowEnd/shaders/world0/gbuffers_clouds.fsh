@@ -5,4 +5,6 @@ Overworld cloud geometry. */
 
 #define SOLACE_DIM_OVERWORLD 1
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_clouds.glsl"

@@ -283,4 +283,5 @@ void main() {
 }
 
 
-/* DRAWBUFFERS:0 */
+/* The DRAWBUFFERS directive for this pass is in each gbuffers_* and dh_terrain program
+   file, not here: it belongs to the program. */

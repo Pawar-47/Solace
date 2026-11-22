@@ -5,4 +5,6 @@ End cloud program: nothing draws here, the palette still comes from the End. */
 
 #define SOLACE_DIM_END 1
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_clouds.glsl"

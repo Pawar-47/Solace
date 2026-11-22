@@ -6,4 +6,6 @@ Overworld far terrain, with the overworld palette. */
 #define SOLACE_DIM_OVERWORLD 1
 #define SOLACE_DH_GEOMETRY 1
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_geometry.glsl"

@@ -5,4 +5,6 @@ Nether cloud program: nothing draws here, the palette still comes from the Nethe
 
 #define SOLACE_DIM_NETHER 1
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_clouds.glsl"

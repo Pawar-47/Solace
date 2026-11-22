@@ -4,4 +4,6 @@ justify the water surface work. */
 
 #version 120
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_geometry.glsl"

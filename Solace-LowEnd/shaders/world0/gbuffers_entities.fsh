@@ -5,4 +5,6 @@ Overworld entities. */
 
 #define SOLACE_DIM_OVERWORLD 1
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_geometry.glsl"

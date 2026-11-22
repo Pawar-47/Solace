@@ -5,4 +5,6 @@ End sky, with the End palette. */
 
 #define SOLACE_DIM_END 1
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_skybasic.glsl"

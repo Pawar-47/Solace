@@ -4,4 +4,6 @@ fire and lava particles still read as bright. */
 
 #version 120
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_geometry.glsl"

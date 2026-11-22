@@ -6,4 +6,6 @@ translucent against the sky. */
 
 #define SOLACE_WEATHER 1
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_geometry.glsl"

@@ -5,4 +5,6 @@ Nether particles. */
 
 #define SOLACE_DIM_NETHER 1
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_geometry.glsl"
