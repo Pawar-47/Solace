@@ -418,4 +418,8 @@ void main() {
 }
 
 
-/* DRAWBUFFERS:0 */
+/* The DRAWBUFFERS directive for this pass is in the gbuffers_water and dh_water
+   program files, not here. It belongs to the program: a mod that reads the program file
+   without inlining its includes would not see one placed in a shared library, and this
+   pass samples gaux1 for refraction and reflections - so an attachment list it did not
+   write would attach the buffer it reads. */

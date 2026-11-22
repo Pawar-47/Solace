@@ -10,4 +10,6 @@ means anything here.
 
 #define SOLACE_DH_WATER 1
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_water.glsl"

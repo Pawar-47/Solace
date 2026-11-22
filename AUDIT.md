@@ -21,7 +21,7 @@ with the commit), **by design** (deliberately different, with the reason), **que
 | `lib/shadowmap.glsl` | same block in `lib/config.glsl` | constants always declared, hardware filtering only with the pass, `shadowDistanceRenderMul` | **fixed** `bee50a0` |
 | `lib/uniforms.glsl` | same content inside the reference's libs | every uniform the pack uses is declared once, no stage misuse | **same** |
 | `lib/math.glsl` | `lib/basic_utils.glsl`, `lib/luma.glsl` | `sat` overloads for every type called, integer `%` replaced, no `texelFetch` | **fixed** `8e2d897`, `d40a588` |
-| `lib/io_geometry.glsl` | `src/writebuffers.glsl`, `src/finalcolor.glsl` | varyings declared once, matching types, `DRAWBUFFERS` per program | **same** |
+| `lib/io_geometry.glsl` | `src/writebuffers.glsl`, `src/finalcolor.glsl` | varyings declared once, matching types, `DRAWBUFFERS` per program | **fixed this commit** — the reference puts each `DRAWBUFFERS` in `src/writebuffers.glsl`, which is inlined *into* the program; two of ours sat inside shared libraries instead, and both those passes sample a buffer they do not write. The directive is now in the program file for `composite` and for the water programs, where nothing can miss it |
 | `lib/pack_textures.glsl` | `texture.gbuffers.noisetex` binding | sampler names the mod can bind: only `noisetex` is bound by convention | **fixed** `d529536` — the pack declared `noise` and `clouds`, which the mod never binds |
 
 ### The post chain

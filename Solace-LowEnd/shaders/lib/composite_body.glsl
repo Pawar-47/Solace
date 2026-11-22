@@ -24,16 +24,16 @@ buffer it reads (colortex0) is never written in the same pass.
 #include "/lib/shadowmap.glsl"
 #include "/lib/buffers.glsl"
 
-/* One colour attachment, not two, unless the exposure average is on. colortex6 holds
-   the exposure carried between frames, and this pass reads it to smooth the value: a
-   buffer read and written inside one draw is undefined behaviour, so the second
-   attachment and its sampler appear together, under the option that uses them. The
-   pack this one replaces switches its DRAWBUFFERS on the same conditions. */
+/* The DRAWBUFFERS directive for this pass is NOT here: it is in the four
+   composite.fsh files. It belongs to the program, and a mod that reads the program
+   file without inlining its includes would not see one placed in a shared library -
+   the pass would then be handed every colour attachment there is, and this pass reads
+   colortex0. An attached buffer that is also sampled is a feedback loop.
+
+   colortex6 holds the exposure carried between frames and is read here to smooth the
+   value, so its sampler appears only when the exposure average is on. */
 #if AUTO_EXPOSURE == 1
-    /* DRAWBUFFERS:16 */
     uniform sampler2D colortex6;
-#else
-    /* DRAWBUFFERS:1 */
 #endif
 
 uniform sampler2D colortex0;

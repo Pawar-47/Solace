@@ -6,4 +6,6 @@ End far water, with the End palette. */
 #define SOLACE_DIM_END 1
 #define SOLACE_DH_WATER 1
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_water.glsl"

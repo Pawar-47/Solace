@@ -3,4 +3,6 @@ Waves, reflection, glint and alpha, from the water library. */
 
 #version 120
 
+/* DRAWBUFFERS:0 */
+
 #include "/lib/fragment_water.glsl"
