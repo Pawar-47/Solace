@@ -6,10 +6,10 @@ name: Release
 #               Each is a build that passed every check, is never rewritten, and is the
 #               one to point a player at.
 #
-#   Preview   - one release named `preview`, rewritten on every push to main. It exists
-#               because a version is a deliberate act, and while the pack is still being
-#               found out, somebody testing it needs the current build without one. It is
-#               labelled a pre-release and says what commit it was built from. It is
+#   Preview   - one release named `preview`, published only when this workflow is run by
+#               hand with the version box left empty. It is not rewritten by a push: the
+#               release page carries versions, and a test build is something you ask for.
+#               It is labelled a pre-release and says what commit it was built from. It is
 #               never the one to recommend.
 #
 # Both gate on every check, including the compiler, before anything is published. A
@@ -18,12 +18,11 @@ name: Release
 
 on:
   push:
-    branches: [main]
     tags: ["v*"]
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to publish, without the v. For example 1.0.0. Leave empty to refresh the preview."
+        description: "Version to publish, without the v. For example 1.0.0. Leave empty to publish a preview instead."
         required: false
         default: ""
       prerelease:

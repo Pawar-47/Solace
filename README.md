@@ -122,11 +122,12 @@ The first three need nothing but Python 3; the fourth needs `glslang-tools`, bec
 it compiles the pack for real. A red run means a file the game would refuse to load,
 or a setting that would show up in the options screen as a raw identifier.
 
-Publishing is separate from that. The **Release** workflow runs on every push to `main`,
-which rewrites the **preview** release, and on a `v*` tag or a manual run with a version
-number, which publishes a **version**. Both gate on all four checks, including the
-compiler, before anything is published, and a version refuses to republish an existing
-tag.
+Publishing is separate from that. The **Release** workflow runs on a `v*` tag, or by hand
+with a version number, and publishes that **version** — never rewritten, always built
+after all four checks including the compiler. Running it by hand with the version box
+empty publishes a **preview** of `main` instead, as a pre-release. A push to `main` does
+not publish anything on its own: the release page carries versions, and a test build is
+something asked for.
 
 The **Diagnose** workflow builds the diagnostic and probe packs on demand and attaches
 them to the run as artifacts, and the **Delete every release** workflow is the reset that
