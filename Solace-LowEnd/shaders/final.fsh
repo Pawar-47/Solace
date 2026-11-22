@@ -50,8 +50,11 @@ uniform sampler2D colortex0;
 #endif
 
 /* lib/ssao.glsl declares depthtex0 itself when ambient occlusion is on, and a uniform
-   declared twice is a redefinition, so this one is only for depth of field. */
-#if AO == 0
+   declared twice is a redefinition. With AO off, the only thing that reads it here is
+   depth of field - and a depth sampler the pass does not use is a full-screen copy of
+   the depth buffer that the mod makes every frame for nothing. The replacing pack
+   declares no depth sampler in this pass at all. */
+#if AO == 0 && DOF == 1
     uniform sampler2D depthtex0;
 #endif
 

@@ -9,8 +9,10 @@ itself; a reflection that lands on water therefore shows water. It also means th
 water reads is one frame old, because this pass runs after gbuffers_water - the reason
 colortex4 is never cleared (see lib/buffers.glsl).
 
-Only runs when one of those two options is 1; with both off the pass is switched off
-in shaders.properties and costs nothing.
+Only useful when one of those two options is 1: with both off the copy is made and
+never read. It still runs, because every pass in this pack runs and gates its own work
+internally - see the note in shaders.properties about why the pack does not switch
+passes off by expression.
 */
 
 #version 120
