@@ -1,5 +1,0 @@
-Delete every release, every tag and every workflow artifact in this repository.
-
-Committing this file is the trigger: the "Delete every release" workflow runs on a push
-that touches it. Check the run under Actions to see what it removed, then delete this
-file and the trigger from cleanup.yml so it cannot fire again.

@@ -49,6 +49,16 @@ jobs:
     name: Check, package and publish
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # The notes list the commits since the previous version, so the tags have to be here.
+          fetch-depth: 0
+
+      # After the checkout, not before it: the version a push publishes is read from a file
+      # in the repository, and until the checkout runs there is no repository to read it
+      # from. This step used to sit first, so every push found no file and published a
+      # preview instead of the version it was asked for.
       - name: Decide what to publish
         id: plan
         env:
@@ -58,7 +68,7 @@ jobs:
         run: |
           file_version=""
           if [ -f .github/release-version ]; then
-            file_version="$(tr -d ' \t\r\n' < .github/release-version)"
+            file_version="$(grep -v '^[[:space:]]*#' .github/release-version | tr -d ' \t\r\n')"
           fi
 
           if [ "$EVENT" = "push" ] && [ "${REF#refs/tags/}" != "$REF" ]; then
@@ -87,12 +97,6 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "kind=$kind" >> "$GITHUB_OUTPUT"
           echo "Publishing $kind as $tag"
-
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          # The notes list the commits since the previous version, so the tags have to be here.
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -208,6 +212,9 @@ jobs:
 
           gh release create "$TAG" "${args[@]}"
           gh release upload "$TAG" Solace-LowEnd.zip ERRORS.txt
+
+          # A version supersedes the test build, so the release page carries versions only.
+          gh release delete preview --yes --cleanup-tag >/dev/null 2>&1 || true
 
           {
             echo "Published $TAG."
