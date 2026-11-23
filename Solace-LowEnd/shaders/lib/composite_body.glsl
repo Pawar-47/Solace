@@ -24,7 +24,7 @@ buffer it reads (colortex0) is never written in the same pass.
 #include "/lib/shadowmap.glsl"
 #include "/lib/buffers.glsl"
 
-/* The DRAWBUFFERS directive for this pass is NOT here: it is in the four
+/* The render-target directive for this pass is NOT here: it is in the four
    composite.fsh files. It belongs to the program, and a mod that reads the program
    file without inlining its includes would not see one placed in a shared library -
    the pass would then be handed every colour attachment there is, and this pass reads

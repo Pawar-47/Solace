@@ -28,8 +28,8 @@ passed the alpha test as opaque.
 /* shadowtex0 (depth of everything) and shadowcolor0 (colour of the translucent part
    of it). shadowtex1, which the geometry pass samples, keeps the opaque depth.
 
-   No DRAWBUFFERS line belongs here: the attachments of this pass are fixed - the first
-   is shadowcolor0 and the second shadowcolor1 - and a DRAWBUFFERS list names colortex
+   No render-target directive belongs here: the attachments of this pass are fixed - the
+   first is shadowcolor0 and the second shadowcolor1 - and a colortex list would name
    targets the shadow pass cannot write. */
 
 #include "/lib/config.glsl"

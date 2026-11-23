@@ -20,7 +20,7 @@ unconditionally: it attached colortex3, sampled it for the previous frame's hist
 wrote it again - the same buffer read and written inside one draw - on every frame, in
 every profile, whether antialiasing was on or not. That is undefined behaviour.
 
-The pack this one replaces never does it: its composite2 puts its DRAWBUFFERS line, its
+The pack this one replaces never does it: its composite2 puts its render-target line, its
 samplers and its writes all inside the same conditions, so with AA off it touches one
 buffer and nothing else. This file now does the same, and with the effects off the whole
 pass is a copy of the frame.

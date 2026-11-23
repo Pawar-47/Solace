@@ -5,6 +5,25 @@ since the previous tag. A major version means the options a player has set might
 looking at again; a minor one adds options or effects without breaking the old values;
 a patch one fixes something and changes no setting.
 
+## 2.0.5
+
+2.0.3 and 2.0.4 do not load. The game stops with:
+
+`Index -1 out of bounds for length 32`
+
+That is not a shader error and no compiler can see it. The render-target directive is
+read by the mod, which takes **every character between the directive's colon and its
+closing marker as a buffer index**. Seven of them had a note added after the number —
+`/* DRAWBUFFERS:0 - at the top with the rest of the pack */` — and `-` is exactly `-1` in
+Java's `Character.getNumericValue`, which is then used to index the array of 32 colortex
+buffers. The seven are back to the bare directive, and the note that explains why now
+sits above it, outside the comment the mod reads.
+
+`tools/validate_pack.py` gained a rule for it: any block comment mentioning the directive
+must contain nothing but `/* DRAWBUFFERS:<digits> */`, on one line. That is the check
+that would have caught this before it was published, and it also bans the token from
+prose, because a prose mention has the same shape as the fault.
+
 ## 2.0.4
 
 The release asset is named for its release — `Solace-LowEnd-v2.0.4.zip`, not

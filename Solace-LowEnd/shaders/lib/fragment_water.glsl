@@ -428,7 +428,7 @@ void main() {
 }
 
 
-/* The DRAWBUFFERS directive for this pass is in the gbuffers_water and dh_water
+/* The render-target directive for this pass is in the gbuffers_water and dh_water
    program files, not here. It belongs to the program: a mod that reads the program file
    without inlining its includes would not see one placed in a shared library, and this
    pass samples gaux1 for refraction and reflections - so an attachment list it did not

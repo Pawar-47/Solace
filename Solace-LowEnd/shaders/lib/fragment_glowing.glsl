@@ -36,5 +36,5 @@ void main() {
 #endif
 
 
-/* The DRAWBUFFERS directive for this pass is in each gbuffers_entities_glowing program
+/* The render-target directive for this pass is in each gbuffers_entities_glowing program
    file, not here: it belongs to the program. */

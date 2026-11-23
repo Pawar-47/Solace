@@ -1,5 +1,6 @@
 # The version a push to main publishes. To cut a release, change the number below and
 # push; the workflow reads this file after the checkout, never before it. A manual run
 # with the version box left empty publishes a preview instead, whatever this file says.
-# 2.0.4 names the release asset after the release: Solace-LowEnd-v2.0.4.zip.
-2.0.4
+# 2.0.5 fixes the render-target directive that stopped 2.0.3 and 2.0.4 loading. The asset
+# carries the tag: Solace-LowEnd-v2.0.5.zip.
+2.0.5

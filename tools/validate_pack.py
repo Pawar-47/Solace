@@ -364,6 +364,40 @@ def check_builtins(shader_root, files):
                       % (relative, number, builtin, hint))
 
 
+# --------------------------------------------------------------------------
+# 8. The render-target directive has to be alone in its comment
+# --------------------------------------------------------------------------
+
+# The mod reads every character between the directive's colon and its closing marker as
+# a buffer index. A note there is therefore read as an index, and `-` is exactly -1 in
+# Java's Character.getNumericValue, which then indexes the colortex array:
+#
+#   Index -1 out of bounds for length 32
+#
+# 2.0.3 shipped seven directives with a note after the number and stopped the game from
+# loading. No compiler can see it: the directive is a comment.
+BLOCK_COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
+DIRECTIVE = re.compile(r"^/\*\s*DRAWBUFFERS\s*:\s*[0-9]+\s*\*/$")
+
+
+def check_directives(shader_root, files):
+    for path in files:
+        if not path.endswith((".vsh", ".fsh", ".glsl")):
+            continue
+        relative = os.path.relpath(path, shader_root)
+        text = read(path)
+        for match in BLOCK_COMMENT.finditer(text):
+            comment = " ".join(match.group(0).split())
+            if "DRAWBUFFERS" not in comment:
+                continue
+            if DIRECTIVE.match(comment):
+                continue
+            line = text.count("\n", 0, match.start()) + 1
+            error("%s:%d: a render-target directive must be alone in its comment, with "
+                  "nothing after the number - the mod reads the rest as buffer indices"
+                  % (relative, line))
+
+
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else os.path.dirname(
         os.path.dirname(os.path.abspath(__file__)))
@@ -393,6 +427,7 @@ def main():
     check_properties(shader_root, options)
     check_versions(shader_root, files)
     check_builtins(shader_root, files)
+    check_directives(shader_root, files)
 
     for message in WARNINGS:
         print("warning: %s" % message)
