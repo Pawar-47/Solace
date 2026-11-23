@@ -1,4 +1,6 @@
 # The version a push to main publishes. To cut a release, change the number below and
 # push; the workflow reads this file after the checkout, never before it. A manual run
 # with the version box left empty publishes a preview instead, whatever this file says.
+# 2.0.2 is unchanged from the first attempt at it: the checks refused that build (an int
+# attribute in a 1.20 shader), so nothing was published and the number was not spent.
 2.0.2

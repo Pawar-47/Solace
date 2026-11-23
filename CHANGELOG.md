@@ -17,12 +17,13 @@ this repository can reach.
   water: the block atlas instead of a tint, `depthtex0` instead of the Distant Horizons
   depth buffer, and no overlap cull. Its two stages also disagreed about which varyings
   exist, which does not link.
-- **`dhMaterialId` was read in a fragment stage.** The documentation makes it a vertex
-  attribute, so the name did not exist where it was used and the material id never
-  reached the lighting: far glowstone, lanterns and lava were dark cubes at night. It is
-  read as an attribute in the vertex stage now and carried to the fragment stage in a
-  varying — a `float`, not a `flat int`, because `flat` is GLSL 1.30 and this pack is
-  1.20.
+- **`dhMaterialId` was read in a fragment stage, and cannot be read at all here.**
+  The documentation makes it an int vertex attribute. The name did not exist where it
+  was used, so the material id never reached the lighting — but carrying it through a
+  varying is not possible either: `attribute int` is illegal in GLSL 1.20 (`non-float
+  shader input/output`) and `flat` arrived in 1.30. The block is removed, so far
+  glowstone, lanterns and lava shade like any other far block; `lib/vertex_geometry.glsl`
+  records what a second, higher-version set of Distant Horizons programs would cost.
 - **`gbuffers_basic.fsh` and `gbuffers_line.fsh` declared `DRAWBUFFERS` after
   `main()`.** Moved to the top, where the other twenty programs carry theirs.
 

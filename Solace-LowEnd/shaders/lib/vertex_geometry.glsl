@@ -31,22 +31,23 @@ the program sets before including the file:
 #if !defined SOLACE_DH_GEOMETRY
 attribute vec4 mc_Entity;
 attribute vec2 mc_midTexCoord;
-#else
-/* Distant Horizons has no blocks, so it has no mc_Entity to give: it passes a material
-   id instead, and this is where that attribute is read. It reaches the fragment stage
-   through the dhMaterial varying io_geometry.glsl declares. */
-attribute int dhMaterialId;
 #endif
+
+/* Distant Horizons also offers `dhMaterialId`, an int attribute naming the kind of far
+   block. It is not read here: GLSL 1.20 has no integer attributes ("non-float shader
+   input/output is not supported for this version"), and this pack is 1.20 throughout. The
+   visible cost is that far glowstone, lanterns and lava are shaded like any other far
+   block instead of staying bright at night; reaching it would mean a second set of
+   Distant Horizons programs at a higher version, which is more machinery than the effect
+   is worth on this hardware. */
 
 void main() {
     texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 
     #if defined SOLACE_DH_GEOMETRY
         blockId = 0.0;
-        dhMaterial = float(dhMaterialId);
     #else
         blockId = mc_Entity.x;
-        dhMaterial = 0.0;
     #endif
 
     lmcoord = sat((gl_TextureMatrix[1] * gl_MultiTexCoord1).xy);
