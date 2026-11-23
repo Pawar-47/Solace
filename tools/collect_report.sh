@@ -81,6 +81,6 @@ for log in "${LOGS[@]}"; do
 done
 
 section "which build was loaded"
-echo "Say here which zip you loaded: Solace-LowEnd.zip or Solace-Diagnostic.zip." >> "$OUT"
+echo "Say here which zip you loaded: Solace-LowEnd-v<version>.zip or Solace-Diagnostic.zip." >> "$OUT"
 
 printf '%s\n' "" "report written to $(pwd)/$OUT"

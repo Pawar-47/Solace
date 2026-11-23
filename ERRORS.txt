@@ -3,7 +3,9 @@ SOLACE - WHEN THE PACK WILL NOT RUN
 
 Two builds are published with every release:
 
-  Solace-LowEnd.zip     the pack.
+  Solace-LowEnd-v<version>.zip
+                        the pack. The asset is named for its release, so
+                        Solace-LowEnd-v2.0.4.zip is that build and nothing else.
   Solace-Diagnostic.zip the same pack with the post chain bypassed: `final` hands the
                         scene through untouched instead of tonemapping, grading and
                         dithering it. Nothing looks right in this build. It exists

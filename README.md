@@ -44,8 +44,10 @@ not upwards.
 
 ## Install
 
-Download `Solace-LowEnd.zip` from the newest release on the [Releases](../../releases)
-page, and **copy the zip itself** into your `shaderpacks` folder, then choose it in
+Download `Solace-LowEnd-v<version>.zip` — the asset is named for the release it belongs
+to, so `Solace-LowEnd-v2.0.4.zip` is that build and nothing else — from the newest release
+on the [Releases](../../releases) page, and **copy the zip itself** into your
+`shaderpacks` folder, then choose it in
 **Options → Video Settings → Shader Packs**. Do not unpack it: the zip already has
 `shaders/` at its top level, which is the shape Iris reads.
 

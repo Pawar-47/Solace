@@ -5,6 +5,22 @@ since the previous tag. A major version means the options a player has set might
 looking at again; a minor one adds options or effects without breaking the old values;
 a patch one fixes something and changes no setting.
 
+## 2.0.4
+
+The release asset is named for its release — `Solace-LowEnd-v2.0.4.zip`, not
+`Solace-LowEnd.zip`. On a page of five releases, every one of them offering a file called
+`Solace-LowEnd.zip` says nothing about which build a player downloaded, and the file keeps
+that name once it is saved to disk, so a bug report could not say which build it came from.
+
+- The workflow builds and uploads `Solace-LowEnd-<tag>.zip`; the preview keeps its own
+  name, `Solace-LowEnd-preview.zip`.
+- The install note inside every release, the README, [ERRORS.txt](ERRORS.txt) and the
+  report collector now quote the versioned name.
+
+2.0.3 was published before this change and its asset is still called
+`Solace-LowEnd.zip`; a published release is not rewritten, so the versioned name starts
+here.
+
 ## 2.0.3
 
 The audit this time really was file by file: every shader stage, every library, the

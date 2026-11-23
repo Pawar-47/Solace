@@ -116,16 +116,22 @@ jobs:
           python3 tools/compile_check.py
 
       - name: Build the zip
+        env:
+          TAG: ${{ steps.plan.outputs.tag }}
         run: |
           cd Solace-LowEnd
-          zip -r ../Solace-LowEnd.zip shaders README.md
+          # The asset carries the release it belongs to: Solace-LowEnd-v2.0.4.zip. A page
+          # of releases all offering "Solace-LowEnd.zip" tells a player nothing about
+          # which build they downloaded, and the file keeps its name once it is saved.
+          zip -r "../Solace-LowEnd-${TAG}.zip" shaders README.md
           cd ..
-          ls -l Solace-LowEnd.zip
-          unzip -l Solace-LowEnd.zip | head -8
+          ls -l "Solace-LowEnd-${TAG}.zip"
+          unzip -l "Solace-LowEnd-${TAG}.zip" | head -8
 
       - name: Write the notes
         env:
           KIND: ${{ steps.plan.outputs.kind }}
+          TAG: ${{ steps.plan.outputs.tag }}
         run: |
           # A subject that names the pack this was measured against is dropped: a release
           # must not point at third-party code, and two early commits do. grep exits 1 when
@@ -141,7 +147,7 @@ jobs:
               echo "Built from \`${GITHUB_SHA:0:7}\` on $(date -u +%Y-%m-%d) at $(date -u +%H:%M) UTC."
               echo ""
             fi
-            echo "Install: copy \`Solace-LowEnd.zip\` itself into your \`shaderpacks\` folder"
+            echo "Install: copy \`Solace-LowEnd-${TAG}.zip\` itself into your \`shaderpacks\` folder"
             echo "and pick it in Options - Video Settings - Shader Packs. Do not unpack it;"
             echo "the zip already has \`shaders/\` at its top level, which is what Iris reads."
             echo "If you would rather have a folder, unpack it and rename the result to"
@@ -177,6 +183,7 @@ jobs:
         if: steps.plan.outputs.kind == 'preview'
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.plan.outputs.tag }}
         run: |
           # The preview is one release that is replaced, not one that accumulates.
           # Deleting it and creating it again keeps the notes and the zip in step.
@@ -187,7 +194,7 @@ jobs:
             --prerelease \
             --target "${GITHUB_SHA}" \
             --latest=false
-          gh release upload preview Solace-LowEnd.zip ERRORS.txt --clobber
+          gh release upload preview "Solace-LowEnd-${TAG}.zip" ERRORS.txt --clobber
           {
             echo "Published the preview from ${GITHUB_SHA:0:7}."
             echo ""
@@ -217,7 +224,7 @@ jobs:
           fi
 
           gh release create "$TAG" "${args[@]}"
-          gh release upload "$TAG" Solace-LowEnd.zip ERRORS.txt
+          gh release upload "$TAG" "Solace-LowEnd-${TAG}.zip" ERRORS.txt
 
           # A version supersedes the test build, so the release page carries versions only.
           gh release delete preview --yes --cleanup-tag >/dev/null 2>&1 || true
