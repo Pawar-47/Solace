@@ -21,5 +21,6 @@ varying vec4 tint;
 void main() {
     texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
     tint = gl_Color;
-    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+    /* Not gl_ModelViewProjectionMatrix: the mods do not patch that built-in. */
+    gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
 }

@@ -5,6 +5,30 @@ since the previous tag. A major version means the options a player has set might
 looking at again; a minor one adds options or effects without breaking the old values;
 a patch one fixes something and changes no setting.
 
+## 2.0.1
+
+2.0.0 did not load. The log said:
+
+`ERROR: 0:130: 'gl_ModelViewProjectionMatrix' : undeclared identifier`
+
+Every vertex stage that positioned anything wrote that built-in — eleven files — and it
+is not one of the names the mods rewrite for a core-profile driver. The documented list
+is `gl_ModelViewMatrix` and `gl_ProjectionMatrix`; there is no combined matrix among
+them, and a name outside the list is left in the source for the driver to refuse.
+
+- **`gl_ModelViewProjectionMatrix` is gone from the pack**, replaced by
+  `gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex` — the same transform, built
+  from two names that are patched. In the full-screen passes the model-view is the
+  identity, so the product is the projection and nothing moves. In the gbuffers and
+  shadow passes the two matrices are that pass's own (`shadowModelView` and
+  `shadowProjection` in the shadow pass), so the result is identical there too.
+- **The checks now catch this class of fault.** No GLSL front end can: it compiles the
+  `#version 120` source, where the built-in legitimately exists, which is why 2.0.0
+  passed a real compiler and still failed to load. `tools/validate_pack.py` gained a
+  rule that takes every `gl_*` name in code — comments stripped, line numbers kept — and
+  compares it against the list the mods actually patch, naming the file and line of
+  anything outside it. That is the check that would have stopped 2.0.0 being published.
+
 ## 2.0.0
 
 A major version, by the rule at the top of this file. No option value changed and nothing

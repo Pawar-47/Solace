@@ -41,5 +41,9 @@ void main() {
         }
     #endif
 
-    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+    /* gl_ModelViewProjectionMatrix is not one of the built-ins the mods patch. In this
+       pass both matrices are the shadow pass's own - gl_ModelViewMatrix is shadowModelView
+       and gl_ProjectionMatrix is shadowProjection - so the product is the same transform
+       written out. */
+    gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
 }

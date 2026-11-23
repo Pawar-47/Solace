@@ -287,6 +287,83 @@ def check_versions(shader_root, files):
                  % os.path.relpath(path, shader_root))
 
 
+# --------------------------------------------------------------------------
+# 7. Legacy built-ins: only the names the mods actually patch
+# --------------------------------------------------------------------------
+
+# The mods rewrite compatibility-profile source into core-profile GLSL, substituting a
+# fixed list of legacy names for their own uniforms. A name outside that list survives
+# the rewrite, the driver refuses the whole program, and the message names no file:
+#
+#   ERROR: 0:130: 'gl_ModelViewProjectionMatrix' : undeclared identifier
+#
+# No compiler can catch that by compiling, because in the `#version 120` this pack is
+# written in the built-in exists - which is why 2.0.0 passed a real GLSL front end and
+# still would not load. gl_ModelViewProjectionMatrix was in the pack eleven times.
+PATCHED_BUILTINS = frozenset([
+    "gl_Vertex", "gl_Normal", "gl_Color", "gl_NormalMatrix",
+    "gl_ModelViewMatrix", "gl_ProjectionMatrix",
+    "gl_MultiTexCoord0", "gl_MultiTexCoord1", "gl_MultiTexCoord2",
+    "gl_TextureMatrix",
+    "gl_FragData", "gl_FragColor", "gl_FragCoord", "gl_FragDepth",
+    "gl_Position", "gl_PointSize", "gl_FrontFacing",
+    "gl_VertexID", "gl_InstanceID",
+    "gl_GlobalInvocationID", "gl_LocalInvocationID", "gl_WorkGroupID",
+    "gl_WorkGroupSize", "gl_NumWorkGroups",
+])
+
+BUILTIN = re.compile(r"\bgl_[A-Za-z_][A-Za-z0-9_]*")
+
+
+def code_without_comments(text):
+    """One entry per line, with comments blanked and the line count kept."""
+    lines = []
+    in_block = False
+    for line in text.splitlines():
+        kept = []
+        index = 0
+        while index < len(line):
+            if in_block:
+                end = line.find("*/", index)
+                if end < 0:
+                    index = len(line)
+                else:
+                    in_block = False
+                    index = end + 2
+            else:
+                block = line.find("/*", index)
+                line_comment = line.find("//", index)
+                if line_comment >= 0 and (block < 0 or line_comment < block):
+                    kept.append(line[index:line_comment])
+                    index = len(line)
+                elif block >= 0:
+                    kept.append(line[index:block])
+                    in_block = True
+                    index = block + 2
+                else:
+                    kept.append(line[index:])
+                    index = len(line)
+        lines.append("".join(kept))
+    return lines
+
+
+def check_builtins(shader_root, files):
+    for path in files:
+        if not path.endswith((".vsh", ".fsh", ".glsl")):
+            continue
+        relative = os.path.relpath(path, shader_root)
+        for number, line in enumerate(code_without_comments(read(path)), 1):
+            for builtin in BUILTIN.findall(line):
+                if builtin in PATCHED_BUILTINS:
+                    continue
+                hint = ""
+                if builtin == "gl_ModelViewProjectionMatrix":
+                    hint = (" - write gl_ProjectionMatrix * gl_ModelViewMatrix "
+                            "* gl_Vertex")
+                error("%s:%d: %s is not a built-in the mods patch%s"
+                      % (relative, number, builtin, hint))
+
+
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else os.path.dirname(
         os.path.dirname(os.path.abspath(__file__)))
@@ -315,6 +392,7 @@ def main():
     check_options(shader_root, options)
     check_properties(shader_root, options)
     check_versions(shader_root, files)
+    check_builtins(shader_root, files)
 
     for message in WARNINGS:
         print("warning: %s" % message)
