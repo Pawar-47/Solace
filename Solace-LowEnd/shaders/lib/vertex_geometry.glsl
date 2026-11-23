@@ -31,6 +31,11 @@ the program sets before including the file:
 #if !defined SOLACE_DH_GEOMETRY
 attribute vec4 mc_Entity;
 attribute vec2 mc_midTexCoord;
+#else
+/* Distant Horizons has no blocks, so it has no mc_Entity to give: it passes a material
+   id instead, and this is where that attribute is read. It reaches the fragment stage
+   through the dhMaterial varying io_geometry.glsl declares. */
+attribute int dhMaterialId;
 #endif
 
 void main() {
@@ -38,8 +43,10 @@ void main() {
 
     #if defined SOLACE_DH_GEOMETRY
         blockId = 0.0;
+        dhMaterial = float(dhMaterialId);
     #else
         blockId = mc_Entity.x;
+        dhMaterial = 0.0;
     #endif
 
     lmcoord = sat((gl_TextureMatrix[1] * gl_MultiTexCoord1).xy);

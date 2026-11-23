@@ -8,6 +8,7 @@ means anything here.
 
 #version 120
 
+#define SOLACE_DH_GEOMETRY 1
 #define SOLACE_DH_WATER 1
 
 /* DRAWBUFFERS:0 */

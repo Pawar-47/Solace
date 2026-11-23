@@ -146,16 +146,18 @@ void main() {
         /* Distant Horizons passes a material id for the far blocks it synthesises.
            Glowstone, lanterns and lava are their own light out there too; without this
            a far glowstone lamp was a dark cube at night, right next to a near one that
-           was not. The guards keep the file compiling against an Iris that does not
-           define these. */
+           was not. The id arrives in the dhMaterial varying, because dhMaterialId is a
+           vertex attribute and this is the fragment stage. */
+        int material = int(dhMaterial + 0.5);
+
         #if defined DH_BLOCK_ILLUMINATED
-            if (dhMaterialId == DH_BLOCK_ILLUMINATED) {
+            if (material == DH_BLOCK_ILLUMINATED) {
                 colour = max(colour, albedo.rgb * 1.20);
             }
         #endif
 
         #if defined DH_BLOCK_LAVA
-            if (dhMaterialId == DH_BLOCK_LAVA) {
+            if (material == DH_BLOCK_LAVA) {
                 colour = max(colour, albedo.rgb);
             }
         #endif

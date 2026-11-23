@@ -264,3 +264,65 @@ the result and they run in CI. The dimension change is the one that most deserve
 in game — the Nether and End palettes now come from `biome_category` rather than from a
 compile-time define, and the fallback for a loader that does not fill it is the Overworld
 palette.
+
+
+## Third audit: file by file against the tutorial
+
+The second audit asked "which rules does the pack break?". This one asks the question in
+the other order — every file, one at a time, against the section of
+[docs/Iris-Shaderpack-Tutorial.md](docs/Iris-Shaderpack-Tutorial.md) that governs it —
+because a rule list only finds the faults you thought to look for, and the two that
+stopped 2.0.0 loading were not on it.
+
+Columns: **file**, the part of the tutorial it is measured against, and what the pass
+found. "Same" means read line by line and correct.
+
+### Repairing what the pass found
+
+| File | Measured against | Found |
+| --- | --- | --- |
+| `dh_water.fsh` | §20.1 — the Distant Horizons contract | **fixed** — it defined `SOLACE_DH_WATER` but not `SOLACE_DH_GEOMETRY`, while its own vertex stage defined both. The shared water library keys every Distant Horizons branch on the geometry define, so the far-water fragment took the *near* path: it sampled `gtexture` with Distant Horizons UVs, read `depthtex0` instead of `dhDepthTex1`, and skipped the overlap cull. Its vertex and fragment stages disagreed about which varyings exist, which is a link error as soon as one side of a `#if` includes an attribute |
+| `lib/fragment_geometry.glsl` | §12.9 and §20.1 — attributes are vertex-stage only; `dhMaterialId` is an attribute | **fixed** — the Distant Horizons material checks read `dhMaterialId` **in the fragment stage**, where that name does not exist, and it was not declared anywhere in the pack. It compiled only because `DISTANT_HORIZONS` is undefined without the mod installed, which is also why every check missed it. The id now enters as an attribute in the vertex stage, travels in a varying, and is compared as an int there |
+| `lib/io_geometry.glsl` | §12 and §11.3 — varyings must agree between the two stages of a program | **fixed** — gained `dhMaterial`, declared unconditionally so both stages of every program agree, and written as `0` where there is no material id. It is a `float` and not a `flat int` because `flat` is GLSL 1.30 (§3.1) and this pack is 1.20; every vertex of a Distant Horizons primitive carries the same id, so interpolation is harmless |
+| `lib/vertex_geometry.glsl` | §20.1 — the Distant Horizons attribute set | **fixed** — declares `attribute int dhMaterialId` where the block attributes are excluded, and assigns it to the varying |
+| `gbuffers_basic.fsh`, `gbuffers_line.fsh` | §14.1 / §11.6 — the directive belongs to the program, on its own line | **fixed** — both had `/* DRAWBUFFERS:0 */` *after* `main()`. It is read from the source either way, but every other program in the pack carries it at the top, and a directive a reader meets after the code it governs is a trap for the next edit. Moved to the top |
+
+### Every other file, read line by line
+
+| File | Measured against | Found |
+| --- | --- | --- |
+| `composite.vsh` / `.fsh` | §11.13, §14.1, §16.8 | Same. Config included before the `DRAWBUFFERS` test, two targets only with `AUTO_EXPOSURE`, model-view-projection written from the two patched matrices |
+| `composite2.vsh` / `.fsh` | §17.5 (flip), §11.13 | Same. `flip.composite2.colortex3` covers the history buffer; samplers and writes share one condition |
+| `deferred.vsh` / `.fsh` | §11.12, §13.2 | Same. Reads `colortex0`, writes `colortex4`, no shared buffer; the header now states the real pass order |
+| `final.vsh` / `.fsh` | §11.14, §17.5 | Same. No `RENDERTARGETS` — one destination; scene sampler named literally so the mod can see it |
+| `prepare.vsh` / `.fsh` | §11.10 | Same. Fills `colortex0` before geometry, one target, reads nothing |
+| `shadow.vsh` / `.fsh` | §11.8, §13.5, §14.18 | Same. Tint to `shadowcolor0`, the attachment the lookup samples; no `DRAWBUFFERS`; samplers stay plain depth because `shadowHardwareFiltering` is off |
+| `dh_terrain.vsh` / `.fsh` | §20.1, §19.1 | Same. `compatibility` profile as required, `dhProjection` for the transform, no block attributes |
+| `gbuffers_armor_glint.vsh` / `.fsh` | §7.2, §11.11 | Same. Glint UVs through `gl_TextureMatrix[0]`, exposure read from `colortex6` behind its option |
+| `gbuffers_beaconbeam`, `_block`, `_clouds`, `_damagedblock`, `_entities`, `_entities_glowing`, `_hand`, `_hand_water`, `_spidereyes`, `_skybasic`, `_skytextured`, `_terrain`, `_textured`, `_water`, `_weather` (`.vsh` / `.fsh`) | §11.11, §13.7 | Same. `#version 120`, one `DRAWBUFFERS:0`, atlas sampled as `gtexture`, alpha cutout at 0.10 matching `alphaTestRef`. `gbuffers_entities_glowing` is OptiFine-only and documented as such |
+| `lib/config.glsl` | §14, §16 | Same. Constants after the options they read; `shadowHardwareFiltering` false in every build |
+| `lib/buffers.glsl` | §13.2, §17.5 | Same. Formats in a block comment, clears as code, the two flipped buffers noted |
+| `lib/uniforms.glsl` | §16 | Same. `dhRenderDistance` a float, the matrix and vector lengths documented, the dimension helpers in one place |
+| `lib/math.glsl` | §3.1 | Same. No `texelFetch`, no integer `%`, no `flat`, float `mod()` |
+| `lib/io_geometry.glsl`, `lib/vertex_geometry.glsl`, `lib/fragment_geometry.glsl` | §12, §6.1 | Fixed above; `gl_NormalMatrix` for normals, lightmap de-bias, `entityId` for entity ids |
+| `lib/fragment_water.glsl` | §13.2, §13.8 | Same. Reads `gaux1` (colortex4) and never writes it; Distant Horizons depths behind their own guards |
+| `lib/fragment_clouds.glsl`, `lib/fragment_glowing.glsl`, `lib/fragment_skybasic.glsl` | §13.7 | Same. Atlas as `gtexture`; sky ray from `gl_FragCoord`, not from `texcoord` |
+| `lib/sky_model.glsl` | §16.6 | Same. Dimension picked from `biome_category`; one `sin()` per pixel |
+| `lib/shadowmap.glsl` | §8.2–§8.8, §13.4 | Same. Plain depth samples, bias before the comparison, coverage fade, no distortion (so both sides agree) |
+| `lib/ssao.glsl` | §13.3 | Same. `depthtex0` in the pass that reads it |
+| `lib/depth_dh.glsl` | §20.1 | Same. Everything inside `#ifdef DISTANT_HORIZONS` |
+| `lib/composite_body.glsl` | §11.13, §17.5 | Same. Light shafts and exposure; `colortex6` flipped |
+| `lib/pack_textures.glsl`, `lib/blockids.glsl` | §13.6, §18.1 | Same. `noisetex` only; ids are the ones `block.properties` writes |
+| `lib/voxy_body.glsl`, `voxy.json`, `voxy_opaque.glsl`, `voxy_translucent.glsl` | §20.3 | **Unverified** — the docs page for Voxy is a stub pointing at a Discord channel, so this is written against the mod's own contract and cannot be checked against the specification. It has no `#version` of its own, which is Voxy's arrangement, not the pack's |
+| `shaders.properties` | §17 | Same. Screens, sliders and profiles match `lib/config.glsl` and the nine language files; `shadow.enabled`, `particles.ordering`, `oldHandLight`, the two `flip` lines |
+| `block.properties`, `entity.properties`, `item.properties` | §18.1–§18.3 | Same. Signed-16 ids, tags behind `IRIS_TAG_SUPPORT`, entity ids read as `entityId` |
+| `lang/*.lang` | §17.1 | Same. 103 options, 103 names; every value list translated |
+| `tools/*.py` | — | **Extended** — `validate_pack.py` now rejects any `gl_*` name outside the list the mods patch, which is the class of fault that stopped 2.0.0 loading |
+
+### What this pass could not do
+
+Nothing here was rendered: there is no GPU in this environment, and the Distant Horizons
+and Voxy paths only compile with those mods installed, so the code that the third audit
+fixed is exactly the code the checks cannot reach. That is why the two faults above
+survived a green CI run, and why they are now guarded by macros the CI *can* compile
+when the defines are supplied.

@@ -144,10 +144,12 @@ The audit is in [AUDIT.md](AUDIT.md): first against the working pack — every f
 against its counterpart — and then against the specification itself, the official Iris
 documentation, kept here as
 [docs/Iris-Shaderpack-Tutorial.md](docs/Iris-Shaderpack-Tutorial.md). Eight defects came
-out of the first pass and twelve out of the second. Two of them alone were enough to make
-the pack unusable: a buffer read and written inside one draw in every profile, and a
+out of the first pass, twelve out of the second, and a third that walked the pack file by
+file found two more in the Distant Horizons path. Three of them were enough on their own
+to stop the pack loading: a buffer read and written inside one draw in every profile, a
 `worldN` folder layout that kept `final`, `composite2`, `deferred` and `shadow` from
-running in any dimension.
+running in any dimension, and `gl_ModelViewProjectionMatrix`, which is not one of the
+legacy built-ins the mods rewrite and was in eleven vertex stages.
 
 The picture has been looked at once, on the machine this pack was written for. 1.0.0
 loaded and stopped freezing, and showed a set of faults in the colour and sky model that

@@ -207,7 +207,7 @@ jobs:
             exit 1
           fi
 
-          args=(--title "Solace ${TAG#v}" --notes-file NOTES.md)
+          args=(--title "Solace ${TAG#v} v2" --notes-file NOTES.md)
           if [ "$PRERELEASE" = "true" ]; then
             args+=(--prerelease)
           fi

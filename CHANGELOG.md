@@ -5,6 +5,30 @@ since the previous tag. A major version means the options a player has set might
 looking at again; a minor one adds options or effects without breaking the old values;
 a patch one fixes something and changes no setting.
 
+## 2.0.2
+
+A pass through the pack one file at a time, measured against the tutorial rather than
+against a list of rules. It found two faults in the Distant Horizons path — code that
+only compiles when Distant Horizons is installed, which is exactly the code no check in
+this repository can reach.
+
+- **`dh_water.fsh` did not define `SOLACE_DH_GEOMETRY`; its own vertex stage did.** The
+  water library branches on that define, so the far-water fragment shaded itself as near
+  water: the block atlas instead of a tint, `depthtex0` instead of the Distant Horizons
+  depth buffer, and no overlap cull. Its two stages also disagreed about which varyings
+  exist, which does not link.
+- **`dhMaterialId` was read in a fragment stage.** The documentation makes it a vertex
+  attribute, so the name did not exist where it was used and the material id never
+  reached the lighting: far glowstone, lanterns and lava were dark cubes at night. It is
+  read as an attribute in the vertex stage now and carried to the fragment stage in a
+  varying — a `float`, not a `flat int`, because `flat` is GLSL 1.30 and this pack is
+  1.20.
+- **`gbuffers_basic.fsh` and `gbuffers_line.fsh` declared `DRAWBUFFERS` after
+  `main()`.** Moved to the top, where the other twenty programs carry theirs.
+
+The pass is recorded file by file at the end of [AUDIT.md](AUDIT.md), including the one
+group it could not verify: the Voxy integration, whose documentation page is a stub.
+
 ## 2.0.1
 
 2.0.0 did not load. The log said:
