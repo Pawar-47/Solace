@@ -164,9 +164,10 @@ vec3 underwaterFogColour(float day) {
     return vec3(0.050, 0.185, 0.245) * (0.35 + 0.65 * day);
 }
 
-/* How much skylight a theme gives. Every theme has its own level, from a dim 0.25 for
-   Shoka to a bright 0.65 for Testigo; without it the eight presets differ only in
-   hue and all sit at the same brightness. */
+/* How much skylight a theme gives. Every theme has its own level, from a dim 0.32 for
+   Cinematic to a bright 0.62 for Bright; without it the eight presets differ only in
+   hue and all sit at the same brightness. (This comment used to quote two numbers that
+   were not the ones below, and named two other packs while doing it.) */
 float themeAmbient() {
     #if COLOR_SCHEME == 0        // Natural
         return 0.45;

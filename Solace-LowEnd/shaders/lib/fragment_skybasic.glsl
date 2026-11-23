@@ -59,9 +59,12 @@ vec4 cloudLayer(vec3 directionWorld, float day, float dusk, vec3 sunColIn) {
                           frameTimeCounter * 0.0022) * CLOUD_SPEED;
 
         #if CLOUD_STYLE == 2
-            /* One fetch from textures/noise.png instead of two noise octaves. The
-               texture is the sampler the mod binds by convention, so nothing has to
-               be declared in shaders.properties for it to work. */
+            /* One fetch from `noisetex` instead of two noise octaves. `noisetex` is the
+               one sampler the loader binds by itself, and by default it binds its own
+               random noise - point it at the generated file with
+               `texture.noise = textures/noise.png` in shaders.properties (shipped
+               commented out, because the png is generated rather than committed) or this
+               style reads white noise instead of a cloud field. */
             float n = texture2D(noisetex,
                                 at.xz * 0.0004
                                 + vec2(frameTimeCounter * 0.0009,

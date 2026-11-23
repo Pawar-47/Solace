@@ -97,16 +97,10 @@ void main() {
         gl_Position = gl_ProjectionMatrix * viewPos;
     #endif
 
+    /* Sub-pixel jitter for the temporal pass: the same offset the sky and the sun use,
+       from lib/uniforms.glsl, so the whole frame moves together. */
     #if AA_TYPE == 1 || AA_TYPE == 2
-        /* Sub-pixel jitter for the temporal pass: eight positions instead of the four
-           corners of a square, walked by a low-discrepancy pair so consecutive frames
-           never land next to each other. The faster the samples move, the better the
-           history can absorb what a still pattern would leave as flicker. */
-        float phase = mod(float(frameCounter), 8.0);
-        vec2 subPixel = fract(phase * vec2(0.75487766624669276, 0.569840290998) + 0.37)
-                      * 2.0 - 1.0;
-        gl_Position.xy += subPixel * 0.5 * vec2(2.0 / viewWidth, 2.0 / viewHeight)
-                        * gl_Position.w;
+        gl_Position.xy += solaceJitter() * gl_Position.w;
     #endif
 
     #if defined SOLACE_ENTITY_GLOW

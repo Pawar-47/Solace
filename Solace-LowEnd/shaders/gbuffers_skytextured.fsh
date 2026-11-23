@@ -4,6 +4,8 @@ the moon stays readable through the fog colour. */
 
 #version 120
 
+/* DRAWBUFFERS:0 - at the top with the rest of the pack, not after main(). */
+
 #include "/lib/config.glsl"
 #include "/lib/math.glsl"
 #include "/lib/sky_model.glsl"
@@ -23,6 +25,3 @@ void main() {
 
     gl_FragData[0] = vec4(colour, disc.a * tint.a);
 }
-
-
-/* DRAWBUFFERS:0 */

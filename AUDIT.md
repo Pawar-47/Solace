@@ -326,3 +326,36 @@ and Voxy paths only compile with those mods installed, so the code that the thir
 fixed is exactly the code the checks cannot reach. That is why the two faults above
 survived a green CI run, and why they are now guarded by macros the CI *can* compile
 when the defines are supplied.
+
+
+## Fourth audit: every file, every line
+
+The third pass above called itself file by file and was not: about twenty stages had only
+been checked by grep and by the compiler, not read. This pass read every shader file in
+the pack from its first line to its last — 26 programs in both stages, 18 libraries, the
+three `.properties` lists, `voxy.json` and the nine language files — and it found six more
+faults, four of them visible on screen.
+
+| File | Measured against | Found |
+| --- | --- | --- |
+| `gbuffers_skybasic.vsh`, `gbuffers_skytextured.vsh`, `lib/vertex_geometry.glsl` | §11.2 and the temporal-antialiasing contract: one jitter for the frame | **fixed** — the sky, the sun and the moon jittered on a four-phase square pattern while every other vertex stage used an eight-phase low-discrepancy one. Two patterns in one frame is exactly what the history cannot absorb: it shows as a smeared horizon and a flickering edge on the sun. The offset is now one function, `solaceJitter()` in `lib/uniforms.glsl`, called by all three |
+| `lib/uniforms.glsl` | §17.1 — a library that reads an option must have the options | **fixed** — it now includes `lib/config.glsl`, because the jitter function reads `AA_TYPE` and a program may include uniforms first |
+| `voxy.json` | §20.3 — the uniforms a Voxy program is given are the ones listed | **fixed** — `darknessFactor`, `darknessLightFactor` and `biome_category` were missing from the list, so the Warden's darkness and the dimension palette never reached far terrain, although the code reads them and says it applies them. Added |
+| `gbuffers_basic.fsh`, `gbuffers_line.fsh`, `gbuffers_damagedblock.fsh`, `gbuffers_spidereyes.fsh`, `gbuffers_skytextured.fsh`, `gbuffers_beaconbeam.fsh`, `gbuffers_armor_glint.fsh` | §14.1 — the directive belongs to the program, on its own line | **fixed** — seven of the twenty-six programs carried `/* DRAWBUFFERS:0 */` *after* `main()`, where the other nineteen carry it at the top. It is read from the source either way, so nothing was broken; a directive a reader meets after the code it governs is a trap for the next edit, and they are all at the top now |
+| `lib/sky_model.glsl` | — (house rule: a release must not name the pack it was measured against) | **fixed** — a comment quoted ambient levels "for Shoka" and "for Testigo", two other packs, and quoted numbers (0.25, 0.65) that were not the ones the code returns (0.32, 0.62). Rewritten to describe this pack's own themes |
+| `lib/fragment_skybasic.glsl`, `lib/fragment_clouds.glsl` | §13.6 — what `noisetex` is bound to | **fixed** — the cloud styles claimed `noisetex` is bound to `textures/noise.png` "by convention, so nothing has to be declared in shaders.properties". It is bound to the loader's own noise unless `texture.noise` says otherwise. Corrected in both files, the second of which also still referred to dimension folders that no longer exist |
+
+### Coverage of this pass
+
+Read line by line and found correct: all 26 program pairs (`composite`, `composite2`,
+`deferred`, `final`, `prepare`, `shadow`, `dh_terrain`, `dh_water` and the eighteen
+`gbuffers_*`), and the libraries `config`, `buffers`, `uniforms`, `math`, `io_geometry`,
+`vertex_geometry`, `fragment_geometry`, `fragment_water`, `fragment_clouds`,
+`fragment_skybasic`, `fragment_glowing`, `sky_model`, `shadowmap`, `ssao`, `depth_dh`,
+`composite_body`, `pack_textures`, `blockids`, `voxy_body`. The language files are
+validated by `tools/check_lang.py` (103 options, 103 names) and were read for format.
+
+The one thing no amount of reading can settle is the Voxy integration: its documentation
+page is a stub, so the struct layout, the `vx*` uniforms and the draw-buffer mapping in
+`voxy.json` are written against the mod's own contract and cannot be checked against the
+specification. That is stated here rather than counted as verified.

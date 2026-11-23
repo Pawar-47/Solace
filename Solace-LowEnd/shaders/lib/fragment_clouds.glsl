@@ -1,8 +1,8 @@
 /* Solace - lib/fragment_clouds.glsl
 
 Vanilla cloud geometry, lit from the palette, with the fog amount the vertex stage
-already computed. A library, so each dimension folder can compile the same body with
-its own palette.
+already computed. Kept in a library so the cloud pass and the sky's own cloud deck read
+one copy of the colour model.
 */
 
 #ifndef SOLACE_CLOUDS

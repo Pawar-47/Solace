@@ -17,11 +17,9 @@ void main() {
     texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
     tint = gl_Color;
 
+    /* The same jitter the geometry gets, from lib/uniforms.glsl, so the sun and moon do
+       not drift against the sky they sit in. */
     #if AA_TYPE == 1 || AA_TYPE == 2
-        float phase = float(frameCounter - 4 * (frameCounter / 4));
-        vec2 subPixel = vec2(
-            phase == 0.0 || phase == 3.0 ? -0.25 : 0.25,
-            phase < 2.0 ? -0.25 : 0.25);
-        gl_Position.xy += subPixel * vec2(2.0 / viewWidth, 2.0 / viewHeight) * gl_Position.w;
+        gl_Position.xy += solaceJitter() * gl_Position.w;
     #endif
 }

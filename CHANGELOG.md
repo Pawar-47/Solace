@@ -5,6 +5,35 @@ since the previous tag. A major version means the options a player has set might
 looking at again; a minor one adds options or effects without breaking the old values;
 a patch one fixes something and changes no setting.
 
+## 2.0.3
+
+The audit this time really was file by file: every shader stage, every library, the
+`.properties` lists, `voxy.json` and the language files, read from the first line to the
+last rather than searched. Six more faults, four of them visible.
+
+- **The sky jittered differently from the world.** `gbuffers_skybasic.vsh` and
+  `gbuffers_skytextured.vsh` moved the sky, the sun and the moon on a four-phase square
+  pattern, while every other vertex stage used an eight-phase low-discrepancy one. Two
+  patterns in the same frame is what the antialiasing history cannot absorb: a smeared
+  horizon and a flickering edge on the sun. One function, `solaceJitter()`, now serves
+  all three.
+- **`voxy.json` did not list three uniforms its own code reads** — `darknessFactor`,
+  `darknessLightFactor` and `biome_category`. The Warden's darkness and the Nether/End
+  palette therefore never reached far terrain, although the code applies both.
+- **Seven programs declared `DRAWBUFFERS` after `main()`** — basic, line, damaged block,
+  spider eyes, sky textured, beacon beam and armour glint. Read from the source either
+  way, so nothing was broken, but the other nineteen carry it at the top and now so do
+  these.
+- **A comment named two other packs** and quoted ambient levels that were not the ones
+  the code returns. Rewritten.
+- **Two comments claimed `noisetex` is bound to `textures/noise.png` by convention.** It
+  is the loader's own noise unless `texture.noise` says otherwise; corrected in
+  `lib/fragment_skybasic.glsl` and `lib/fragment_clouds.glsl`, the second of which also
+  still mentioned dimension folders.
+
+The coverage, and the one thing reading cannot settle — the Voxy integration, whose
+documentation is a stub — are recorded at the end of [AUDIT.md](AUDIT.md).
+
 ## 2.0.2
 
 A pass through the pack one file at a time, measured against the tutorial rather than

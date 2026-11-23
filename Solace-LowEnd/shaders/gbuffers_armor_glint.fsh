@@ -11,12 +11,15 @@ fragment shader and not in a vertex one.
 
 #version 120
 
+/* DRAWBUFFERS:0 - at the top with the rest of the pack, not after main(). */
+
 #include "/lib/config.glsl"
 #include "/lib/math.glsl"
 
 uniform sampler2D gtexture;
 
-/* The exposure value the exposure pass leaves in gaux3, the same for every pixel. */
+/* The exposure value the exposure pass leaves in gaux3 (colortex6), the same for every
+   pixel. */
 #if AUTO_EXPOSURE == 1
     uniform sampler2D colortex6;
 #endif
@@ -37,6 +40,3 @@ void main() {
     gl_FragData[0] = vec4(glint.rgb * (1.50 / max(exposure, 0.05)),
                           glint.a * 0.85);
 }
-
-
-/* DRAWBUFFERS:0 */

@@ -9,6 +9,11 @@ blindness and darknessFactor can be declared without a version guard.
 #ifndef SOLACE_UNIFORMS
 #define SOLACE_UNIFORMS
 
+/* The options, because the jitter below reads AA_TYPE and a program may include this
+   file before anything else. config.glsl has its own guard, so including it twice is
+   free. */
+#include "/lib/config.glsl"
+
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferProjection;
@@ -101,5 +106,25 @@ uniform int biome_category;
 bool solaceIsNether() { return biome_category == CAT_NETHER; }
 bool solaceIsEnd()    { return biome_category == CAT_THE_END; }
 bool solaceNoSky()    { return solaceIsNether() || solaceIsEnd(); }
+
+/* ---- The temporal-antialiasing jitter ------------------------------------
+
+   The sub-pixel offset every vertex stage adds while temporal antialiasing is on, as a
+   fraction of a pixel in clip space. It is a function because it has to be *one* answer
+   for the whole frame: the sky, the sun and the moon used to jitter on a four-phase
+   square pattern while the geometry used this eight-phase one, and two patterns in the
+   same frame is a mismatch the history cannot resolve - it shows as a smeared horizon
+   and flickering on the sun's edge. Every stage that moves a vertex under AA_TYPE 1 or
+   2 now calls this, and the multiply by w keeps the offset the same size at any depth. */
+vec2 solaceJitter() {
+    #if AA_TYPE == 1 || AA_TYPE == 2
+        float phase = mod(float(frameCounter), 8.0);
+        vec2 subPixel = fract(phase * vec2(0.75487766624669276, 0.569840290998) + 0.37)
+                      * 2.0 - 1.0;
+        return subPixel * 0.5 * vec2(2.0 / viewWidth, 2.0 / viewHeight);
+    #else
+        return vec2(0.0);
+    #endif
+}
 
 #endif

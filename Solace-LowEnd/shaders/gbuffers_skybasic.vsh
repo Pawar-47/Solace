@@ -16,11 +16,10 @@ void main() {
     gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
     texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 
+    /* The same jitter the geometry gets, from lib/uniforms.glsl. A four-phase square
+       pattern here used to disagree with the geometry's eight-phase one, and the
+       disagreement is what the history cannot absorb: a smeared horizon. */
     #if AA_TYPE == 1 || AA_TYPE == 2
-        float phase = float(frameCounter - 4 * (frameCounter / 4));
-        vec2 subPixel = vec2(
-            phase == 0.0 || phase == 3.0 ? -0.25 : 0.25,
-            phase < 2.0 ? -0.25 : 0.25);
-        gl_Position.xy += subPixel * vec2(2.0 / viewWidth, 2.0 / viewHeight) * gl_Position.w;
+        gl_Position.xy += solaceJitter() * gl_Position.w;
     #endif
 }
